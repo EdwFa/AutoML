@@ -1,0 +1,6 @@
+*.pyc
+.idea
+datasets
+db.sqlite3
+logs
+*.zip
