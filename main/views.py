@@ -7,6 +7,7 @@ from django.core.files.storage import default_storage
 from pprint import pprint
 import logging
 import requests
+import json
 
 from .serializers import *
 from .utils import *
@@ -86,8 +87,10 @@ class DatasetLearnerView(APIView):
         dataset = Dataset.objects.get(id=dataset_id)
         if (not request.user.is_superuser) or (request.user.username != dataset.user.username):
             return Response(data='Error', status=401)
+        _, columns, _, _ = read_dataset_file(dataset)
         data = {
-            'models': DefaultNetworkSerializer(DefaultNetwork.objects.all(), many=True).data
+            'models': DefaultNetworkSerializer(DefaultNetwork.objects.all(), many=True).data,
+            'labels': [col['field'] for col in columns]
         }
         for net in data['models']:
             for param in net['param']:
@@ -100,9 +103,14 @@ class DatasetLearnerView(APIView):
         dataset = Dataset.objects.get(id=dataset_id)
         if (not request.user.is_superuser) or (request.user.username != dataset.user.username):
             return Response(data='Error', status=401)
-        print(request.data)
-        r = requests.get('http://localhost:7000/models/svm')
+
+        headers = {
+            # 'authorization': f{'token_type'}.encode('utf-8')+' '+f['access_token'].encode('utf-8'),
+            'Content-Type': 'application/json'
+        }
+        send_data = json.dumps(create_info_request(dataset, request.data['target'], request.data['model']['param']))
+        r = requests.post('http://localhost:7000/models/svm', data=send_data, headers=headers)
         print(r.status_code, r.json())
-        data = {'status': 'succes'}
+        data = r.json()
         return Response(data=data, status=201)
 

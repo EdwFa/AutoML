@@ -53,3 +53,9 @@ class NetworkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Networks
         exclude = ['path']
+
+
+class SendDataSerializer(serializers.Serializer):
+    dataset_path = serializers.CharField(max_length=250)
+    dataset_name = serializers.CharField(max_length=250)
+    target = serializers.CharField(max_length=250)
