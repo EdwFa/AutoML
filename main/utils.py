@@ -37,7 +37,28 @@ default_models = [
             ['min_impurity_decrease', '0.0', 'F'],
             ['ccp_alpha', '0.0', 'F']
         ]
-    }
+    },
+    {
+        'RandomForestClassifier': []
+    },
+    {
+        'LogisticRegression': []
+    },
+    {
+        'GradientBoostingClassifier': []
+    },
+    {
+        'AdaBoostClassifier': []
+    },
+    {
+        'KNeighborsClassifier': []
+    },
+    {
+        'ExtraTreesClassifier': []
+    },
+    {
+        'MLPClassifier': []
+    },
 ]
 
 def fill_models():
@@ -72,11 +93,17 @@ def read_dataset_file(dataset):
     print(file.shape[0])
     return file.to_dict('records'), [{'field': column} for column in file.columns], file.shape[0], file.shape[1]
 
-def create_info_request(dataset, new_model, request):
+
+# ----------
+# Обучение
+# ----------
+
+
+def create_info_request(dataset, type_model, request):
     print(request.data)
     data = {
-        'model_name': request.data["model"]["name"],
-        'model_path': f'models/{request.user.username}/{new_model.id}_{request.data["model"]["name"]}_{request.data["target"]}.sav',
+        'model_name': type_model,
+        # 'model_path': f'models/{request.user.username}/{new_model.id}_{request.data["model"]["name"]}_{request.data["target"]}.sav',
         'dataset_path': os.path.abspath(dataset.path),
         'dataset_name': f'{dataset.name}.{dataset.format}',
         'target': request.data['target'],
@@ -100,9 +127,6 @@ def convert_data_type(label, value, type_data, **kwargs):
             value = value
     print(f'param ==> {label} = {value} ({type(value)})')
     return value
-
-def save_model(path, model):
-    return True
 
 
 # ----------

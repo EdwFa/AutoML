@@ -5,13 +5,12 @@ from .views import *
 app_name = 'main'
 
 urlpatterns = [
-    path('datasets', DatasetView.as_view(), name='datasets'),
+    # Загрузка датасета
     path('datasets/upload', DatesetUploadView.as_view(), name='upload'),
-    path('dataset/details', DatasetDetailView.as_view(), name='dataset'),
+
+    # Разделы для анализа и обучения датасета
     path('dataset/viewer', DatasetViewerView.as_view(), name='viewer'),
     path('dataset/statistic', DatasetStatistic.as_view(), name='learner'),
     path('dataset/learner', DatasetLearnerView.as_view(), name='learner'),
 
-    path('models/save_model', SaveModelView.as_view(), name='save-model'),
-    path('models/use_model', UseModelView.as_view(), name='use-model'),
 ]

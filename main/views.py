@@ -18,19 +18,6 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-class DatasetView(APIView):
-
-    def get(self, request):
-        logger.debug(f'Connected user {request.user.username}...')
-        if request.user.is_superuser:
-            datasets = Dataset.objects.all()
-        else:
-            datasets = Dataset.objects.filter(user=request.user)
-        data = {
-            'datasets': DatasetSerializer(datasets, many=True).data
-        }
-        return Response(data=data, status=200)
-
 class DatesetUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser, FileUploadParser]
 
@@ -61,21 +48,13 @@ class DatesetUploadView(APIView):
         data['status'] = 'Created'
         return Response(data=data, status=201)
 
+
 def get_dataset(request):
     datasetName = request.GET.get('datasetName')
     print(datasetName)
     dataset = Dataset.objects.get(name=''.join(datasetName.split('.')[:-1]), user=request.user)
     return dataset
 
-class DatasetDetailView(APIView):
-    def get(self, request):
-        dataset = get_dataset(request)
-        if (not request.user.is_superuser) or (request.user.username != dataset.user.username):
-            return Response(data='Error', status=401)
-        data = {
-            'info': DatasetSerializer(dataset, many=False).data,
-        }
-        return Response(data=data, status=200)
 
 class DatasetViewerView(APIView):
     def get(self, request):
@@ -90,6 +69,7 @@ class DatasetViewerView(APIView):
             'count_columns': counts_columns
         }
         return Response(data=data, status=200)
+
 
 class DatasetStatistic(APIView):
 
@@ -129,32 +109,10 @@ class DatasetLearnerView(APIView):
             # 'authorization': f{'token_type'}.encode('utf-8')+' '+f['access_token'].encode('utf-8'),
             'Content-Type': 'application/json'
         }
-        new_model = Networks.objects.create(dataset=dataset, default_model=DefaultNetwork.objects.get(
-            name=request.data["model"]["name"]))
-        send_data = json.dumps(create_info_request(dataset, new_model, request))
+        type_model = request.data["model"]["name"]
+        send_data = json.dumps(create_info_request(dataset, type_model, request))
         r = requests.post(f'{HOST_TO_CONNECT_LEARNER}/models/learn', data=send_data, headers=headers)
         print(r.status_code, r.json())
-        new_model.path = r.json()['path']
-        # new_model.size = r.json()['size']
-        new_model.save()
         data = r.json()
-        data['model_id'] = new_model.id
         return Response(data=data, status=201)
-
-class SaveModelView(APIView):
-    def post(self, request):
-        new_model = Networks.objects.get(id=request.data['model_id'])
-        if request.user.id != new_model.dataset.user.id:
-            return Response(data='Not allow', status=403)
-        if new_model.saved:
-            return Response(data='Already saved', status=403)
-        new_model.saved = True
-        new_model.save()
-        return Response(data='Success', status=201)
-
-
-class UseModelView(APIView):
-    def get(self, request):
-        data = {'data': ""}
-        return Response(data=data, status=200)
 
