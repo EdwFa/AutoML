@@ -23,7 +23,7 @@ class LearnerView(APIView):
         X_train, y_train, X_test, y_test = preprocess_data(dataset, dataset[request.data['target']].copy(), labels)
         cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org = trainer(
             X_train, y_train, X_test, y_test, request.data['model_name'],
-            label_name=request.data['target'], filename=request.data['model_path'], **request.data['params'])
+            label_name=request.data['target'], **request.data['params'])
         print('Train accuracy = ', round(train_accuracy, 2))
         print('Test accuracy = ', round(test_accuracy, 2))
         print(classification_matrix)
@@ -38,7 +38,7 @@ class LearnerView(APIView):
             'y_scores': y_scores,
             'y_onehot': y_labels,
             'cm_model': cm_model,
-            'path': request.data['model_path'],
+            # 'path': request.data['model_path'],
             # 'size': os.stat(request.data['model_path']).st_size,
         }
         return Response(data=data, status=200)

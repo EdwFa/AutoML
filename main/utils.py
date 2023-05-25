@@ -20,16 +20,28 @@ import pandas as pd
 import pickle
 
 
+# models = {
+#     'SVM': SVC,
+#     'Decision Tree': DecisionTreeClassifier,
+#     'Random Forest': RandomForestClassifier,
+#     'Logistic Regression': LogisticRegression,
+#     'GradientBoostingClassifier': GradientBoostingClassifier,
+#     'AdaBoost': AdaBoostClassifier,
+#     'KNN': KNeighborsClassifier,
+#     'ExtraTrees': ExtraTreesClassifier,
+#     'MLPClassifier': MLPClassifier
+# }
 models = {
-    'SVM': SVC,
-    'Decision Tree': DecisionTreeClassifier,
-    'Random Forest': RandomForestClassifier,
-    'Logistic Regression': LogisticRegression,
-    'GradientBoostingClassifier': GradientBoostingClassifier,
-    'AdaBoost': AdaBoostClassifier,
-    'KNN': KNeighborsClassifier,
-    'ExtraTrees': ExtraTreesClassifier,
-    'MLPClassifier': MLPClassifier
+    'SVM': SVC(probability=True),
+    'Decision Tree': DecisionTreeClassifier(),
+    'Random Forest': RandomForestClassifier(),
+    'Logistic Regression': LogisticRegression(max_iter=200),
+    'GradientBoostingClassifier': GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+                                                             max_depth=1, random_state=0),
+    'AdaBoost': AdaBoostClassifier(),
+    'KNN': KNeighborsClassifier(),
+    'ExtraTrees': ExtraTreesClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0),
+    'MLPClassifier': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
 }
 
 formats = ['csv', 'xlsx', 'xls']
@@ -110,9 +122,9 @@ def check_filename(filename):
         os.mkdir(file_path)
     return filename
 
-def trainer(X_train, y_train, X_test, y_test, model_name, label_name, filename, **params):
+def trainer(X_train, y_train, X_test, y_test, model_name, label_name, **params):
     print("params ", params)
-    model = models[model_name](**params)
+    model = models[model_name]
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     y_test_org = np.unique(y_test)
