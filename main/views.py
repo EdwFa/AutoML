@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser, MultiPartParser, FormParser
 from django.core.files.storage import default_storage
+from django.core.exceptions import ObjectDoesNotExist
 
 from pprint import pprint
 import logging
@@ -51,16 +52,20 @@ class DatesetUploadView(APIView):
 
 def get_dataset(request):
     datasetName = request.GET.get('datasetName')
-    print(datasetName)
-    dataset = Dataset.objects.get(name=''.join(datasetName.split('.')[:-1]), user=request.user)
-    return dataset
+    logger.info(datasetName)
+    try:
+        dataset = Dataset.objects.get(name=''.join(datasetName.split('.')[:-1]), user=request.user)
+    except ObjectDoesNotExist:
+        return None
+    finally:
+        return dataset
 
 
 class DatasetViewerView(APIView):
     def get(self, request):
         dataset = get_dataset(request)
-        if (not request.user.is_superuser) or (request.user.username != dataset.user.username):
-            return Response(data='Error', status=401)
+        if dataset is None:
+            return Response(data='Error', status=403)
         data, columns, count_rows, counts_columns = read_dataset_file(dataset)
         data = {
             'dataset': data,
@@ -75,8 +80,8 @@ class DatasetStatistic(APIView):
 
     def get(self, request):
         dataset = get_dataset(request)
-        if (not request.user.is_superuser) or (request.user.username != dataset.user.username):
-            return Response(data='Error', status=401)
+        if dataset is None:
+            return Response(data='Error', status=403)
         data = {
             "data": get_statistic_info(dataset)
         }
@@ -86,8 +91,8 @@ class DatasetStatistic(APIView):
 class DatasetLearnerView(APIView):
     def get(self, request):
         dataset = get_dataset(request)
-        if (not request.user.is_superuser) or (request.user.username != dataset.user.username):
-            return Response(data='Error', status=401)
+        if dataset is None:
+            return Response(data='Error', status=403)
         _, columns, _, _ = read_dataset_file(dataset)
         data = {
             'models': DefaultNetworkSerializer(DefaultNetwork.objects.all(), many=True).data,
