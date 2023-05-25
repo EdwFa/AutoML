@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import { useState, useEffect } from 'react';
-import { variables } from '../Variables'
+import { variables } from '../../Variables'
 
 import './styles.css';
 
@@ -133,6 +133,8 @@ export class LogIn extends Component {
     }
   }
 
+
+
   render() {
     const {
       loading,
@@ -150,62 +152,59 @@ export class LogIn extends Component {
         return <Navigate push to="/viewer" />
     } else {
         return (
-            <div class="e11_88">
-                <div  class="e11_89"></div>
-                <div  class="e11_90"></div>
-                <div class="e11_91">
-                    <div  class="e11_92"></div>
-                    <div  class="e11_93"></div>
-                    <div  class="e11_94"></div>
-                    <div  class="e11_95"></div>
-                    <div  class="e11_96"></div>
-                    <div  class="e11_97"></div>
-                    <div  class="e11_98"></div>
-                    <div  class="e11_99"></div>
-                    <div  class="e11_100"></div>
-                    <div  class="e11_101"></div>
-                </div>
-                <div  class="e11_105"></div>
-                <div  class="e11_106"></div>
-                <span  class="e11_107">LOGIN</span>
-                    <span  class="e11_108">Username
-                        <input type="text"
+            <div class="e1_64">
+                <div class="e1_65"></div>
+                <div class="e1_95">
+                    <div class="e1_96">
+                        <div  class="e1_97"></div>
+                        <div  class="e1_98"></div>
+                        <span  class="e1_99">Account</span>
+                    </div>
+                    {/*<span  class="e1_100">Username</span>*/}
+                    <input type="text"
+                            className="e1_100"
                             name="username"
                             value={formUsername}
                             onChange={this.changeUserNameForm}
-                            placeholder=""
+                            placeholder="Username"
                         />
-                    </span>
-                    <span  class="e11_109">Password
-                        <input type="password"
+                    <input type="password"
+                            className="e1_101"
                             name="password"
                             value={formPassword}
                             onChange={this.changePasswordForm}
                             placeholder="••••••••"
                         />
-                    </span>
-                <div class="e11_110">
-                    <button type="button"
-                        className="e11_111"
-                        onClick={() => this.submitUp()}
-                        >login
-                    </button>
-                </div>
-                <div class="e11_112">
-                    <span  class="e11_113">Sechenov Machine Learning Change Healthcare</span>
-                </div>
-                <div class="e11_128">
-                    <div class="e11_129"></div>
-                    <div class="e11_130">
-                        <div  class="e11_131"></div>
-                        <div  class="e11_132"></div>
-                        <div class="e11_133">
-                        <div  class="e11_134">
+                    <div class="e1_102">
+                        <div class="e1_103">
+                            <button type="button"
+                                className="e1_104"
+                                onClick={() => this.submitUp()}
+                                >Log in
+                            </button>
+                        </div>
                     </div>
-                    <div  class="e11_135"></div>
+                    <div class="e1_106">
+                        <div class="e1_107">
+                            <span  class="e1_110">Don’t have an account yet?</span>
+                            <Link to="/sign-up">
+                                <a href="#">
+                                    <span  class="e1_111">Register here</span>
+                                </a>
+                            </Link>
+                            {/* <span  class="e1_112">Forgot your password?</span> */}
+                        </div>
+                    </div>
+                    <div  class="e1_113"></div>
+                    <div  class="e1_114"></div>
+                    <div  class="e1_115"></div>
                 </div>
-            </div>
-            </div>
+                <span  class="e1_116">Log in</span>
+                <div  class="e1_118"></div>
+                <div class="e1_119">
+                    <span  class="e1_120">Sechenov Machine Learning Change Healthcare</span>
+                    <div  class="e1_121"></div>
+                </div>
             </div>
         )
     }
