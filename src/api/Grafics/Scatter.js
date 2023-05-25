@@ -1,0 +1,66 @@
+
+
+function getRandomColor(count) {
+var colors = [];
+for (var i = 0; i < count; i++) {
+   var letters = '0123456789ABCDEF'.split('');
+   var color = '#';
+      for (var x = 0; x < 6; x++) {
+          color += letters[Math.floor(Math.random() * 16)];
+      }
+      colors.push(color);
+      }
+   return colors;
+}
+
+function GetScatterData(x_data, y_data, groups) {
+
+   var groups_styles = new Array();
+
+   if (groups != null) {
+    var groups_set = [...new Set(groups)];
+    console.log(groups_set);
+    var groups_colors = getRandomColor(groups_set.length);
+
+    let i = 0;
+    for (let el of groups_set) {
+        groups_styles.push({target: el, value: {marker: {color: groups_styles[i]}}})
+        i += 1;
+     };
+   }
+
+    var trace1 = {
+      x: x_data,
+      y: y_data,
+      mode: 'markers',
+      type: 'scatter',
+      name: 'Team A',
+
+      marker: { size: 8 },
+      transforms: [{
+        type: 'groupby',
+        groups: groups,
+        styles: groups_styles
+      }],
+    };
+
+    var data = [ trace1 ];
+
+    return data;
+}
+
+function GetScatterLayout(y_label, x_label) {
+    console.log(y_label, x_label)
+    var layout = {
+
+      title:'',
+      width:500,
+	  height:439,
+	  xaxis: {title: x_label},
+      yaxis: {title: y_label},
+    };
+
+    return layout;
+}
+
+export { GetScatterData, GetScatterLayout };

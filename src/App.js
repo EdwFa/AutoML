@@ -1,13 +1,14 @@
 import './App.css';
 import { useEffect } from 'react';
 
-// Импорт страниц
-import Main from "./pages/Main";
-import Auth from './pages/Auth';
-import { Account } from './api/Account.js';
-import Reg from './pages/Reg';
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+
+// Импорт страниц
+import { LogIn } from './api/SignUp/LogIn.js';
+import { Viewer } from './api/Viewer/Viewer.js';
+import { Learning } from './api/Learning/Learning.js';
+import { Statistic } from './api/Statistic/Statistic.js';
+
 
 function App() {
   useEffect(() => {
@@ -21,10 +22,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path='/' element={<Auth />} />
-        <Route path='/main' element={<Main />} />
-        <Route path='/account' element={<Account />} />
-        <Route path='/registration' element={<Reg />} />
+        <Route path='/' element={<LogIn />} />
+        <Route path='/viewer' element={<Viewer />} />
+        <Route path='/learning' element={<Learning />} />
+        <Route path='/statistic' element={<Statistic />} />
       </Routes>
     </Router>
   );

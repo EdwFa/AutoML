@@ -10,9 +10,6 @@ export function showDate(dateString) {
 export const variables = {
     API_URL: "",
     token: "",
-    is_admin: false,
-    is_staff: false,
-    username: "",
-    email: "",
-    epicCount: 0,
+    user: null,
+    uploaded_file: null,
 }
