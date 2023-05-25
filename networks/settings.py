@@ -146,6 +146,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 if not os.path.exists('logs'):
     os.mkdir('logs')
 
+if not os.path.exists('models'):
+    os.mkdir('models')
 
 LOGGING = {
     'version': 1,

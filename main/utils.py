@@ -1,3 +1,5 @@
+import os.path
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -7,6 +9,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve, roc_auc_score
 
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
@@ -14,22 +17,19 @@ from sklearn.linear_model import SGDClassifier
 
 import numpy as np
 import pandas as pd
+import pickle
 
 
 models = {
     'SVM': SVC,
-    'Decision Tree': DecisionTreeClassifier(),
-    'Random Forest': RandomForestClassifier(),
-    'Logistic Regression': LogisticRegression(max_iter=200),
-    'GradientBoostingClassifier': GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
-                                                             max_depth=1, random_state=0),
-    'AdaBoost': AdaBoostClassifier(),
-    'KNN': KNeighborsClassifier(),
-    'ExtraTrees': ExtraTreesClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0),
-    'MLPClassifier': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
-    # 'MLPRegressor': MLPRegressor(random_state=1, max_iter=500)
-    # 'SGDC': SGDClassifier(loss="squared_error", penalty="l2", max_iter=5)
-
+    'Decision Tree': DecisionTreeClassifier,
+    'Random Forest': RandomForestClassifier,
+    'Logistic Regression': LogisticRegression,
+    'GradientBoostingClassifier': GradientBoostingClassifier,
+    'AdaBoost': AdaBoostClassifier,
+    'KNN': KNeighborsClassifier,
+    'ExtraTrees': ExtraTreesClassifier,
+    'MLPClassifier': MLPClassifier
 }
 
 formats = ['csv', 'xlsx', 'xls']
@@ -56,22 +56,16 @@ def load_data(file, file_name):
 def sort_data(data, labels=None):
     if labels is None:
         labels = {}
-        for label, uniqval in zip(data.columns, data.nunique()):
+        for dtype, label, uniqval in zip(data.dtypes, data.columns, data.nunique()):
             info = {}
-            value = data[label][0]
-            try:
-                int(value)
+            if dtype == 'float' or dtype == 'int':
                 info['type'] = 1
-            except:
-                try:
-                    float(value)
-                    info['type'] = 1
-                except:
-                    info['type'] = 0
-            finally:
-                info['uniq_vals'] = uniqval
-                info['use'] = True
-                labels[label] = info
+            else:
+                info['type'] = 0
+
+            info['uniq_vals'] = uniqval
+            info['use'] = True
+            labels[label] = info
         for label, nadata in zip(data.columns, data.isna().sum()):
             labels[label]['na_data'] = nadata
     else:
@@ -109,9 +103,16 @@ def preprocess_data(data, target, labels):
     X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=0.18, random_state=401)
     return X_train, y_train, X_test, y_test
 
+def check_filename(filename):
+    file_path = '/'.join(filename.split('/')[:-1])
+    print(file_path)
+    if not os.path.exists(file_path):
+        os.mkdir(file_path)
+    return filename
 
-def trainer(X_train, y_train, X_test, y_test, model_name, label_name, **params):
-    model = models[model_name](probability=True, **params)
+def trainer(X_train, y_train, X_test, y_test, model_name, label_name, filename, **params):
+    print("params ", params)
+    model = models[model_name](**params)
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     y_test_org = np.unique(y_test)
@@ -130,6 +131,7 @@ def trainer(X_train, y_train, X_test, y_test, model_name, label_name, **params):
 
     y_scores = model.predict_proba(X_test)
     y_onehot = pd.get_dummies(y_test, columns=model.classes_)
+    # pickle.dump(model, open(check_filename(filename), 'wb'))
 
     return cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org
 
@@ -189,7 +191,7 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
     table_strings = []
     for k, v in classification_matrix.items():
         table_strings.append([k, *v])
-    table_names_columns = [label_name, 'SE', 'SP', 'PPV', 'NPV']
+    table_names_columns = ['label', 'SE', 'SP', 'PPV', 'NPV']
     classification_matrix = pd.DataFrame(table_strings, columns=table_names_columns)
 
     print("Матрица классификации == ", classification_matrix)
@@ -199,3 +201,23 @@ def prepare_matrix_to_grid(matrix):
     print(matrix.columns)
     print([l for l in matrix.to_dict('index').values()])
     return [l for l in matrix.to_dict('index').values()], [{'field': c} for c in matrix.columns]
+
+
+def prepare_y_scores_to_js(y_scores, y_onehot):
+    results = [[] for y in y_onehot]
+    labels = []
+    i = 0
+    for i, result in zip(range(y_scores.shape[1]), results):
+        y_true = y_onehot.iloc[:, i]
+        y_score = y_scores[:, i]
+
+        fpr, tpr, _ = roc_curve(y_true, y_score)
+        auc_score = roc_auc_score(y_true, y_score)
+
+        name = f"{y_onehot.columns[i]} (AUC={auc_score:.2f})"
+        result.append(tpr)
+        result.append(fpr)
+        result.append(name)
+        labels.append(y_onehot.columns[i])
+
+    return results, labels
