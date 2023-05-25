@@ -174,7 +174,7 @@ export class Registration extends Component {
       is_admin,
     } = this.state;
 
-    if (token != "2") {
+    if (token != "") {
         return (
             <div class="e9_523">
                 <div  class="e9_524"></div>
