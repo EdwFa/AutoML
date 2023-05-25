@@ -504,27 +504,27 @@ export class Statistic extends Component {
                                                             </div>
                                                         </div>
                                                         <div class="e13_453_1">
-                                                            {currentElem.type === 'categorial'?
-                                                                <Plot
+                                                            <Plot
                                                                     data={
                                                                         GetHistogramData(currentElem.data)
                                                                     }
                                                                     layout={
                                                                         GetHistogramLayout(currentElem.column)
                                                                     }
-                                                                />
-                                                            :
-                                                                <Plot
-                                                                    data={
-                                                                        GetHistogramData(currentElem.data)
-                                                                    }
-                                                                    layout={
-                                                                        GetHistogramLayout(currentElem.column)
-                                                                    }
-                                                                />
-                                                            }
+                                                            />
                                                         </div>
-
+                                                        <div class="e13_457_1">
+                                                            <div className="ag-theme-alpine" style={{height: "100%", width: "100%"}}>
+                                                               <AgGridReact
+                                                                    rowData={currentElem.district_appear}
+                                                                    columnDefs={[
+                                                                        {field: 'value', sortable: true},
+                                                                        {field: 'count', sortable: true},
+                                                                        {field: 'percent', sortable: true}
+                                                                    ]}>
+                                                                </AgGridReact>
+                                                            </div>
+                                                        </div>
                                                     </>
                                                 :null}
                                             </div>
