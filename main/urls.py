@@ -7,7 +7,11 @@ app_name = 'main'
 urlpatterns = [
     path('datasets', DatasetView.as_view(), name='datasets'),
     path('datasets/upload', DatesetUploadView.as_view(), name='upload'),
-    path('datasets/<int:dataset_id>', DatasetDetailView.as_view(), name='dataset'),
-    path('datasets/<int:dataset_id>/viewer', DatasetViewerView.as_view(), name='viewer'),
-    path('datasets/<int:dataset_id>/learner', DatasetLearnerView.as_view(), name='learner'),
+    path('dataset/details', DatasetDetailView.as_view(), name='dataset'),
+    path('dataset/viewer', DatasetViewerView.as_view(), name='viewer'),
+    path('dataset/statistic', DatasetStatistic.as_view(), name='learner'),
+    path('dataset/learner', DatasetLearnerView.as_view(), name='learner'),
+
+    path('models/save_model', SaveModelView.as_view(), name='save-model'),
+    path('models/use_model', UseModelView.as_view(), name='use-model'),
 ]

@@ -207,3 +207,5 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = "accounts.User"
+
+HOST_TO_CONNECT_LEARNER = 'http://localhost:8001'

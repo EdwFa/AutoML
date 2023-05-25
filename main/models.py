@@ -48,8 +48,9 @@ class DefaultNetwork(models.Model):
 class Networks(models.Model):
     dataset = models.ForeignKey(Dataset, on_delete=models.PROTECT, related_name='model')
     default_model = models.ForeignKey(DefaultNetwork, on_delete=models.PROTECT, related_name='prepared_model')
-    path = models.CharField(max_length=255)
-    size = models.IntegerField()
+    path = models.CharField(max_length=255, null=True, blank=True)
+    size = models.IntegerField(null=True, blank=True)
+    saved = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.dataset.name} - {self.default_model.name}'
@@ -68,7 +69,7 @@ class ModelParam(models.Model):
     """Таблица для храниения параметров модели"""
     model = models.ForeignKey(Networks, on_delete=models.CASCADE, related_name='param')
     label = models.CharField(max_length=255)
-    value = models.CharField(max_length=255)
+    value = models.CharField(max_length=255, null=True, blank=True)
     type_data = models.CharField(max_length=1, choices=choices_types_data, default='I')
 
     def __str__(self):
@@ -79,7 +80,7 @@ class ModelDefaultParam(models.Model):
     """Таблица для храниения параметров модели"""
     model = models.ForeignKey(DefaultNetwork, on_delete=models.CASCADE, related_name='param')
     label = models.CharField(max_length=255)
-    value = models.CharField(max_length=255)
+    value = models.CharField(max_length=255, null=True, blank=True)
     type_data = models.CharField(max_length=1, choices=choices_types_data, default='I')
     choices_values = models.CharField(max_length=1024, null=True, blank=True)
 
