@@ -107,8 +107,8 @@ class DatasetLearnerView(APIView):
 
     def post(self, request):
         dataset = get_dataset(request)
-        if (not request.user.is_superuser) or (request.user.username != dataset.user.username):
-            return Response(data='Error', status=401)
+        if dataset is None:
+            return Response(data='Error', status=403)
 
         headers = {
             # 'authorization': f{'token_type'}.encode('utf-8')+' '+f['access_token'].encode('utf-8'),
