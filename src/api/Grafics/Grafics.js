@@ -172,15 +172,16 @@ export class Grafics extends Component {
         } else {
             return (
                 <>
-                    {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
+                    {/* Страница с графиками */}
                     <div>
                         {/* Подгружаем боковую панель */}
                         <div>
                             <Sidebar />
                         </div>
-                        {/* Основной блок кода с таблицей и загрузкой */}
+                        {/* Основной блок кода */}
                         <div>
                             <span>Dataset grafics</span>
+                            {/* Выбор графика и осей */}
                             <div>
                                 <label>Grafic</label>
                                 <Select
@@ -243,6 +244,7 @@ export class Grafics extends Component {
                                 </button>
 
                             </div>
+                            {/* Отрисовка графика */}
                             <div>
                                 <PlotGrafic
                                     graffic={choicedGrafic}
