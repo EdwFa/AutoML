@@ -5,7 +5,7 @@ import Plot from 'react-plotly.js';
 import { GetScatterData, GetScatterLayout } from './Scatter.js';
 import { GetHistogramData, GetHistogramLayout } from './Histogram.js'
 
-import "../Viewer/styles.css"
+// import "../Viewer/styles.css"
 
 
 export class PlotGrafic extends Component {

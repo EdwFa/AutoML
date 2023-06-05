@@ -17,8 +17,7 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import Plot from 'react-plotly.js';
 
 import { variables, showDate } from '../Variables.js';
-
-import './styles.css';
+import Sidebar  from "../Sidebar/Sidebar.js";
 
 
 function GetHistogramData(x_data) {
@@ -181,363 +180,175 @@ export class Statistic extends Component {
             return <Navigate push to="/" />
         } else {
             return (
-                <div class="e11_446">
-                    {/* Начало основного раздела */}
-                    <div  class="e11_31932"></div>
-                    <div class="e11_31933">
-                        <div class="e11_31934">
-                            <span  class="e11_31935">Sechenov Machine Learning Change Healthcare</span>
-                            <div class="e11_31936">
-                                <div  class="e11_31937"></div>
-                                <div  class="e11_31938"></div>
-                            </div>
-                        </div>
-                        <div class="e11_31939">
-                            <div  class="e11_31940"></div>
-                            <span  class="e11_31941">{user != null? user.username: null}</span>
-                        </div>
-                        <div class="e11_31942">
-                            <div class="e11_31943">
-                            </div>
-                            <div class="e11_31945">
-                                <label for="files" class="e11_31946">{uploaded_file? <>{uploaded_file.slice(0, 5)} ... {uploaded_file.slice(-5)}</>: <>Select dataset</>}</label>
-                                <input id="files" class="e11_136" type="file" onChange={this.uploadClick}/>
-                            </div>
-                        </div>
-                        <div class="e11_31947_1">
-                            <div  class="e11_31948_1"></div>
-                            <div class="e11_31949_1">
-                                <Link to="/viewer">
-                                    <a href="#">
-                                        <span  class="e11_31950_1">Go to viewer</span>
-                                    </a>
-                                </Link>
-                            </div>
-                        </div>
-                        <div class="e11_31947_2">
-                            <div  class="e11_31948_2"></div>
-                            <div class="e11_31949_2">
-                                <Link to="/learning">
-                                    <a href="#">
-                                        <span  class="e11_31950_2">Go to learner</span>
-                                    </a>
-                                </Link>
-                            </div>
-                        </div>
-                        <div class="e11_31947_3">
-                            <div  class="e11_31948_3"></div>
-                            <div class="e11_31949_3">
-                                <Link to="/statistic">
-                                    <a href="#">
-                                        <span  class="e11_31950_3">Statistic</span>
-                                    </a>
-                                </Link>
-                            </div>
-                        </div>
-                        <div class="e11_31980">
-                            <div class="e11_31981"></div>
-                            <div class="e11_31982">
-                                <div  class="e11_31983"></div>
-                                <div  class="e11_31984"></div>
-                                <div class="e11_31985">
-                                    <div  class="e11_31986"></div>
-                                    <div  class="e11_31987"></div>
-                                </div>
-                            </div>
-                        </div>
+                <div>
+                    {/* Подгружаем боковую панель */}
+                    <div>
+                        <Sidebar />
                     </div>
+                    {/* Начало основного раздела где выводим информацию о столбце */}
+                    <div>
+                        <span>Dataset Statistic</span>
+                                {/* Выбор столбца */}
+                                <Select
+                                    className='basic-single'
+                                    classNamePrefix='select'
+                                    options={info}
+                                    getOptionLabel={(option) => `${option['column']}`}
+                                    getOptionValue={(option) => `${option['column']}`}
+                                    value={currentElem}
+                                    noOptionsMessage={() => "Пусто"}
+                                    onChange={this.selectColumn}
+                                    placeholder="Выберите cтолбец датасета"
+                                    isSearchable
+                                    isClearable
+                                />
+                                {/* Информация о стобце */}
+                                <div>
+                                        {currentElem !== null?
+                                            <div>
+                                                {/* название */}
+                                                <div>
+                                                    <span>{currentElem.column} ({currentElem.type})</span>
+                                                </div>
+                                                {/* основные данные */}
+                                                <div>
+                                                            {currentElem.type == 'categorial'?
+                                                                <>
+                                                                    <table>
+                                                                        <tr>
+                                                                            <td>Distinct</td>
+                                                                            <td>{currentElem.district.length}</td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>Missing</td>
+                                                                            <td>{currentElem.count_nan} ({currentElem.persent_nan} %)</td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </>
+                                                            :
+                                                                <>
+                                                                    <table>
+                                                                        <tr>
+                                                                            <td>Distinct</td>
+                                                                            <td>{currentElem.district.length}</td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>Missing</td>
+                                                                            <td>{currentElem.count_nan} ({currentElem.persent_nan} %)</td>
+                                                                        </tr>
+                                                                        {moreDetails?
+                                                                            <>
+                                                                                <tr>
+                                                                                    <td>Max</td>
+                                                                                    <td>{currentElem.max}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Min</td>
+                                                                                    <td>{currentElem.min}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Range</td>
+                                                                                    <td>{currentElem.range}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Mean</td>
+                                                                                    <td>{currentElem.mean}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>5-th percentile</td>
+                                                                                    <td>{currentElem.quantiles[0.05]}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Q1</td>
+                                                                                    <td>{currentElem.quantiles[0.25]}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Median</td>
+                                                                                    <td>{currentElem.quantiles[0.5]}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Q3</td>
+                                                                                    <td>{currentElem.quantiles[0.75]}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>95-th percentile</td>
+                                                                                    <td>{currentElem.quantiles[0.95]}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Interquartile range (IQR)</td>
+                                                                                    <td>{currentElem.IQR}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Standard deviation</td>
+                                                                                    <td>{currentElem.std}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Coefficient of variation (CV)%</td>
+                                                                                    <td>{currentElem.CV}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Kurtosis</td>
+                                                                                    <td>{currentElem.kurt}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Median Absolute Deviation (MAD)</td>
+                                                                                    <td>{currentElem.MAD}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Skewness</td>
+                                                                                    <td>{currentElem.skew}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Sum</td>
+                                                                                    <td>{currentElem.sum}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Variance</td>
+                                                                                    <td>{currentElem.var}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Monotonicity</td>
+                                                                                    <td>{currentElem.monotonicy? "Monotonic": "Non monotonic"}</td>
+                                                                                </tr>
+                                                                            </>
+                                                                        :null}
+                                                                    </table>
+                                                                     <button type="button"
+                                                                        onClick={() => this.setState({moreDetails: !this.state.moreDetails})}
+                                                                     >{moreDetails? "Hide details" : "More details"}
+                                                                    </button>
+                                                                </>
+                                                            }
+                                                </div>
 
-                    {/* Начало основного раздела */}
+                                                {/* График распределения */}
+                                                <div>
+                                                    <Plot
+                                                        data={
+                                                            GetHistogramData(currentElem.data)
+                                                        }
+                                                        layout={
+                                                            GetHistogramLayout(currentElem.column)
+                                                        }
+                                                    />
+                                                </div>
 
-                    <div class="e11_31963_1">
-                        <div class="e13_440">
-                            <div class="e13_441">
-                                <div class="e13_442">
-                                    <span  class="e13_443">Dataset Statistic</span>
-                                    <div  class="e28_281"></div>
-                                    <Select
-                                            className='basic-single'
-                                            classNamePrefix='select'
-                                            options={info}
-                                            getOptionLabel={(option) => `${option['column']}`}
-                                            getOptionValue={(option) => `${option['column']}`}
-                                            value={currentElem}
-                                            noOptionsMessage={() => "Пусто"}
-                                            onChange={this.selectColumn}
-                                            placeholder="Выберите cтолбец датасета"
-                                            isSearchable
-                                            isClearable
-                                        />
-                                </div>
-                                <div class="e13_448">
-                                    <div class="e13_449">
-                                        <div class="e13_450">
-                                            <div class="e13_451_1">
-                                                {currentElem !== null?
-                                                    <>
-                                                        <div class="e13_452_1">
-                                                            <div class="e3_1135">
-                                                                <div class="e3_1136">
-                                                                    <div class="e3_1137">
-                                                                        <span  class="ei3_1137_2_118">{currentElem.column} ({currentElem.type})</span>
-                                                                    </div>
-                                                                    {moreDetails?
-                                                                        currentElem.type == 'categorial'?
-                                                                        <div class="e3_1138">
-                                                                            <div class="e3_1139">
-                                                                                <span  class="ei3_1139_2_246">Distinct:</span>
-                                                                            </div>
-                                                                            <div class="e3_1140">
-                                                                                <span  class="ei3_1140_2_246">Missing:</span>
-                                                                            </div>
-                                                                            <div class="e3_1141_1">
-                                                                                <button type="button"
-                                                                                    onClick={() => this.setState({moreDetails: !this.state.moreDetails})}
-                                                                                    class="ei3_1477_2_246_1">
-                                                                                    {moreDetails? "Hide details" : "More details"}
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                        :
-                                                                        <div class="e3_1138">
-                                                                            <div class="e3_1139">
-                                                                                <span  class="ei3_1139_2_246">Distinct:</span>
-                                                                            </div>
-                                                                            <div class="e3_1140">
-                                                                                <span  class="ei3_1140_2_246">Missing:</span>
-                                                                            </div>
-                                                                            <div class="e3_1141">
-                                                                                <span  class="ei3_1141_2_246">Max:</span>
-                                                                            </div>
-                                                                            <div class="e3_1481">
-                                                                                <span  class="ei3_1481_2_246">Min:</span>
-                                                                            </div>
-                                                                            <div class="e3_1142">
-                                                                                <span  class="ei3_1142_2_246">Range:</span>
-                                                                            </div>
-                                                                            <div class="e3_1143">
-                                                                                <span  class="ei3_1143_2_246">Mean:</span>
-                                                                            </div>
-                                                                            <div class="e3_1144">
-                                                                                <span  class="ei3_1144_2_246">5-th percentile:</span>
-                                                                            </div>
-                                                                            <div class="e3_1145">
-                                                                                <span  class="ei3_1145_2_246">Q1:</span>
-                                                                            </div>
-                                                                            <div class="e3_1146">
-                                                                                <span  class="ei3_1146_2_246">Median:</span>
-                                                                            </div>
-                                                                            <div class="e3_1147">
-                                                                                <span  class="ei3_1147_2_246">Q3: </span>
-                                                                            </div>
-                                                                            <div class="e3_1148">
-                                                                                <span  class="ei3_1148_2_246">95-th percentile: </span>
-                                                                            </div>
-                                                                            <div class="e3_1149">
-                                                                                <span  class="ei3_1149_2_246">Interquartile range (IQR):</span>
-                                                                            </div>
-                                                                            <div class="e3_1150">
-                                                                                <span  class="ei3_1150_2_246">Standard deviation: </span>
-                                                                            </div>
-                                                                            <div class="e3_1151">
-                                                                                <span  class="ei3_1151_2_246">Coefficient of variation (CV)%</span>
-                                                                            </div>
-                                                                            <div class="e3_1152">
-                                                                                <span  class="ei3_1152_2_246">Kurtosis: </span>
-                                                                            </div>
-                                                                            <div class="e3_1153">
-                                                                                <span  class="ei3_1153_2_246">Median Absolute Deviation (MAD): </span>
-                                                                            </div>
-                                                                            <div class="e3_1154">
-                                                                                <span  class="ei3_1154_2_246">Skewness:</span>
-                                                                            </div>
-                                                                            <div class="e3_1501">
-                                                                                <span  class="ei3_1501_2_246">Sum: </span>
-                                                                            </div>
-                                                                            <div class="e3_1475">
-                                                                                <span  class="ei3_1475_2_246">Variance:</span>
-                                                                            </div>
-                                                                            <div class="e3_1477">
-                                                                                <span  class="ei3_1477_2_246">Monotonicity:</span>
-                                                                            </div>
-                                                                            <div class="e3_1477_1">
-                                                                                <button type="button"
-                                                                                    onClick={() => this.setState({moreDetails: !this.state.moreDetails})}
-                                                                                    class="ei3_1477_2_246_1">
-                                                                                    {moreDetails? "Hide details" : "More details"}
-                                                                                </button>
-                                                                            </div>
-                                                                            {/*
-                                                                                <ul>
-                                                                                    <li>Max: {currentElem.max}</li>
-                                                                                    <li>Min: {currentElem.min}</li>
-                                                                                    <li>Range: {currentElem.range}</li>
-                                                                                    <li>Mean: {currentElem.mean}</li>
-                                                                                    <li>5-th percentile: {currentElem.quantiles[0.05]}</li>
-                                                                                    <li>Q1: {currentElem.quantiles[0.25]}</li>
-                                                                                    <li>Median: {currentElem.median}</li>
-                                                                                    <li>Q3: {currentElem.quantiles[0.75]}</li>
-
-                                                                                    <li>95-th percentile: {currentElem.quantiles[0.95]}</li>
-                                                                                    <li>Interquartile range (IQR): {currentElem.IQR}</li>
-                                                                                    <li>Standard deviation: {currentElem.std}</li>
-                                                                                    <li>Coefficient of variation (CV): {currentElem.CV}</li>
-                                                                                    <li>Kurtosis: {currentElem.kurt}</li>
-                                                                                    <li>Median Absolute Deviation (MAD): {currentElem.MAD}</li>
-                                                                                    <li>Skewness: {currentElem.skew}</li>
-                                                                                    <li>Sum: {currentElem.sum}</li>
-                                                                                    <li>Variance: {currentElem.var}</li>
-                                                                                    <li>Monotonicity: {currentElem.monotonicy? "Monotonic": "Non monotonic"}</li>
-                                                                                </ul>
-                                                                            */}
-                                                                        </div>
-                                                                    :
-                                                                    <>
-                                                                        <div class="e3_1138">
-                                                                            <div class="e3_1139">
-                                                                                <span  class="ei3_1139_2_246">Distinct:</span>
-                                                                            </div>
-                                                                            <div class="e3_1140">
-                                                                                <span  class="ei3_1140_2_246">Missing:</span>
-                                                                            </div>
-                                                                            <div class="e3_1141_1">
-                                                                                <button type="button"
-                                                                                    onClick={() => this.setState({moreDetails: !this.state.moreDetails})}
-                                                                                    class="ei3_1477_2_246_1">
-                                                                                    {moreDetails? "Hide details" : "More details"}
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </>
-                                                                    }
-                                                                </div>
-                                                                {moreDetails?
-                                                                    currentElem.type == 'categorial'?
-                                                                     <div class="e3_1439">
-                                                                        <div class="e3_1441">
-                                                                            <div class="e3_1442">
-                                                                                <span  class="ei3_1442_2_246">{currentElem.district.length}</span>
-                                                                            </div>
-                                                                            <div class="e3_1443">
-                                                                                <span  class="ei3_1443_2_246">{currentElem.count_nan} ({currentElem.persent_nan} %)</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                   :
-                                                                    <div class="e3_1439">
-                                                                        <div class="e3_1441">
-                                                                            <div class="e3_1442">
-                                                                                <span  class="ei3_1442_2_246">{currentElem.district.length}</span>
-                                                                            </div>
-                                                                            <div class="e3_1443">
-                                                                                <span  class="ei3_1443_2_246">{currentElem.count_nan} ({currentElem.persent_nan} %)</span>
-                                                                            </div>
-                                                                            <div class="e3_1444">
-                                                                                <span  class="ei3_1444_2_246">{currentElem.max}</span>
-                                                                            </div>
-                                                                            <div class="e3_1445">
-                                                                                <span  class="ei3_1445_2_246">{currentElem.min}</span>
-                                                                            </div>
-                                                                            <div class="e3_1446">
-                                                                                <span  class="ei3_1446_2_246">{currentElem.range}</span>
-                                                                            </div>
-                                                                            <div class="e3_1447">
-                                                                                <span  class="ei3_1447_2_246">{currentElem.mean}</span>
-                                                                            </div>
-                                                                            <div class="e3_1448">
-                                                                                <span  class="ei3_1448_2_246">{currentElem.quantiles[0.05]}</span>
-                                                                            </div>
-                                                                            <div class="e3_1449">
-                                                                                <span  class="ei3_1449_2_246">{currentElem.quantiles[0.25]}</span>
-                                                                            </div>
-                                                                            <div class="e3_1450">
-                                                                                <span  class="ei3_1450_2_246">{currentElem.median}</span>
-                                                                            </div>
-                                                                            <div class="e3_1451">
-                                                                                <span  class="ei3_1451_2_246">{currentElem.quantiles[0.75]}</span>
-                                                                            </div>
-                                                                            <div class="e3_1452">
-                                                                                <span  class="ei3_1452_2_246">{currentElem.quantiles[0.95]}</span>
-                                                                            </div>
-                                                                            <div class="e3_1453">
-                                                                                <span  class="ei3_1453_2_246">{currentElem.IQR}</span>
-                                                                            </div>
-                                                                            <div class="e3_1454">
-                                                                                <span  class="ei3_1454_2_246">{currentElem.std}</span>
-                                                                            </div>
-                                                                            <div class="e3_1455">
-                                                                                <span  class="ei3_1455_2_246">{currentElem.CV}</span>
-                                                                            </div>
-                                                                            <div class="e3_1456">
-                                                                                <span  class="ei3_1456_2_246">{currentElem.kurt}</span>
-                                                                            </div>
-                                                                            <div class="e3_1457">
-                                                                                <span  class="ei3_1457_2_246">{currentElem.MAD}</span>
-                                                                            </div>
-                                                                            <div class="e3_1483">
-                                                                                <span  class="ei3_1483_2_246">{currentElem.skew}</span>
-                                                                            </div>
-                                                                            <div class="e3_1485">
-                                                                                <span  class="ei3_1485_2_246">{currentElem.sum}</span>
-                                                                            </div>
-                                                                            <div class="e3_1489">
-                                                                                <span  class="ei3_1489_2_246">{currentElem.var}</span>
-                                                                            </div>
-                                                                            <div class="e3_1495">
-                                                                                <span  class="ei3_1495_2_246">{currentElem.monotonicy? "Monotonic": "Non monotonic"}</span>
-                                                                            </div>
-                                                                    </div>
-                                                                 </div>
-                                                                :
-                                                                    <div class="e3_1439">
-                                                                        <div class="e3_1441">
-                                                                            <div class="e3_1442">
-                                                                                <span  class="ei3_1442_2_246">{currentElem.district.length}</span>
-                                                                            </div>
-                                                                            <div class="e3_1443">
-                                                                                <span  class="ei3_1443_2_246">{currentElem.count_nan} ({currentElem.persent_nan} %)</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                }
-
-                                                            </div>
-                                                        </div>
-                                                        <div class="e13_453_1">
-                                                            <Plot
-                                                                    data={
-                                                                        GetHistogramData(currentElem.data)
-                                                                    }
-                                                                    layout={
-                                                                        GetHistogramLayout(currentElem.column)
-                                                                    }
-                                                            />
-                                                        </div>
-                                                        <div class="e13_457_1">
-                                                            <div className="ag-theme-alpine" style={{height: "100%", width: "100%"}}>
-                                                               <AgGridReact
-                                                                    rowData={currentElem.district_appear}
-                                                                    columnDefs={[
-                                                                        {field: 'value', sortable: true},
-                                                                        {field: 'count', sortable: true},
-                                                                        {field: 'percent', sortable: true}
-                                                                    ]}>
-                                                                </AgGridReact>
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                :null}
+                                                {/* Частота и кол-во встречаемый значений */}
+                                                <div className="ag-theme-alpine" style={{height: 600, width: "100%"}}>
+                                                   <AgGridReact
+                                                       rowData={currentElem.district_appear}
+                                                       columnDefs={[
+                                                         {field: 'value', sortable: true},
+                                                         {field: 'count', sortable: true},
+                                                         {field: 'percent', sortable: true}
+                                                       ]}>
+                                                   </AgGridReact>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        :null}
                                 </div>
-                            </div>
-                        </div>
-                        <span  class="e13_811">Dataset statistic</span>
                     </div>
-
                 </div>
-
             )
         }
     }

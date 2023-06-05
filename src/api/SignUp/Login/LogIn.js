@@ -4,8 +4,6 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import { variables } from '../../Variables'
 
-import './styles.css';
-
 
 export class LogIn extends Component {
 
@@ -152,59 +150,32 @@ export class LogIn extends Component {
         return <Navigate push to="/viewer" />
     } else {
         return (
-            <div class="e1_64">
-                <div class="e1_65"></div>
-                <div class="e1_95">
-                    <div class="e1_96">
-                        <div  class="e1_97"></div>
-                        <div  class="e1_98"></div>
-                        <span  class="e1_99">Account</span>
-                    </div>
-                    {/*<span  class="e1_100">Username</span>*/}
-                    <input type="text"
-                            className="e1_100"
+                <div>
+                    {/* Авторизация пользователя */}
+                    <input
+                            type="text"
                             name="username"
                             value={formUsername}
                             onChange={this.changeUserNameForm}
                             placeholder="Username"
                         />
-                    <input type="password"
-                            className="e1_101"
+                    <input
+                            type="password"
                             name="password"
                             value={formPassword}
                             onChange={this.changePasswordForm}
                             placeholder="••••••••"
                         />
-                    <div class="e1_102">
-                        <div class="e1_103">
-                            <button type="button"
-                                className="e1_104"
-                                onClick={() => this.submitUp()}
-                                >Log in
-                            </button>
-                        </div>
-                    </div>
-                    <div class="e1_106">
-                        <div class="e1_107">
-                            <span  class="e1_110">Don’t have an account yet?</span>
-                            <Link to="/sign-up">
-                                <a href="#">
-                                    <span  class="e1_111">Register here</span>
-                                </a>
-                            </Link>
-                            {/* <span  class="e1_112">Forgot your password?</span> */}
-                        </div>
-                    </div>
-                    <div  class="e1_113"></div>
-                    <div  class="e1_114"></div>
-                    <div  class="e1_115"></div>
-                </div>
-                <span  class="e1_116">Log in</span>
-                <div  class="e1_118"></div>
-                <div class="e1_119">
-                    <span  class="e1_120">Sechenov Machine Learning Change Healthcare</span>
-                    <div  class="e1_121"></div>
-                </div>
+                    <button type="button"
+                        onClick={() => this.submitUp()}
+                        >Log in
+                    </button>
+                    {/* Ссылка на регистрацию */}
+                    <Link to="/sign-up">
+                        <a href="#">
+                            <span>Register here</span>
+                        </a>
+                    </Link>
             </div>
         )
     }
