@@ -529,7 +529,7 @@ export class Main extends Component {
                                     <button type="button"
                                                 onClick={() => this.createStatistic(uploaded_file)}
                                             >
-                                                Обучить
+                                                Создать
                                             </button>
                                 :
                                     <iframe srcdoc={currentElem} style={{height: 1000, width: "100%"}}></iframe>
