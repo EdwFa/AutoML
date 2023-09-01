@@ -147,7 +147,7 @@ export class LogIn extends Component {
     } = this.state;
 
     if (token != "") {
-        return <Navigate push to="/viewer" />
+        return <Navigate push to="/" />
     } else {
         return (
                 <div>
