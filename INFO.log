@@ -1,0 +1,408 @@
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address None:None...
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address None:None...
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://localhost:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:17:05] "[31m[1mPOST /learn HTTP/1.1[0m" 405 -
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:18:26] "[31m[1mPOST /learn HTTP/1.1[0m" 405 -
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:19:22] "[31m[1mPOST /learn HTTP/1.1[0m" 405 -
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:24:34] "[31m[1mPOST /learn HTTP/1.1[0m" 405 -
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:28:31] "[31m[1mPOST /learn HTTP/1.1[0m" 405 -
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:30:21] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:32:05] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://localhost:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:33:57] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://localhost:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:34:34] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:34:59] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:36:14] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://localhost:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:40:14] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://localhost:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:40:47] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:42:11] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:42:25] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:42:40] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://localhost:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:44:02] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 18:44:47] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:26:03] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:26:16] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:27:01] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:28:46] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:29:01] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:29:30] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:35:08] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:35:49] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:38:05] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:39:12] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://localhost:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:40:24] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:41:49] "POST /learner HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:42:15] "POST /learner HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:42:23] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:42:30] "POST /learner HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:42:45] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:43:26] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:44:05] "POST /learner HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:44:19] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:45:19] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:45:41] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:46:12] "POST /learner HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:46:23] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:46:58] "POST /learner HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/views.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:47:12] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:48:44] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [31/Aug/2023 19:48:57] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://localhost:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 16:59:24] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 17:00:23] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 17:01:27] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 17:01:44] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 17:03:12] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 17:04:17] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 17:04:46] "POST /learner HTTP/1.1" 200 -
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 17:04:56] "[35m[1mPOST /learner HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/home/artem/Job/ml_datamed/learning_api/Api/utils.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:StatisticMLApi:-----------------
+INFO:StatisticMLApi:Starting on address localhost:5001...
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 142-635-064
+INFO:StatisticMLApi:Connected to learning model SVM...
+INFO:werkzeug:127.0.0.1 - - [01/Sep/2023 17:05:52] "POST /learner HTTP/1.1" 200 -
