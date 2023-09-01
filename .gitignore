@@ -2,5 +2,6 @@
 .idea
 datasets
 db.sqlite3
+venv
 logs
 *.zip

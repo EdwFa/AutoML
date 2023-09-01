@@ -1,96 +1,33 @@
 import pandas as pd
 import numpy as np
 from statsmodels import robust
-from .models import DefaultNetwork, ModelDefaultParam, Networks
+from .models import LearnModel, Dataset
 import os
 
 
 default_models = [
-    {
-        'SVM': [
-            ['C', '1.0', 'F'],
-            ['kernel', 'rbf', 'S', 'linear poly rbf sigmoid precomputed'],
-            ['gamma', 'scale', 'S', 'scale auto'],
-            ['coef0', '0.0', 'F'],
-            ['shrinking', 'True', 'B'],
-            ['probability', 'True', 'B'],
-            ['tol', '0.001', 'F'],
-            ['cache_size', '200', 'F'],
-            ['verbose', 'False', 'B'],
-            ['max_iter', '1', 'I'],
-            ['decision_function_shape', 'ovr', 'S', 'ovr ovo'],
-            ['break_ties', 'False', 'B'],
-            ['random_state', None, 'I']
-        ]
-    },
-    {
-        'Decision Tree': [
-            ['criterion', 'gini', 'S', 'gini entropy log_loss'],
-            ['splitter', 'best', 'S', 'best random'],
-            ['max_depth', None, 'I'],
-            ['min_samples_split', '2', 'F'],
-            ['min_samples_leaf', '1', 'F'],
-            ['min_weight_fraction_leaf', '0.0', 'F'],
-            ['max_features', None, 'S', 'auto sqrt log2'],
-            ['random_state', None, 'I'],
-            ['max_leaf_nodes', None, 'I'],
-            ['min_impurity_decrease', '0.0', 'F'],
-            ['ccp_alpha', '0.0', 'F']
-        ]
-    },
-    {
-        'RandomForestClassifier': []
-    },
-    {
-        'LogisticRegression': []
-    },
-    {
-        'GradientBoostingClassifier': []
-    },
-    {
-        'AdaBoostClassifier': []
-    },
-    {
-        'KNeighborsClassifier': []
-    },
-    {
-        'ExtraTreesClassifier': []
-    },
-    {
-        'MLPClassifier': []
-    },
+    'SVM',
+    'Decision Tree',
+    'RandomForestClassifier',
+    'LogisticRegression',
+    'GradientBoostingClassifier',
+    'AdaBoostClassifier',
+    'KNeighborsClassifier',
+    'ExtraTreesClassifier',
+    'MLPClassifier'
 ]
 
-def fill_models():
-    for model in default_models:
-        for key, params in model.items():
-            print(key)
-            try:
-                default_model = DefaultNetwork.objects.get(name=key)
-            except:
-                default_model = DefaultNetwork.objects.create(name=key)
-            for param in params:
-                param_dict = {'model': None, 'label': None, 'value': None, 'type_data': None, 'choices_values': None}
-                param = [default_model] + param
-                for key_value, value in zip(param_dict, param):
-                    param_dict[key_value] = value
-                print(param_dict)
-                ModelDefaultParam.objects.create(**param_dict)
-            print('-------')
-    return True
 
 def read_dataset_file(dataset):
     if dataset.format == 'csv':
-        file = pd.read_csv(dataset.path)
+        file = pd.read_csv(os.path.join(dataset.path, f'{dataset.name}.{dataset.format}'))
     elif dataset.format == 'xlsx':
-        file = pd.read_excel(dataset.path)
+        file = pd.read_excel(os.path.join(dataset.path, f'{dataset.name}.{dataset.format}'))
     else:
-        raise Exception('Not valid format')
+        e = f'Not valid format "{dataset.format}"'
+        print(e)
+        raise Exception(e)
     file = file.fillna('')
-
-    print(file)
-    print(file.columns)
-    print(file.shape[0])
     return file.to_dict('records'), [{'field': column} for column in file.columns], file.shape[0], file.shape[1]
 
 
@@ -99,15 +36,15 @@ def read_dataset_file(dataset):
 # ----------
 
 
-def create_info_request(dataset, type_model, request):
+def create_info_request(dataset, type_model, request, broker_key):
     print(request.data)
+    records, _, _, _ = read_dataset_file(dataset)
     data = {
         'model_name': type_model,
-        # 'model_path': f'models/{request.user.username}/{new_model.id}_{request.data["model"]["name"]}_{request.data["target"]}.sav',
-        'dataset_path': os.path.abspath(dataset.path),
-        'dataset_name': f'{dataset.name}.{dataset.format}',
+        'broker_key': broker_key,
+        'dataset': records,
         'target': request.data['target'],
-        'params': {param['label']: convert_data_type(**param) for param in request.data['model']['param']},
+        'params': []
     }
     print(data)
     return data
@@ -186,9 +123,9 @@ def get_categorial_info(column_name, dataset_column):
 
 def get_statistic_info(dataset_table):
     if dataset_table.format == 'csv':
-        dataset = pd.read_csv(dataset_table.path)
+        dataset = pd.read_csv(os.path.join(dataset_table.path, f'{dataset_table.name}.{dataset_table.format}'))
     elif dataset_table.format == 'xlsx':
-        dataset = pd.read_excel(dataset_table.path)
+        dataset = pd.read_excel(os.path.join(dataset_table.path, f'{dataset_table.name}.{dataset_table.format}'))
     else:
         raise Exception('Not valid format')
     data = []
@@ -202,3 +139,5 @@ def get_statistic_info(dataset_table):
     # data = ProfileReport(dataset, title="Profiling Report")
     # data = data.to_json()
     return data
+
+

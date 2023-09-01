@@ -1,3 +1,5 @@
+import os.path
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.urls import reverse
@@ -17,3 +19,10 @@ class User(AbstractUser):
 
     def get_absolute_url(self):
         return reverse('accounts:user-account', kwargs={'user_id': self.id})
+
+    def save(self, *args, **kwargs):
+        user_folder = os.path.join('datasets', self.username)
+        if not os.path.exists(user_folder):
+            os.mkdir(user_folder)
+
+        super().save(*args, **kwargs)

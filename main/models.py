@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.files.storage import default_storage
 from django.urls import reverse
+
+import os
 
 User = get_user_model()
 
@@ -30,59 +33,24 @@ class Dataset(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
+
     def delete(self, *args, **kwargs):
+        os.remove(self.path)
         super().delete(*args, **kwargs)
 
 
-class DefaultNetwork(models.Model):
-    """Таблица для храниния начальных настроек моделей для обучения"""
+class LearnModel(models.Model):
+    dataset = models.ForeignKey(Dataset, on_delete=models.PROTECT, related_name='models')
     name = models.CharField(max_length=64)
 
     def __str__(self):
-        return f'{self.name}'
-
-    def get_absolute_url(self):
-        return reverse('main:default-model', kwargs={'model_id': self.id})
-
-
-class Networks(models.Model):
-    dataset = models.ForeignKey(Dataset, on_delete=models.PROTECT, related_name='model')
-    default_model = models.ForeignKey(DefaultNetwork, on_delete=models.PROTECT, related_name='prepared_model')
-    path = models.CharField(max_length=255, null=True, blank=True)
-    size = models.IntegerField(null=True, blank=True)
-    saved = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f'{self.dataset.name} - {self.default_model.name}'
-
-    def get_absolute_url(self):
-        return reverse('main:model', kwargs={'model_id': self.id})
+        return f'{self.dataset.name}({self.dataset.user.username}) - {self.name}'
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        os.remove(os.path.join(self.dataset.path, 'models', self.name))
         super().delete(*args, **kwargs)
 
 
-class ModelParam(models.Model):
-    """Таблица для храниения параметров модели"""
-    model = models.ForeignKey(Networks, on_delete=models.CASCADE, related_name='param')
-    label = models.CharField(max_length=255)
-    value = models.CharField(max_length=255, null=True, blank=True)
-    type_data = models.CharField(max_length=1, choices=choices_types_data, default='I')
-
-    def __str__(self):
-        return f'{self.model.id} {self.label}'
-
-
-class ModelDefaultParam(models.Model):
-    """Таблица для храниения параметров модели"""
-    model = models.ForeignKey(DefaultNetwork, on_delete=models.CASCADE, related_name='param')
-    label = models.CharField(max_length=255)
-    value = models.CharField(max_length=255, null=True, blank=True)
-    type_data = models.CharField(max_length=1, choices=choices_types_data, default='I')
-    choices_values = models.CharField(max_length=1024, null=True, blank=True)
-
-    def __str__(self):
-        return f'{self.model.name} {self.label}'

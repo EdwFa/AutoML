@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv, dotenv_values
+import redis
 import os
 
 
@@ -70,7 +71,7 @@ ROOT_URLCONF = 'ML_Datamed.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR,"datasets")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -209,3 +210,10 @@ REST_FRAMEWORK = {
 AUTH_USER_MODEL = "accounts.User"
 
 HOST_TO_CONNECT_LEARNER = os.getenv('HOST_TO_CONNECT_LEARNER')
+HOST_TO_CONNECT_STATISTIC = os.getenv('HOST_TO_CONNECT_STATISTIC')
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = int(os.getenv('REDIS_PORT'))
+
+print(f'redis on {REDIS_HOST}{REDIS_PORT}')
+
+redis_cli = redis.Redis(host='localhost', port=6379, decode_responses=True)

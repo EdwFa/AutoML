@@ -1,6 +1,3 @@
-from django.shortcuts import render, redirect
-from django.views.generic import FormView
-from django.views.generic.base import View
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
