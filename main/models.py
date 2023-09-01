@@ -35,7 +35,11 @@ class Dataset(models.Model):
 
 
     def delete(self, *args, **kwargs):
-        os.remove(self.path)
+        for comp in os.listdir(self.path):
+            print(comp)
+            if os.path.isfile(os.path.join(self.path, comp)):
+                os.remove(os.path.join(self.path, comp))
+        os.rmdir(self.path)
         super().delete(*args, **kwargs)
 
 
