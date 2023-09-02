@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 import logging
+from dotenv import load_dotenv
 
 from Api import analise
 
@@ -12,6 +13,8 @@ app.logger.name = 'StatisticMLApi'
 address_host = os.getenv('HOST')
 address_port = os.getenv('PORT')
 
+
+load_dotenv()
 
 if __name__ == '__main__':
     logging.basicConfig(filename='INFO.log', level=logging.DEBUG)
