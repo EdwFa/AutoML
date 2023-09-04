@@ -1,7 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.core.files.storage import default_storage
-from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework.decorators import parser_classes, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -27,7 +26,7 @@ from .utils import *
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
-allowed_types = ['csv', 'xlsx']
+allowed_types = ['csv', 'xlsx', 'xls']
 
 
 @api_view(['GET'])
@@ -39,9 +38,50 @@ def get_datasets(request):
     if request.user.is_superuser:
         datasets = Dataset.objects.all()
     else:
-        datasets = Dataset.objects.filter(user=request.user)
+        datasets = Dataset.objects.filter(user=request.user).select_related('user')
     datasets = DatasetSerializer(datasets, many=True).data
-    return Response(data={'status': 'success', 'datasets': datasets}, status=403)
+    return Response(data={'status': 'success', 'datasets': datasets}, status=200)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def delete_dataset(request):
+    dataset = get_dataset_obj(request)
+    if dataset is None:
+        return Response(data={'status': 'error'}, status=404)
+    dataset.delete()
+    return Response(data={'status': 'success'}, status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+@parser_classes([MultiPartParser, FormParser, FileUploadParser])
+def update_dataset(request):
+    dataset = request.FILES.get('file')
+    dataset_name = ''.join(dataset.name.split('.')[:-1])
+    dataset_type = dataset.name.split('.')[-1]
+    logger.debug(dataset)
+
+    data = {
+        'status': '',
+        'name': dataset.name
+    }
+
+    dataset_table = get_dataset_obj(request)
+    if dataset_table is None:
+        return Response(data={'status': 'error'}, status=404)
+
+    if dataset_type == 'csv':
+        file = pd.read_csv(dataset)
+    else:
+        e = f'Not valid format "{dataset_type}"'
+        print(e)
+        raise Exception(e)
+    file.to_csv(dataset_table.get_dataset_path(), index=False)
+
+    data['status'] = 'Created'
+    return Response(data=data, status=201)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -62,49 +102,32 @@ def upload_dataset(request):
         return Response(data=data, status=403)
 
     logger.debug(dataset)
-    path_to_save_folder = os.path.join('datasets', request.user.username, dataset_name)
-    if not os.path.exists(path_to_save_folder):
-        os.mkdir(path_to_save_folder)
-    dataset_full_path = os.path.join(path_to_save_folder, dataset.name)
-
-    if os.path.exists(dataset_full_path):
-        data['status'] = 'Already Exists'
-        return Response(data=data, status=201)
     dataset_table = Dataset(
         name=dataset_name,
         user=request.user,
         size=dataset.size,
         format=dataset_type,
-        path=path_to_save_folder
+        path='/'
     )
-    dataset_table.save(dataset)
-    default_storage.save(dataset_full_path, dataset)
+    dataset_table.save()
+    path_to_save_folder = os.path.join('datasets', request.user.username, f'{dataset_table.id}_{dataset_table.name}')
+    dataset_table.path = path_to_save_folder
+    if not os.path.exists(path_to_save_folder):
+        os.mkdir(path_to_save_folder)
+    dataset_full_path = os.path.join(path_to_save_folder, f'{dataset_table.id}_{dataset_table.name}.csv')
+    dataset_table.save()
+    if dataset_type == 'csv':
+        file = pd.read_csv(dataset)
+    elif dataset_type == 'xlsx' or 'xls':
+        file = pd.read_excel(dataset)
+    else:
+        e = f'Not valid format "{dataset_type}"'
+        print(e)
+        raise Exception(e)
+    file.to_csv(dataset_full_path, index=False)
+
     data['status'] = 'Created'
     return Response(data=data, status=201)
-
-
-def get_dataset_obj(request):
-    datasetName = request.GET.get('datasetName')
-    datasetType = request.GET.get('datasetType')
-    logger.info(datasetName)
-    try:
-        dataset = Dataset.objects.get(name=datasetName, format=datasetType, user=request.user)
-    except ObjectDoesNotExist:
-        return None
-    else:
-        return dataset
-
-
-async def get_dataset_obj_async(request):
-    datasetName = request.GET.get('datasetName')
-    datasetType = request.GET.get('datasetType')
-    logger.info(datasetName)
-    try:
-        dataset = await Dataset.objects.aget(name=datasetName, format=datasetType, user=request.user)
-    except ObjectDoesNotExist:
-        return None
-    else:
-        return dataset
 
 
 @api_view(['GET'])
@@ -114,10 +137,20 @@ def get_dataset(request):
     dataset = get_dataset_obj(request)
     if dataset is None:
         return Response(data='Error', status=404)
-    data, columns, count_rows, counts_columns = read_dataset_file(dataset)
+    data, columns, count_rows, counts_columns, dtypes = read_dataset_file(dataset)
     data = {
         'dataset': data,
-        'columns': columns,
+        'columns': [
+            {
+                'field': col,
+                'filter': get_grid_type(dtype),
+                'sortable': True,
+                'enableRowGroup': True,
+                'enableValue': True,
+                'resizable': True
+            }
+            for col, dtype in zip(columns, dtypes)
+        ],
         'count_rows': count_rows,
         'count_columns': counts_columns
     }
@@ -150,7 +183,6 @@ async def stat_response(**kwargs):
 
         statistic_file = os.path.join(kwargs['path'], 'statistic.html')
         stat = await response.read()
-        print(stat)
         with open(statistic_file, 'wb') as fs:
             fs.write(stat)
         return 200
@@ -179,10 +211,12 @@ def get_models(request):
     dataset = get_dataset_obj(request)
     if dataset is None:
         return Response(data='Error', status=403)
-    _, columns, _, _ = read_dataset_file(dataset)
+    _, columns, _, _, types = read_dataset_file(dataset)
     data = {
         'models': default_models,
-        'labels': [{'id': i, 'name': col['field']} for i, col in enumerate(columns)]
+        'labels': [
+            {'id': i, 'name': col, 'number': (dtype == 'int' or dtype == 'float')}
+        for i, (col, dtype) in enumerate(zip(columns, types))]
     }
     return Response(data=data, status=200)
 

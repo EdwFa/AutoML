@@ -33,14 +33,26 @@ class Dataset(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-
     def delete(self, *args, **kwargs):
-        for comp in os.listdir(self.path):
-            print(comp)
-            if os.path.isfile(os.path.join(self.path, comp)):
-                os.remove(os.path.join(self.path, comp))
-        os.rmdir(self.path)
+        if self.path != '/':
+            for comp in os.listdir(self.path):
+                print(comp)
+                if os.path.isfile(os.path.join(self.path, comp)):
+                    os.remove(os.path.join(self.path, comp))
+            os.rmdir(self.path)
         super().delete(*args, **kwargs)
+
+    def get_user(self):
+        return self.user.username
+
+    def exist_stat(self):
+        return 'statistic.html' in os.listdir(self.path)
+
+    def get_dataset_path(self):
+        return os.path.join(self.path, f'{self.id}_{self.name}.csv')
+
+    def get_stat_path(self):
+        return os.path.join(self.path, 'statistic.html')
 
 
 class LearnModel(models.Model):

@@ -12,7 +12,8 @@ class UserShowSerializer(serializers.ModelSerializer):
         exclude = ['password']
 
 class DatasetSerializer(serializers.ModelSerializer):
-    user = UserShowSerializer(many=False)
+    user = serializers.CharField(source='get_user')
+    statistic = serializers.BooleanField(source='exist_stat')
 
     class Meta:
         model = Dataset

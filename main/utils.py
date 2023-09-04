@@ -1,3 +1,5 @@
+from django.core.exceptions import ObjectDoesNotExist
+
 import pandas as pd
 import numpy as np
 from statsmodels import robust
@@ -17,18 +19,46 @@ default_models = [
     'MLPClassifier'
 ]
 
+get_grid_type = lambda x : "agNumberColumnFilter" if (x == 'int' or x == 'float') else "agTextColumnFilter"
 
-def read_dataset_file(dataset):
-    if dataset.format == 'csv':
-        file = pd.read_csv(os.path.join(dataset.path, f'{dataset.name}.{dataset.format}'))
-    elif dataset.format == 'xlsx':
-        file = pd.read_excel(os.path.join(dataset.path, f'{dataset.name}.{dataset.format}'))
+def get_dataset_obj(request):
+    dataset_id = int(request.GET.get('datasetId'))
+    try:
+        dataset = Dataset.objects.get(id=dataset_id)
+    except ObjectDoesNotExist:
+        return None
     else:
+        if not request.user.is_superuser and dataset.user.username != request.user.username:
+            return None
+        return dataset
+
+
+async def get_dataset_obj_async(request):
+    dataset_id = int(request.GET.get('datasetId'))
+    try:
+        dataset = await Dataset.objects.aget(id=dataset_id)
+    except ObjectDoesNotExist:
+        return None
+    else:
+        if not request.user.is_superuser and dataset.user.username != request.user.username:
+            return None
+        return dataset
+
+def read_dataset_file(dataset, drop_or_fill='fill'):
+    try:
+        file = pd.read_csv(dataset.get_dataset_path())
+    except:
         e = f'Not valid format "{dataset.format}"'
         print(e)
         raise Exception(e)
-    file = file.fillna('')
-    return file.to_dict('records'), [{'field': column} for column in file.columns], file.shape[0], file.shape[1]
+    dtypes = file.dtypes
+    if drop_or_fill == 'fill':
+        file = file.fillna('')
+    else:
+        file = file.dropna()
+    return file.to_dict('records'), file.columns, file.shape[0], file.shape[1], dtypes
+
+
 
 
 # ----------
@@ -38,12 +68,14 @@ def read_dataset_file(dataset):
 
 def create_info_request(dataset, type_model, request, broker_key):
     print(request.data)
-    records, _, _, _ = read_dataset_file(dataset)
+    records, _, _, _ = read_dataset_file(dataset, drop_or_fill='drop')
     data = {
         'model_name': type_model,
         'broker_key': broker_key,
         'dataset': records,
         'target': request.data['target'],
+        'categorical_columns': request.data.get('categorical_columns', None),
+        'number_columns': request.data.get('number_columns', None),
         'params': []
     }
     print(data)

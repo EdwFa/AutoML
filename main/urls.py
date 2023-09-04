@@ -5,8 +5,12 @@ from .views import *
 app_name = 'main'
 
 urlpatterns = [
-    # Загрузка датасета
-    # path('datasets/upload', DatesetsView.as_view(), name='upload'),
+    # датасеты
+    path('datasets', get_datasets),
+    path('dataset/delete', delete_dataset),
+    path('dataset/update', update_dataset),
+
+    # Загрузка датасета и статистики
     path('datasets/upload', upload_dataset, name='upload'),
     path('statistic/upload', upload_statistic, name='upload'),
 
