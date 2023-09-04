@@ -45,39 +45,38 @@ models = {
 
 formats = ['csv', 'xlsx', 'xls']
 
-def load_data(dataset):
+def load_data(dataset, target, *labels):
     print(f'Load dataset...')
     data = pd.DataFrame.from_records(dataset)
+    if labels is not None:
+        data = data[[target, *labels]]
     print(data.columns)
     if 'ID' in data.columns:
         return data.drop(['ID'], axis=1)
-    elif'id' in data.columns:
+    elif 'id' in data.columns:
         return data.drop(['id'], axis=1)
     else:
         print('No one id column')
         return data
 
 
-def sort_data(data, labels=None):
-    if labels is None:
-        labels = {}
-        for dtype, label, uniqval in zip(data.dtypes, data.columns, data.nunique()):
-            info = {}
-            if dtype == 'float' or dtype == 'int':
-                info['type'] = 1
-            else:
-                info['type'] = 0
+def sort_data(data, categorical, number):
+    labels = {}
+    for dtype, label, uniqval in zip(data.dtypes, data.columns, data.nunique()):
+        info = {}
+        print(f'column --> {label} is {dtype}')
+        if label in categorical:
+            info['type'] = 0
+        elif label in number:
+            info['type'] = 1
+        elif dtype == 'float' or dtype == 'int':
+            info['type'] = 1
+        else:
+            info['type'] = 0
 
-            info['uniq_vals'] = uniqval
-            info['use'] = True
-            labels[label] = info
-        for label, nadata in zip(data.columns, data.isna().sum()):
-            labels[label]['na_data'] = nadata
-    else:
-        for label, uniqval in zip(data.columns, data.nunique()):
-            labels[label]['uniq_vals'] = uniqval
-        for label, nadata in zip(data.columns, data.isna().sum()):
-            labels[label]['na_data'] = nadata
+        info['uniq_vals'] = uniqval
+        info['use'] = True
+        labels[label] = info
     if 'ID' in data.columns:
         labels['ID']['use'] = False
     return labels
@@ -92,13 +91,13 @@ def preprocess_data(data, target, labels):
             if labels[label]['type'] == 1:
                 column.fillna(column.median(), inplace=True)
                 mean = column.mean()
-                print('mean = ', mean)
+                print(f'Column {label} mean = ', mean)
                 column = column / mean
             else:
                 column.fillna(column.mode().values[0], inplace=True)
                 categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
                 column = column.replace(categ_list)
-                print("Catefory list == ", categ_list)
+                print(f"Column {label} Catefory list == ", categ_list)
             if dataset is not None:
                 dataset = np.vstack([dataset, column.to_numpy()])
             else:
@@ -188,15 +187,41 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
         except ZeroDivisionError:
             NPV = 0
 
-        classification_matrix[k] = [round(SE, 2), round(SP, 2), round(PPV, 2), round(NPV, 2)]
+        try:
+            FPR = 1 - SP
+        except ZeroDivisionError:
+            FPR = 0
+        try:
+            FNR = 1 - SE
+        except ZeroDivisionError:
+            FNR = 0
+        try:
+            OA = SP + SE
+        except ZeroDivisionError:
+            OA = 0
+        try:
+            LRP = SE / (1 - SP)
+        except ZeroDivisionError:
+            LRP = 0
+        try:
+            LRN = (1 - SE) / SP
+        except ZeroDivisionError:
+            LRN = 0
+        try:
+            DOR = SE / (1 - SP) + (1 - SE) / SP
+        except ZeroDivisionError:
+            DOR = 0
+
+        classification_matrix[k] = [round(SE, 2), round(SP, 2), round(PPV, 2), round(NPV, 2), round(FPR, 2),
+                                    round(FNR, 2), round(OA, 2), round(LRP, 2), round(LRN, 2), round(DOR, 2)]
         # table_strings[i+1] = table_strings[i+1] + classification_matrix[k]
-    #
-    # print("таблица значений == ", table_strings)
-    # classification_matrix = pd.DataFrame(table_strings[1:i+2], columns=table_strings[0])
+        #
+        # print("таблица значений == ", table_strings)
+        # classification_matrix = pd.DataFrame(table_strings[1:i+2], columns=table_strings[0])
     table_strings = []
     for k, v in classification_matrix.items():
         table_strings.append([k, *v])
-    table_names_columns = ['label', 'SE', 'SP', 'PPV', 'NPV']
+    table_names_columns = [label_name, 'SE', 'SP', 'PPV', 'NPV', 'FPR', 'FNR', 'Overall accuracy', 'LR+', 'LR-', 'DOR']
     classification_matrix = pd.DataFrame(table_strings, columns=table_names_columns)
 
     print("Матрица классификации == ", classification_matrix)
