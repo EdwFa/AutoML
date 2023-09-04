@@ -20,11 +20,15 @@ def check_status():
 def createStat():
     current_app.logger.info(f'Start create statistic data...')
     data = request.json
-    print(data)
     if 'dataset' not in data:
         return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
     current_app.logger.info(f'Find dataset and convert them to pandas DataFrame...')
     dataset = pd.DataFrame.from_records(data['dataset'])
+    if 'ID' in dataset.columns:
+        dataset = dataset.drop(['ID'], axis=1)
+    elif 'id' in dataset.columns:
+        dataset = dataset.drop(['id'], axis=1)
+    current_app.logger.info(f'{dataset.shape[0]} {dataset.shape[1]}')
     title = dataset.get('title', 'Statistic')
     current_app.logger.info(f'Title -> {title}')
     profile = ProfileReport(
@@ -32,6 +36,6 @@ def createStat():
     )
     current_app.logger.info(f'Save dataset...')
     save_file = "report.html"
-    # profile.to_file(save_file)
+    profile.to_file(save_file)
     current_app.logger.info(f'Response dataset...')
     return send_file(save_file, as_attachment=True)
