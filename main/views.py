@@ -35,10 +35,11 @@ allowed_types = ['csv', 'xlsx', 'xls']
 def get_datasets(request):
     if not request.user.is_active:
         return Response(data={'status': 'is not active'}, status=403)
-    if request.user.is_superuser:
-        datasets = Dataset.objects.all()
-    else:
-        datasets = Dataset.objects.filter(user=request.user).select_related('user')
+    # if request.user.is_superuser:
+    #     datasets = Dataset.objects.all()
+    # else:
+    #     datasets = Dataset.objects.filter(user=request.user).select_related('user')
+    datasets = Dataset.objects.filter(user=request.user).select_related('user')
     datasets = DatasetSerializer(datasets, many=True).data
     return Response(data={'status': 'success', 'datasets': datasets}, status=200)
 
