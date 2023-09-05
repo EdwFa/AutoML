@@ -68,7 +68,7 @@ def read_dataset_file(dataset, drop_or_fill='fill'):
 
 def create_info_request(dataset, type_model, request, broker_key):
     print(request.data)
-    records, _, _, _ = read_dataset_file(dataset, drop_or_fill='drop')
+    records, _, _, _, _ = read_dataset_file(dataset, drop_or_fill='drop')
     data = {
         'model_name': type_model,
         'broker_key': broker_key,
