@@ -33,13 +33,13 @@ import pandas as pd
 models = {
     'SVM': SVC(probability=True),
     'Decision Tree': DecisionTreeClassifier(),
-    'Random Forest': RandomForestClassifier(),
+    'RandomForestClassifier': RandomForestClassifier(),
     'LogisticRegression': LogisticRegression(max_iter=200),
     'GradientBoostingClassifier': GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
                                                              max_depth=1, random_state=0),
-    'AdaBoost': AdaBoostClassifier(),
-    'KNN': KNeighborsClassifier(),
-    'ExtraTrees': ExtraTreesClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0),
+    'AdaBoostClassifier': AdaBoostClassifier(),
+    'KNeighborsClassifier': KNeighborsClassifier(),
+    'ExtraTreesClassifier': ExtraTreesClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0),
     'MLPClassifier': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
 }
 
@@ -82,27 +82,32 @@ def sort_data(data, categorical, number):
     return labels
 
 def preprocess_data(data, target, labels):
-    dataset = None
+    columns = []
     for label in labels:
         if labels[label]['use'] == False:
             print('Not Use --> ', label)
+            continue
+        column = data[label].copy()
+        if labels[label]['type'] == 1:
+            column.fillna(column.median(), inplace=True)
+            mean = column.mean()
+            print(f'Column {label} mean = ', mean)
+            column = column / mean
+            columns.append(column.to_numpy())
         else:
-            column = data[label].copy()
-            if labels[label]['type'] == 1:
-                column.fillna(column.median(), inplace=True)
-                mean = column.mean()
-                print(f'Column {label} mean = ', mean)
-                column = column / mean
-            else:
-                column.fillna(column.mode().values[0], inplace=True)
-                categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
-                column = column.replace(categ_list)
-                print(f"Column {label} Catefory list == ", categ_list)
-            if dataset is not None:
-                dataset = np.vstack([dataset, column.to_numpy()])
-            else:
-                dataset = np.array([[i for i in column.to_numpy()]])
-    dataset = np.transpose(dataset)
+            column.fillna(column.mode().values[0], inplace=True)
+            categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
+            matrix = np.zeros((column.shape[0], len(categ_list)))
+            for i, val in zip(range(column.shape[0]), column):
+                matrix[i, categ_list[val]] = 1
+            print(matrix)
+            print(f"Column {label} Catefory list == ", categ_list)
+            columns.append(matrix)
+    print([len(column.shape) for column in columns])
+    columns = [column.reshape(column.shape[0], 1) if len(column.shape) == 1 else column for column in columns]
+    print([column.shape for column in columns])
+    dataset = np.concatenate(columns, axis=1)
+    # dataset = np.transpose(dataset)
     print(dataset.shape)
     X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=0.18, random_state=401)
     return X_train, y_train, X_test, y_test
