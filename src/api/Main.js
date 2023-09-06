@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from "react";
+import React, { Component, useState, useEffect, createRef } from "react";
 
 import { Navigate, Link } from "react-router-dom";
 
@@ -20,10 +20,16 @@ import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
+import "./ag-theme-acmecorp.css";
 
 import Plot from "react-plotly.js";
 
-import { variables, GetDatasetParams, showDate } from "./Variables.js";
+import {
+  variables,
+  GetDatasetParams,
+  showDate,
+  AG_GRID_LOCALE_RU,
+} from "./Variables.js";
 import { PlotGrafic } from "./Grafics/InfoGrafics.js";
 
 const AllowedGrafics = [
@@ -45,14 +51,19 @@ export class Main extends Component {
   constructor(props) {
     super(props);
 
+    this.gridRef = createRef();
+    this.datasetGridRef = createRef();
     this.state = {
       // user data
       user: variables.user,
       token: variables.token,
+      loading: false,
 
       // dataset
-      uploaded_file: variables.uploaded_file,
-      dataset: [],
+      uploaded_file: null,
+      datasets: [],
+      dataset: null,
+      datasetRows: [],
       datasetColumns: [],
 
       // graphics
@@ -72,9 +83,78 @@ export class Main extends Component {
       labels: [],
       LearnModel: null,
       LearnLabel: null,
-      loading: false,
+      NumberLabels: [],
+      CategoricalLabels: [],
       LearnInfo: null,
     };
+  }
+
+  // настройка грида
+  autoGroupColumnDef = () => {
+    return {
+      minWidth: 200,
+    };
+  };
+
+  // датасеты их выбор и удаление
+  GetDatasets() {
+    fetch(variables.API_URL + "main/datasets", {
+      headers: {
+        "Content-Type": "application/json;charset=utf-8",
+        Authorization: `Token ${this.state.token}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw Error("Dataset doesnt delete");
+        } else {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        this.setState({
+          datasets: data.datasets,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        this.setState({ datasets: [] });
+      });
+  }
+
+  onSelectionChanged = () => {
+    const selectedRows = this.gridRef.current.api.getSelectedRows();
+    this.setState({
+      dataset: selectedRows.length === 1 ? selectedRows[0] : null,
+    });
+  };
+
+  deleteDataset(dataset) {
+    fetch(
+      variables.API_URL + "main/dataset/delete" + `?datasetId=${dataset.id}`,
+      {
+        headers: {
+          "Content-Type": "application/json;charset=utf-8",
+          Authorization: `Token ${this.state.token}`,
+        },
+        method: "DELETE",
+      }
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw Error("Dataset doesnt delete");
+        } else {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        this.setState({ dataset: null });
+        this.GetDatasets();
+      })
+      .catch((error) => {
+        console.log(error);
+        alert(error);
+      });
   }
 
   // Загрузка датасета
@@ -83,7 +163,7 @@ export class Main extends Component {
     e.preventDefault();
     let format = e.target.files[0].name.split(".").slice(-1)[0];
     console.log(format);
-    if (format != "csv" && format != "xlsx") {
+    if (format != "csv" && format != "xlsx" && format != "xls") {
       alert('Загрузите пожайлуста файлы формата ".csv" или ".xlsx"');
       return;
     }
@@ -108,30 +188,51 @@ export class Main extends Component {
         console.log(data);
         this.setState({ uploaded_file: data.name });
         variables.uploaded_file = data.name;
-        this.LoadDataset(data.name);
-        this.LoadStatistic(data.name);
-        this.RefreshModels(data.name);
+        this.GetDatasets();
       })
       .catch((error) => {
         alert("Ошибка");
       });
   };
 
-  // Подгрзка датасета с сервера и его визуализация
-  GetDatasets() {
-    return;
+  updateClick(dataset) {
+    const formData = new FormData();
+
+    var myblob = new Blob([this.datasetGridRef.current.api.getDataAsCsv()], {
+      type: "text/plain",
+    });
+    formData.append("file", myblob, "update.csv");
+
+    fetch(variables.API_URL + `main/dataset/update?datasetId=${dataset.id}`, {
+      headers: {
+        Authorization: `Token ${this.state.token}`,
+      },
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => {
+        if (res.status == 201) {
+          return res.json();
+        } else {
+          throw Error(res.statusText);
+        }
+      })
+      .then((data) => {
+        console.log(data);
+        this.setState({ uploaded_file: data.name });
+        variables.uploaded_file = data.name;
+        this.LoadDataset(dataset);
+      })
+      .catch((error) => {
+        alert("Ошибка");
+      });
   }
 
-  LoadDataset(dataset) {
-    let datasetParams = GetDatasetParams(dataset);
-    if (datasetParams === null) {
-      return;
-    }
+  // Подгрзка датасета с сервера и его визуализация
 
+  LoadDataset(dataset) {
     fetch(
-      variables.API_URL +
-        "main/dataset/viewer" +
-        `?datasetName=${datasetParams[0]}&datasetType=${datasetParams[1]}`,
+      variables.API_URL + "main/dataset/viewer" + `?datasetId=${dataset.id}`,
       {
         headers: {
           "Content-Type": "application/json;charset=utf-8",
@@ -142,15 +243,22 @@ export class Main extends Component {
       .then((response) => response.json())
       .then((data) => {
         this.setState({
-          dataset: data.dataset,
+          datasetRows: data.dataset,
           datasetColumns: data.columns,
           countRows: data.count_rows,
           countColumns: data.count_columns,
         });
+        this.LoadStatistic(dataset);
+        this.RefreshModels(dataset);
       })
       .catch((error) => {
         console.log(error);
-        this.setState({ dataset: [], datasetColumns: [] });
+        this.setState({
+          datasetRows: [],
+          datasetColumns: [],
+          countRows: 0,
+          countColumns: 0,
+        });
       });
   }
 
@@ -166,17 +274,19 @@ export class Main extends Component {
 
   changeX = (e) => {
     this.setState({ x_label: e });
-    this.setState({ x_data: this.state.dataset.map((el) => el[e.field]) });
+    this.setState({ x_data: this.state.datasetRows.map((el) => el[e.field]) });
   };
 
   changeY = (e) => {
     this.setState({ y_label: e });
-    this.setState({ y_data: this.state.dataset.map((el) => el[e.field]) });
+    this.setState({ y_data: this.state.datasetRows.map((el) => el[e.field]) });
   };
 
   changeGroup = (e) => {
     this.setState({ group_label: e });
-    this.setState({ group_data: this.state.dataset.map((el) => el[e.field]) });
+    this.setState({
+      group_data: this.state.datasetRows.map((el) => el[e.field]),
+    });
   };
 
   resetGrafic() {
@@ -193,15 +303,8 @@ export class Main extends Component {
 
   // Статистика датасета
   LoadStatistic(dataset) {
-    let datasetParams = GetDatasetParams(dataset);
-    if (datasetParams === null) {
-      return;
-    }
-
     fetch(
-      variables.API_URL +
-        "main/dataset/statistic" +
-        `?datasetName=${datasetParams[0]}&datasetType=${datasetParams[1]}`,
+      variables.API_URL + "main/dataset/statistic" + `?datasetId=${dataset.id}`,
       {
         headers: {
           "Content-Type": "application/json;charset=utf-8",
@@ -209,7 +312,12 @@ export class Main extends Component {
         },
       }
     )
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.status > 299) {
+          throw Error(response.status);
+        }
+        return response.json();
+      })
       .then((data) => {
         this.setState({
           info: data.data,
@@ -223,15 +331,11 @@ export class Main extends Component {
   }
 
   createStatistic(dataset) {
-    let datasetParams = GetDatasetParams(dataset);
-    if (datasetParams === null) {
-      return;
-    }
+    console.log(this.state.loading);
+    this.setState({ loading: true });
 
     fetch(
-      variables.API_URL +
-        "main/statistic/upload" +
-        `?datasetName=${datasetParams[0]}&datasetType=${datasetParams[1]}`,
+      variables.API_URL + "main/statistic/upload" + `?datasetId=${dataset.id}`,
       {
         method: "POST",
         headers: {
@@ -247,24 +351,20 @@ export class Main extends Component {
         throw Error("Ошибка при создании статистических данных");
       })
       .then((data) => {
-        this.LoadDataset(dataset);
+        this.setState({ loading: false });
+        this.LoadStatistic(dataset);
       })
       .catch((error) => {
         console.log(error);
-        this.setState({ info: [] });
+        alert(error);
+        this.setState({ info: [], loading: false });
       });
   }
 
   // Работа с обучением моделей под датасет
   RefreshModels(dataset) {
-    let datasetParams = GetDatasetParams(dataset);
-    if (datasetParams === null) {
-      return;
-    }
     fetch(
-      variables.API_URL +
-        "main/dataset/models" +
-        `?datasetName=${datasetParams[0]}&datasetType=${datasetParams[1]}`,
+      variables.API_URL + "main/dataset/models" + `?datasetId=${dataset.id}`,
       {
         headers: {
           "Content-Type": "application/json;charset=utf-8",
@@ -280,11 +380,13 @@ export class Main extends Component {
             name: model,
           })),
           labels: data.labels,
+          CategoricalLabels: data.labels.filter((label) => !label.number),
+          NumberLabels: data.labels.filter((label) => label.number),
         });
       })
       .catch((error) => {
         console.log(error);
-        this.setState({ default_models: [], labels: [] });
+        this.setState({ default_models: [], labels: [], UseLabels: [] });
       });
   }
 
@@ -293,7 +395,43 @@ export class Main extends Component {
   };
 
   changeLabel = (e) => {
-    this.setState({ LearnLabel: e });
+    this.setState({
+      LearnLabel: e,
+      NumberLabels: this.state.NumberLabels.filter((x) => x.id !== e.id).map(
+        (x) => x
+      ),
+      CategoricalLabels: this.state.CategoricalLabels.filter(
+        (x) => x.id !== e.id
+      ).map((x) => x),
+    });
+  };
+
+  changeNumberLabels = (e) => {
+    this.setState({
+      NumberLabels: e.map((label) => label),
+      LearnLabel: this.state.LearnLabel
+        ? e.map((label) => label.id).includes(this.state.LearnLabel.id)
+          ? null
+          : this.state.LearnLabel
+        : null,
+      CategoricalLabels: this.state.CategoricalLabels.filter(
+        (x) => !e.map((label) => label.id).includes(x.id)
+      ).map((x) => x),
+    });
+  };
+
+  changeCategoricalLabels = (e) => {
+    this.setState({
+      CategoricalLabels: e.map((label) => label),
+      LearnLabel: this.state.LearnLabel
+        ? e.map((label) => label.id).includes(this.state.LearnLabel.id)
+          ? null
+          : this.state.LearnLabel
+        : null,
+      NumberLabels: this.state.NumberLabels.filter(
+        (x) => !e.map((label) => label.id).includes(x.id)
+      ).map((x) => x),
+    });
   };
 
   LearnModel(dataset) {
@@ -301,15 +439,9 @@ export class Main extends Component {
       alert("Не выбрана модель или поле для обучения");
       return;
     }
-    let datasetParams = GetDatasetParams(dataset);
-    if (datasetParams === null) {
-      return;
-    }
 
     fetch(
-      variables.API_URL +
-        "main/dataset/learner" +
-        `?datasetName=${datasetParams[0]}&datasetType=${datasetParams[1]}`,
+      variables.API_URL + "main/dataset/learner" + `?datasetId=${dataset.id}`,
       {
         method: "POST",
         headers: {
@@ -319,6 +451,10 @@ export class Main extends Component {
         body: JSON.stringify({
           model: this.state.LearnModel,
           target: this.state.LearnLabel.name,
+          categorical_columns: this.state.CategoricalLabels.map(
+            (label) => label.name
+          ),
+          number_columns: this.state.NumberLabels.map((label) => label.name),
         }),
       }
     )
@@ -331,7 +467,7 @@ export class Main extends Component {
       })
       .then((data) => {
         console.log(data);
-        this.setState({ LearnInfo: data, loading: true });
+        this.setState({ LearnInfo: data, loading: false });
       })
       .catch((error) => {
         alert("Ошибка");
@@ -434,8 +570,12 @@ export class Main extends Component {
     const {
       token,
       user,
+      loading,
       uploaded_file,
+
+      datasets,
       dataset,
+      datasetRows,
       datasetColumns,
       countColumns,
       countRows,
@@ -454,6 +594,8 @@ export class Main extends Component {
       default_models,
       LearnModel,
       labels,
+      NumberLabels,
+      CategoricalLabels,
       LearnLabel,
       LearnInfo,
     } = this.state;
@@ -686,44 +828,98 @@ export class Main extends Component {
                     <h2 class="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                       Загрузка данных
                     </h2>
-                    <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                      <label
-                        htmlFor="cover-photo"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      ></label>
-                      <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                        <div className="text-center">
-                          <PhotoIcon
-                            className="mx-auto h-12 w-12 text-gray-300"
-                            aria-hidden="true"
-                          />
-                          <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                            <label
-                              htmlFor="files"
-                              className="relative cursor-pointer rounded-md font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
-                            >
-                              <span>
-                                {uploaded_file ? (
-                                  <>
-                                    {uploaded_file.slice(0, 5)} ...{" "}
-                                    {uploaded_file.slice(-5)}
-                                  </>
-                                ) : (
-                                  <>Загрузить файл</>
-                                )}
-                              </span>
-                              <input
-                                id="files"
-                                type="file"
-                                className="sr-only"
-                                onChange={this.uploadClick}
-                              />
-                            </label>
-                            <p className="pl-1">or drag and drop</p>
+                    {/* просмотр и выбо датасетов */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 gap-y-4">
+                      <div className="col-span-2 order-last block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                        <div
+                          className="mt-4 flex text-sm leading-6 text-gray-600 w-full"
+                          style={{ height: 300 }}
+                        >
+                          <div
+                            className="ag-theme-alpine ag-theme-acmecorp"
+                            style={{ height: "100%", width: "100%" }}
+                          >
+                            <AgGridReact
+                              ref={this.gridRef}
+                              rowData={datasets}
+                              columnDefs={[
+                                { field: "id" },
+                                { field: "name" },
+                                { field: "format" },
+                                { field: "size" },
+                                { field: "statistic" },
+                                { field: "upload_date" },
+                                { field: "user" },
+                              ]}
+                              rowSelection={"single"}
+                              onSelectionChanged={this.onSelectionChanged}
+                            ></AgGridReact>
                           </div>
-                          <p className="text-xs leading-5 text-gray-600">
-                            XLS, XLSX, GIF up to 10MB
-                          </p>
+                        </div>
+                        <div>
+                          {dataset ? (
+                            <div className="flex items-start">
+                              <p>{dataset.name}</p>
+                              <button
+                                type="button"
+                                class="mt-4 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
+                                onClick={() => this.deleteDataset(dataset)}
+                              >
+                                Удалить
+                              </button>
+                              <br />
+                              <button
+                                type="button"
+                                class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                                onClick={() => this.LoadDataset(dataset)}
+                              >
+                                Выгрузить
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                          <label
+                            htmlFor="cover-photo"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          ></label>
+                          <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                            <div className="text-center">
+                              <PhotoIcon
+                                className="mx-auto h-12 w-12 text-gray-300"
+                                aria-hidden="true"
+                              />
+                              <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                                <label
+                                  htmlFor="files"
+                                  className="relative cursor-pointer rounded-md font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
+                                >
+                                  <span>
+                                    {uploaded_file ? (
+                                      <>
+                                        {uploaded_file.slice(0, 5)} ...{" "}
+                                        {uploaded_file.slice(-5)}
+                                      </>
+                                    ) : (
+                                      <>Загрузить файл</>
+                                    )}
+                                  </span>
+                                  <input
+                                    id="files"
+                                    type="file"
+                                    className="sr-only"
+                                    onChange={this.uploadClick}
+                                  />
+                                </label>
+                                <p className="pl-1">или перетащите</p>
+                              </div>
+                              <p className="text-xs leading-5 text-gray-600">
+                                XLS, XLSX, CSV up to 10MB
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -740,20 +936,55 @@ export class Main extends Component {
                     Просмотр
                   </h2>
                   <div>
-                    {uploaded_file ? (
+                    {datasetRows.length !== 0 ? (
                       <>
                         <div
-                          className="ag-theme-alpine"
+                          className="ag-theme-alpine ag-theme-acmecorp"
                           style={{ height: 600, width: "100%" }}
                         >
                           <AgGridReact
+                            ref={this.datasetGridRef}
                             columnDefs={datasetColumns}
-                            rowData={dataset}
+                            rowData={datasetRows}
+                            autoGroupColumnDef={this.autoGroupColumnDef}
+                            localeText={AG_GRID_LOCALE_RU}
+                            sideBar={{
+                              toolPanels: [
+                                {
+                                  id: "columns",
+                                  labelDefault: "Columns",
+                                  labelKey: "columns",
+                                  iconKey: "columns",
+                                  toolPanel: "agColumnsToolPanel",
+                                  minWidth: 225,
+                                  width: 225,
+                                  maxWidth: 225,
+                                },
+                                {
+                                  id: "filters",
+                                  labelDefault: "Filters",
+                                  labelKey: "filters",
+                                  iconKey: "filter",
+                                  toolPanel: "agFiltersToolPanel",
+                                  minWidth: 180,
+                                  maxWidth: 400,
+                                  width: 250,
+                                },
+                              ],
+                              position: "left",
+                            }}
                           ></AgGridReact>
                         </div>
                         {/* общая информация о датасете */}
                         <p>Count rows = {countRows}</p>
                         <p>Count columns = {countColumns}</p>
+                        <button
+                          type="button"
+                          class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                          onClick={() => this.updateClick(dataset)}
+                        >
+                          Обновить
+                        </button>
                       </>
                     ) : null}
                   </div>
@@ -770,88 +1001,96 @@ export class Main extends Component {
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Выбор графика и осей */}
-                    <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                      <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        График
-                      </label>
-                      <Select
-                        className="basic-single"
-                        classNamePrefix="select"
-                        options={AllowedGrafics}
-                        getOptionLabel={(option) => `${option["name"]}`}
-                        getOptionValue={(option) => `${option["id"]}`}
-                        value={choicedGrafic}
-                        noOptionsMessage={() => "Пусто"}
-                        onChange={this.changeGrafic}
-                        placeholder="Выберите график"
-                      />
-                      <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        X label
-                      </label>
-                      <Select
-                        className="basic-single"
-                        classNamePrefix="select"
-                        options={datasetColumns}
-                        getOptionLabel={(option) => `${option["field"]}`}
-                        getOptionValue={(option) => `${option["field"]}`}
-                        value={x_label}
-                        noOptionsMessage={() => "Пусто"}
-                        onChange={this.changeX}
-                        placeholder="Выберите X"
-                      />
-                      {choicedGrafic ? (
-                        choicedGrafic.name === "histogram" ? null : (
-                          <>
-                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                              Y label
-                            </label>
-                            <Select
-                              className="basic-single"
-                              classNamePrefix="select"
-                              options={datasetColumns}
-                              getOptionLabel={(option) => `${option["field"]}`}
-                              getOptionValue={(option) => `${option["field"]}`}
-                              value={y_label}
-                              noOptionsMessage={() => "Пусто"}
-                              onChange={this.changeY}
-                              placeholder="Выберите Y"
-                            />
-                          </>
-                        )
-                      ) : null}
-                      <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        Group label
-                      </label>
-                      <Select
-                        className="basic-single"
-                        classNamePrefix="select"
-                        options={datasetColumns}
-                        getOptionLabel={(option) => `${option["field"]}`}
-                        getOptionValue={(option) => `${option["field"]}`}
-                        value={group_label}
-                        noOptionsMessage={() => "Пусто"}
-                        onChange={this.changeGroup}
-                        placeholder="Выберите Y"
-                      />
-                      <button
-                        class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-                        type="button"
-                        onClick={() => this.resetGrafic()}
-                      >
-                        Очистить
-                      </button>
-                    </div>
-                    {/* Отрисовка графика */}
-                    <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                      <PlotGrafic
-                        graffic={choicedGrafic}
-                        x_label={x_label ? x_label.field : null}
-                        y_label={y_label ? y_label.field : null}
-                        group_label={group_data}
-                        x_data={x_data}
-                        y_data={y_data}
-                      />
-                    </div>
+                    {datasetRows.length !== 0 ? (
+                      <>
+                        <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            График
+                          </label>
+                          <Select
+                            className="basic-single"
+                            classNamePrefix="select"
+                            options={AllowedGrafics}
+                            getOptionLabel={(option) => `${option["name"]}`}
+                            getOptionValue={(option) => `${option["id"]}`}
+                            value={choicedGrafic}
+                            noOptionsMessage={() => "Пусто"}
+                            onChange={this.changeGrafic}
+                            placeholder="Выберите график"
+                          />
+                          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            X label
+                          </label>
+                          <Select
+                            className="basic-single"
+                            classNamePrefix="select"
+                            options={datasetColumns}
+                            getOptionLabel={(option) => `${option["field"]}`}
+                            getOptionValue={(option) => `${option["field"]}`}
+                            value={x_label}
+                            noOptionsMessage={() => "Пусто"}
+                            onChange={this.changeX}
+                            placeholder="Выберите X"
+                          />
+                          {choicedGrafic ? (
+                            choicedGrafic.name === "histogram" ? null : (
+                              <>
+                                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                  Y label
+                                </label>
+                                <Select
+                                  className="basic-single"
+                                  classNamePrefix="select"
+                                  options={datasetColumns}
+                                  getOptionLabel={(option) =>
+                                    `${option["field"]}`
+                                  }
+                                  getOptionValue={(option) =>
+                                    `${option["field"]}`
+                                  }
+                                  value={y_label}
+                                  noOptionsMessage={() => "Пусто"}
+                                  onChange={this.changeY}
+                                  placeholder="Выберите Y"
+                                />
+                              </>
+                            )
+                          ) : null}
+                          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            Group label
+                          </label>
+                          <Select
+                            className="basic-single"
+                            classNamePrefix="select"
+                            options={datasetColumns}
+                            getOptionLabel={(option) => `${option["field"]}`}
+                            getOptionValue={(option) => `${option["field"]}`}
+                            value={group_label}
+                            noOptionsMessage={() => "Пусто"}
+                            onChange={this.changeGroup}
+                            placeholder="Выберите Y"
+                          />
+                          <button
+                            class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                            type="button"
+                            onClick={() => this.resetGrafic()}
+                          >
+                            Очистить
+                          </button>
+                        </div>
+                        {/* Отрисовка графика */}
+                        <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                          <PlotGrafic
+                            graffic={choicedGrafic}
+                            x_label={x_label ? x_label.field : null}
+                            y_label={y_label ? y_label.field : null}
+                            group_label={group_data}
+                            x_data={x_data}
+                            y_data={y_data}
+                          />
+                        </div>
+                      </>
+                    ) : null}
                   </div>
                 </Tab.Panel>
                 <Tab.Panel
@@ -864,21 +1103,37 @@ export class Main extends Component {
                   <h2 class="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                     Статистика
                   </h2>
-                  <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                    {currentElem === null ? (
-                      <button
-                        type="button"
-                        onClick={() => this.createStatistic(uploaded_file)}
-                      >
-                        Создать
-                      </button>
-                    ) : (
-                      <iframe
-                        srcdoc={currentElem}
-                        style={{ height: 1000, width: "100%" }}
-                      ></iframe>
-                    )}
-                  </div>
+                  {datasetRows.length !== 0 ? (
+                    <>
+                      <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                        {currentElem === null ? (
+                          loading ? (
+                            "Загрузка..."
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => this.createStatistic(dataset)}
+                            >
+                              Создать
+                            </button>
+                          )
+                        ) : (
+                          <>
+                            <iframe
+                              srcdoc={currentElem}
+                              style={{ height: 1000, width: "100%" }}
+                            ></iframe>
+                            <button
+                              type="button"
+                              onClick={() => this.createStatistic(dataset)}
+                            >
+                              Обновить
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  ) : null}
                 </Tab.Panel>
                 <Tab.Panel
                   className={classNames(
@@ -891,7 +1146,7 @@ export class Main extends Component {
                     Обучение
                   </h2>
                   {/* Выбор для обучения */}
-                  {uploaded_file ? (
+                  {datasetRows.length !== 0 ? (
                     <div className="mb-4 block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                       <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                         Доступные модели
@@ -920,16 +1175,54 @@ export class Main extends Component {
                         getOptionValue={(option) => `${option["id"]}`}
                         value={LearnLabel}
                         noOptionsMessage={() => "Пусто"}
-                        onChange={this.changeLabel}
+                        onChange={(e) => this.changeLabel(e)}
                         placeholder="Выберите поле для обучения"
                         isSearchable
                         isClearable
+                      />
+                      <label
+                        for="date"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Категориальные данные
+                      </label>
+                      <Select
+                        className="basic-multi-select"
+                        classNamePrefix="select"
+                        options={labels}
+                        getOptionLabel={(option) => `${option["name"]}`}
+                        getOptionValue={(option) => `${option["id"]}`}
+                        value={CategoricalLabels}
+                        onChange={(e) => this.changeCategoricalLabels(e)}
+                        placeholder="Выберите поля на который будете обучать"
+                        isSearchable
+                        isClearable
+                        isMulti
+                      />
+                      <label
+                        for="date"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Числовые данные
+                      </label>
+                      <Select
+                        className="basic-multi-select"
+                        classNamePrefix="select"
+                        options={labels}
+                        getOptionLabel={(option) => `${option["name"]}`}
+                        getOptionValue={(option) => `${option["id"]}`}
+                        value={NumberLabels}
+                        onChange={(e) => this.changeNumberLabels(e)}
+                        placeholder="Выберите поля на который будете обучать"
+                        isSearchable
+                        isClearable
+                        isMulti
                       />
                       <div>
                         <button
                           type="button"
                           class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-                          onClick={() => this.LearnModel(uploaded_file)}
+                          onClick={() => this.LearnModel(dataset)}
                         >
                           Обучить
                         </button>
@@ -943,17 +1236,23 @@ export class Main extends Component {
                       {/* таблица с результатами */}
                       <div className="mb-4 block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                         <div
-                          className="ag-theme-alpine"
+                          className="ag-theme-alpine ag-theme-acmecorp"
                           style={{ height: "100%", width: "100%" }}
                         >
                           <AgGridReact
                             rowData={LearnInfo.classification_matrix}
                             columnDefs={[
-                              { field: "label" },
+                              { field: LearnLabel.name },
                               { field: "SE" },
                               { field: "SP" },
                               { field: "PPV" },
                               { field: "NPV" },
+                              { field: "FPR" },
+                              { field: "FNR" },
+                              { field: "Overall accuracy" },
+                              { field: "LR+" },
+                              { field: "LR-" },
+                              { field: "DOR" },
                             ]}
                           ></AgGridReact>
                         </div>
@@ -978,8 +1277,8 @@ export class Main extends Component {
                           <Plot
                             data={this.PlotRocCurve(LearnInfo.y_scores)}
                             layout={{
-                              width: 100,
-                              height: 500,
+                              width: "100%",
+                              height: "100%",
                               title: "Roc Curve",
                             }}
                           />
