@@ -829,97 +829,89 @@ export class Main extends Component {
                       Загрузка данных
                     </h2>
                     {/* просмотр и выбо датасетов */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 gap-y-4">
-                      <div className="col-span-2 order-last block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                        <div
-                          className="mt-4 flex text-sm leading-6 text-gray-600 w-full"
-                          style={{ height: 300 }}
-                        >
-                          <div
-                            className="ag-theme-alpine ag-theme-acmecorp"
-                            style={{ height: "100%", width: "100%" }}
-                          >
-                            <AgGridReact
-                              ref={this.gridRef}
-                              rowData={datasets}
-                              columnDefs={[
-                                { field: "id" },
-                                { field: "name" },
-                                { field: "format" },
-                                { field: "size" },
-                                { field: "statistic" },
-                                { field: "upload_date" },
-                                { field: "user" },
-                              ]}
-                              rowSelection={"single"}
-                              onSelectionChanged={this.onSelectionChanged}
-                            ></AgGridReact>
-                          </div>
-                        </div>
-                        <div>
-                          {dataset ? (
-                            <div className="flex items-start">
-                              <p>{dataset.name}</p>
-                              <button
-                                type="button"
-                                class="mt-4 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
-                                onClick={() => this.deleteDataset(dataset)}
-                              >
-                                Удалить
-                              </button>
-                              <br />
-                              <button
-                                type="button"
-                                class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-                                onClick={() => this.LoadDataset(dataset)}
-                              >
-                                Выгрузить
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
+                    <div
+                      className="mt-4 flex text-sm leading-6 text-gray-600"
+                      style={{ height: 300, width: 1000 }}
+                    >
+                      <div
+                        className="ag-theme-alpine ag-theme-acmecorp"
+                        style={{ height: "100%", width: "100%" }}
+                      >
+                        <AgGridReact
+                          ref={this.gridRef}
+                          rowData={datasets}
+                          columnDefs={[
+                            { field: "id" },
+                            { field: "name" },
+                            { field: "format" },
+                            { field: "size" },
+                            { field: "statistic" },
+                            { field: "upload_date" },
+                            { field: "user" },
+                          ]}
+                          rowSelection={"single"}
+                          onSelectionChanged={this.onSelectionChanged}
+                        ></AgGridReact>
                       </div>
-                      <div>
-                        <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                          <label
-                            htmlFor="cover-photo"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          ></label>
-                          <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                            <div className="text-center">
-                              <PhotoIcon
-                                className="mx-auto h-12 w-12 text-gray-300"
-                                aria-hidden="true"
+                    </div>
+                    <div>
+                      {dataset ? (
+                        <>
+                          <p>{dataset.name}</p>
+                          <button
+                            type="button"
+                            onClick={() => this.deleteDataset(dataset)}
+                          >
+                            Удалить
+                          </button>
+                          <br />
+                          <button
+                            type="button"
+                            onClick={() => this.LoadDataset(dataset)}
+                          >
+                            Выгрузить
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                    <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                      <label
+                        htmlFor="cover-photo"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      ></label>
+                      <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                        <div className="text-center">
+                          <PhotoIcon
+                            className="mx-auto h-12 w-12 text-gray-300"
+                            aria-hidden="true"
+                          />
+                          <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                            <label
+                              htmlFor="files"
+                              className="relative cursor-pointer rounded-md font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
+                            >
+                              <span>
+                                {uploaded_file ? (
+                                  <>
+                                    {uploaded_file.slice(0, 5)} ...{" "}
+                                    {uploaded_file.slice(-5)}
+                                  </>
+                                ) : (
+                                  <>Загрузить файл</>
+                                )}
+                              </span>
+                              <input
+                                id="files"
+                                type="file"
+                                className="sr-only"
+                                onChange={this.uploadClick}
                               />
-                              <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                                <label
-                                  htmlFor="files"
-                                  className="relative cursor-pointer rounded-md font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
-                                >
-                                  <span>
-                                    {uploaded_file ? (
-                                      <>
-                                        {uploaded_file.slice(0, 5)} ...{" "}
-                                        {uploaded_file.slice(-5)}
-                                      </>
-                                    ) : (
-                                      <>Загрузить файл</>
-                                    )}
-                                  </span>
-                                  <input
-                                    id="files"
-                                    type="file"
-                                    className="sr-only"
-                                    onChange={this.uploadClick}
-                                  />
-                                </label>
-                                <p className="pl-1">или перетащите</p>
-                              </div>
-                              <p className="text-xs leading-5 text-gray-600">
-                                XLS, XLSX, CSV up to 10MB
-                              </p>
-                            </div>
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
                           </div>
+                          <p className="text-xs leading-5 text-gray-600">
+                            XLS, XLSX, CSV up to 10MB
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -980,7 +972,6 @@ export class Main extends Component {
                         <p>Count columns = {countColumns}</p>
                         <button
                           type="button"
-                          class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
                           onClick={() => this.updateClick(dataset)}
                         >
                           Обновить
