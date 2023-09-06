@@ -148,7 +148,8 @@ def get_dataset(request):
                 'sortable': True,
                 'enableRowGroup': True,
                 'enableValue': True,
-                'resizable': True
+                'resizable': True,
+                'editable': True
             }
             for col, dtype in zip(columns, dtypes)
         ],
