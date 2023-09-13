@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import pandas as pd
 import numpy as np
 from statsmodels import robust
-from .models import LearnModel, Dataset
+from .models import LearnModel, Dataset, User
 import os
 
 
@@ -40,7 +40,8 @@ async def get_dataset_obj_async(request):
     except ObjectDoesNotExist:
         return None
     else:
-        if not request.user.is_superuser and dataset.user.username != request.user.username:
+        dataset_user = await User.objects.aget(datasets=dataset)
+        if not request.user.is_superuser and dataset_user.username != request.user.username:
             return None
         return dataset
 
