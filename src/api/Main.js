@@ -2,16 +2,18 @@ import React, { Component, useState, useEffect, createRef } from "react";
 
 import { Navigate, Link } from "react-router-dom";
 
+import InfoPanel from "../components/InfoPanel";
+
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
 import ReactSelect, { createFilter } from "react-select";
 
 import { Tab } from "@headlessui/react";
 import { PhotoIcon, UserCircleIcon } from "@heroicons/react/24/solid";
-import { Fragment } from "react";
 
-import Switcher from "../components/Switcher";
-import { Disclosure, Menu, Transition } from "@headlessui/react";
+import Aside from "../components/Sidebar";
+
+import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 import ReactPaginate from "react-paginate";
@@ -24,6 +26,9 @@ import "./ag-theme-acmecorp.css";
 
 import Plot from "react-plotly.js";
 
+import Gr1 from "../../src/gr1.png";
+import Gr2 from "../../src/gr2.png";
+
 import {
   variables,
   GetDatasetParams,
@@ -35,12 +40,6 @@ import { PlotGrafic } from "./Grafics/InfoGrafics.js";
 const AllowedGrafics = [
   { id: 0, name: "scatter" },
   { id: 1, name: "histogram" },
-];
-
-const links = [
-  { href: "/account-settings", label: "Настройки аккаунта" },
-  { href: "/support", label: "Поддержка" },
-  { href: "/sign-out", label: "Выход" },
 ];
 
 function classNames(...classes) {
@@ -250,9 +249,11 @@ export class Main extends Component {
         });
         this.LoadStatistic(dataset);
         this.RefreshModels(dataset);
+        alert("Датасет загружен");
       })
       .catch((error) => {
         console.log(error);
+        alert("Ошибка при загрузке");
         this.setState({
           datasetRows: [],
           datasetColumns: [],
@@ -326,7 +327,7 @@ export class Main extends Component {
       })
       .catch((error) => {
         console.log(error);
-        this.setState({ info: [] });
+        this.setState({ info: [], currentElem: null });
       });
   }
 
@@ -496,8 +497,8 @@ export class Main extends Component {
     var zValues = cm_model;
 
     var colorscaleValue = [
-      [0, "#3D9970"],
-      [1, "#001f3f"],
+      [0, "#60a5fa"],
+      [1, "#1d4ed8"],
     ];
 
     var data = [
@@ -522,7 +523,7 @@ export class Main extends Component {
 
     var layout = {
       title: "Heatmap",
-      width: 629,
+      width: 550,
       height: 500,
       annotations: [],
       xaxis: {
@@ -604,235 +605,150 @@ export class Main extends Component {
       return <Navigate push to="/login" />;
     } else {
       return (
-        <div>
-          <Tab.Group>
-            <header>
-              <div className="min-h-full">
+        <div className="flex h-screen overflow-hidden">
+          {/*Боковое меню*/}
+          <Aside />
+          {/*Хлебные крошки*/}
+          <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+            <Tab.Group>
+              <div>
                 <Disclosure
                   as="nav"
-                  className="bg-white border-gray-200 px-4 lg:px-6 py-2.5 dark:bg-gray-800"
+                  className="bg-white border-gray-200 px-4 lg:px-6 dark:bg-gray-800"
                 >
                   {({ open }) => (
-                    <>
-                      <div className="px-4 sm:px-6 lg:px-8">
-                        <div className="flex h-16 items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="flex">
-                              <img
-                                src="https://flowbite.com/docs/images/logo.svg"
-                                class="h-8 mr-3"
-                                alt="Datamed LOGO"
-                              />
-                              <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-                                ML_Datamed
-                              </span>
-                            </div>
-
-                            <div className="hidden md:block">
-                              <div className="ml-10 flex items-baseline space-x-4">
-                                <Tab.List className="flex space-x-4 rounded-xl p-4 text-gray-500 dark:text-gray-300">
-                                  <Tab
-                                    className={({ selected }) =>
-                                      classNames(
-                                        "dark:bg-gray-800",
-                                        "block rounded-md px-3 py-2 text-base font-medium",
-                                        selected
-                                          ? "bg-gray-100 dark:bg-gray-600"
-                                          : "hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-600 dark:hover:text-gray-200"
-                                      )
-                                    }
-                                  >
-                                    Загрузка данных
-                                  </Tab>
-                                  <Tab
-                                    className={({ selected }) =>
-                                      classNames(
-                                        "dark:bg-gray-800",
-                                        "block rounded-md px-3 py-2 text-base font-medium",
-                                        selected
-                                          ? "bg-gray-100 dark:bg-gray-600"
-                                          : "hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-600 dark:hover:text-gray-200"
-                                      )
-                                    }
-                                  >
-                                    Просмотр
-                                  </Tab>
-                                  <Tab
-                                    className={({ selected }) =>
-                                      classNames(
-                                        "dark:bg-gray-800",
-                                        "block rounded-md px-3 py-2 text-base font-medium",
-                                        selected
-                                          ? "bg-gray-100 dark:bg-gray-600"
-                                          : "hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-600 dark:hover:text-gray-200"
-                                      )
-                                    }
-                                  >
-                                    Графики
-                                  </Tab>
-                                  <Tab
-                                    className={({ selected }) =>
-                                      classNames(
-                                        "dark:bg-gray-800",
-                                        "block rounded-md px-3 py-2 text-base font-medium",
-                                        selected
-                                          ? "bg-gray-100 dark:bg-gray-600"
-                                          : "hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-600 dark:hover:text-gray-200"
-                                      )
-                                    }
-                                  >
-                                    Статистика
-                                  </Tab>
-                                  <Tab
-                                    className={({ selected }) =>
-                                      classNames(
-                                        "dark:bg-gray-800",
-                                        "block rounded-md px-3 py-2 text-base font-medium",
-                                        selected
-                                          ? "bg-gray-100 dark:bg-gray-600"
-                                          : "hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-600 dark:hover:text-gray-200"
-                                      )
-                                    }
-                                  >
-                                    Обучение
-                                  </Tab>
-                                </Tab.List>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="hidden md:block">
-                            <div className="ml-4 flex items-center md:ml-6">
-                              <Switcher />
-                              {/* Profile dropdown */}
-                              <Menu
-                                as="div"
-                                className="relative inline-block text-left"
+                    <div className="flex h-16 items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="hidden md:block">
+                          <div className="flex items-baseline space-x-4">
+                            <Tab.List className="flex space-x-4 text-sm font-medium text-center">
+                              <Tab
+                                className={({ selected }) =>
+                                  classNames(
+                                    "",
+                                    "inline-block p-2 border-b-2 rounded-t-lg",
+                                    selected
+                                      ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                      : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                  )
+                                }
                               >
-                                <Menu.Button className="relative flex max-w-xs items-center rounded-full bg-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                                  <span className="absolute -inset-1.5" />
-                                  <span className="sr-only">
-                                    Open user menu
-                                  </span>
-                                  <img
-                                    className="h-8 w-8 rounded-full"
-                                    src="https://img.icons8.com/?size=512&id=108296&format=png"
-                                    alt=""
-                                  />
-                                </Menu.Button>
-                                <Transition
-                                  as={Fragment}
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="transform opacity-0 scale-95"
-                                  enterTo="transform opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="transform opacity-100 scale-100"
-                                  leaveTo="transform opacity-0 scale-95"
-                                >
-                                  <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-700 dark:divide-gray-800 dark:text-gray-400">
-                                    {links.map((link) => (
-                                      <div className="px-1 py-1 ">
-                                        <Menu.Item
-                                          as="a"
-                                          key={link.href}
-                                          href={link.href}
-                                          className="group flex w-full items-center rounded-md px-2 py-2 text-sm dark:hover:bg-gray-600"
-                                        >
-                                          {link.label}
-                                        </Menu.Item>
-                                      </div>
-                                    ))}
-                                  </Menu.Items>
-                                </Transition>
-                              </Menu>
-                            </div>
+                                Загрузка данных
+                              </Tab>
+                              <Tab
+                                className={({ selected }) =>
+                                  classNames(
+                                    "",
+                                    "inline-block p-2 border-b-2 rounded-t-lg",
+                                    selected
+                                      ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                      : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                  )
+                                }
+                              >
+                                Просмотр
+                              </Tab>
+                              <Tab
+                                className={({ selected }) =>
+                                  classNames(
+                                    "",
+                                    "inline-block p-2 border-b-2 rounded-t-lg",
+                                    selected
+                                      ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                      : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                  )
+                                }
+                              >
+                                Графики
+                              </Tab>
+                              <Tab
+                                className={({ selected }) =>
+                                  classNames(
+                                    "",
+                                    "inline-block p-2 border-b-2 rounded-t-lg",
+                                    selected
+                                      ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                      : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                  )
+                                }
+                              >
+                                Статистика
+                              </Tab>
+                              <Tab
+                                className={({ selected }) =>
+                                  classNames(
+                                    "",
+                                    "inline-block p-2 border-b-2 rounded-t-lg",
+                                    selected
+                                      ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                      : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                  )
+                                }
+                              >
+                                Обучение
+                              </Tab>
+                            </Tab.List>
                           </div>
                         </div>
                       </div>
-                      {/* Мобильное меню 
-                    <Disclosure.Panel className="md:hidden">
-                      <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
-                        {navigation.map((item) => (
-                          <Disclosure.Button
-                            key={item.name}
-                            as="a"
-                            href={item.href}
-                            className={classNames(
-                              item.current
-                                ? "bg-gray-900 text-white"
-                                : "text-gray-300 hover:bg-gray-700 hover:text-white",
-                              "block rounded-md px-3 py-2 text-base font-medium"
-                            )}
-                            aria-current={item.current ? "page" : undefined}
-                          >
-                            {item.name}
-                          </Disclosure.Button>
-                        ))}
-                      </div>
-                      <div className="border-t border-gray-700 pb-3 pt-4">
-                        <div className="flex items-center px-5">
-                          <div className="flex-shrink-0">
-                            <img
-                              className="h-10 w-10 rounded-full"
-                              src={user.imageUrl}
-                              alt=""
-                            />
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-base font-medium leading-none text-white">
-                              {user.name}
-                            </div>
-                            <div className="text-sm font-medium leading-none text-gray-400">
-                              {user.email}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            className="relative ml-auto flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                          >
-                            <span className="absolute -inset-1.5" />
-                            <span className="sr-only">View notifications</span>
-                            <BellIcon className="h-6 w-6" aria-hidden="true" />
-                          </button>
-                        </div>
-                        <div className="mt-3 space-y-1 px-2">
-                          {userNavigation.map((item) => (
-                            <Disclosure.Button
-                              key={item.name}
-                              as="a"
-                              href={item.href}
-                              className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
-                            >
-                              {item.name}
-                            </Disclosure.Button>
-                          ))}
-                        </div>
-                      </div>
-                    </Disclosure.Panel>
-                    */}
-                    </>
+                    </div>
                   )}
                 </Disclosure>
-              </div>
-            </header>
-            {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
-            <main className="w-full p-4">
-              <Tab.Panels className="">
-                <Tab.Panel
-                  className={classNames(
-                    "min-h-screen rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg",
-                    "focus:outline-none"
-                  )}
-                >
-                  {/* загрузка файла */}
-                  <div>
-                    <h2 class="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                      Загрузка данных
-                    </h2>
+                {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
+                <Tab.Panels className={classNames("px-4")}>
+                  <Tab.Panel
+                    className={classNames(
+                      "h-dvh flex flex-col bg-white dark:bg-gray-800",
+                      "focus:outline-none"
+                    )}
+                  >
+                    {/* загрузка файла */}
+                    <InfoPanel>
+                      <span class="sr-only">Info</span>
+                      <div class="ml-3 text-sm">
+                        Это стартовая страница. Чтобы начать работу в системе,
+                        загрузите файл с датасетом. Обратите внимание, что файл
+                        должен соответствовать следующим параметрам:{" "}
+                        <p>• Допустимый формат: XLS, XLSX, CSV </p>
+                        <p>• Допустимый размер: до 10 MB</p>
+                        <p>
+                          Если вы хотите протестировать работу системы, но у вас
+                          нет готового датасета, вы можете воспользоваться
+                          нашими тестовыми датасетами. Для этого кликните одну
+                          из строк ниже и нажмите кнопку "Анализировать"
+                        </p>
+                      </div>
+                    </InfoPanel>
+
+                    <div className="">
+                      <span>
+                        {uploaded_file ? (
+                          <>
+                            {uploaded_file.slice(0, 5)} ...{" "}
+                            {uploaded_file.slice(-5)}
+                          </>
+                        ) : (
+                          <label
+                            class="px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                            for="files"
+                          >
+                            Загрузить датасет
+                          </label>
+                        )}
+                      </span>
+                      <input
+                        className="hidden"
+                        id="files"
+                        type="file"
+                        onChange={this.uploadClick}
+                      />
+                      <p className="mt-1 text-xs leading-5 text-gray-600">
+                        XLS, XLSX, CSV не более 10MB
+                      </p>
+                    </div>
+
                     {/* просмотр и выбо датасетов */}
-                    <div
-                      className="mt-4 flex text-sm leading-6 text-gray-600"
-                      style={{ height: 300, width: 1000 }}
-                    >
+                    <div className="mt-4 grow w-full flex text-sm leading-6 text-gray-600">
                       <div
                         className="ag-theme-alpine ag-theme-acmecorp"
                         style={{ height: "100%", width: "100%" }}
@@ -840,6 +756,7 @@ export class Main extends Component {
                         <AgGridReact
                           ref={this.gridRef}
                           rowData={datasets}
+                          pagination={true}
                           columnDefs={[
                             { field: "id" },
                             { field: "name" },
@@ -857,82 +774,47 @@ export class Main extends Component {
                     <div>
                       {dataset ? (
                         <>
-                          <p>{dataset.name}</p>
-                          <button
-                            type="button"
-                            onClick={() => this.deleteDataset(dataset)}
-                          >
-                            Удалить
-                          </button>
-                          <br />
-                          <button
-                            type="button"
-                            onClick={() => this.LoadDataset(dataset)}
-                          >
-                            Выгрузить
-                          </button>
+                          <p className="mt-4">Выбран датасет: {dataset.name}</p>
+                          <div className="mt-4 flex justify-start">
+                            <button
+                              type="button"
+                              className="mr-2 px-3 py-2 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+                              onClick={() => this.deleteDataset(dataset)}
+                            >
+                              Удалить датасет
+                            </button>
+                            <br />
+                            <button
+                              type="button"
+                              className="px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                              onClick={() => this.LoadDataset(dataset)}
+                            >
+                              Открыть
+                            </button>
+                          </div>
                         </>
                       ) : null}
                     </div>
-                    <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                      <label
-                        htmlFor="cover-photo"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      ></label>
-                      <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                        <div className="text-center">
-                          <PhotoIcon
-                            className="mx-auto h-12 w-12 text-gray-300"
-                            aria-hidden="true"
-                          />
-                          <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                            <label
-                              htmlFor="files"
-                              className="relative cursor-pointer rounded-md font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
-                            >
-                              <span>
-                                {uploaded_file ? (
-                                  <>
-                                    {uploaded_file.slice(0, 5)} ...{" "}
-                                    {uploaded_file.slice(-5)}
-                                  </>
-                                ) : (
-                                  <>Загрузить файл</>
-                                )}
-                              </span>
-                              <input
-                                id="files"
-                                type="file"
-                                className="sr-only"
-                                onChange={this.uploadClick}
-                              />
-                            </label>
-                            <p className="pl-1">or drag and drop</p>
-                          </div>
-                          <p className="text-xs leading-5 text-gray-600">
-                            XLS, XLSX, CSV up to 10MB
-                          </p>
-                        </div>
+                  </Tab.Panel>
+                  <Tab.Panel
+                    className={classNames(
+                      "h-dvh flex flex-col bg-white dark:bg-gray-800",
+                      "focus:outline-none"
+                    )}
+                  >
+                    {/* Отображаем файл в виде таблицы */}
+                    <InfoPanel>
+                      <span class="sr-only">Info</span>
+                      <div class="ml-3 text-sm">
+                        В этом разделе отображается содержание файла. Здесь вы
+                        можете просматривать и редактировать данные.
                       </div>
-                    </div>
-                  </div>
-                </Tab.Panel>
-                <Tab.Panel
-                  className={classNames(
-                    "min-h-screen rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg",
-                    "focus:outline-none"
-                  )}
-                >
-                  {/* Отображаем файл в виде таблицы */}
-                  <h2 class="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    Просмотр
-                  </h2>
-                  <div>
+                    </InfoPanel>
                     {datasetRows.length !== 0 ? (
-                      <>
+                      <div className="mt-4 grow w-full flex flex-col text-sm leading-6 text-gray-600">
                         <div
-                          className="ag-theme-alpine ag-theme-acmecorp"
-                          style={{ height: 600, width: "100%" }}
+                          className="ag-theme-alpine ag-theme-acmecorp flex flex-col"
+                          style={{ height: "100%", width: "100%" }}
                         >
                           <AgGridReact
                             ref={this.datasetGridRef}
@@ -940,6 +822,7 @@ export class Main extends Component {
                             rowData={datasetRows}
                             autoGroupColumnDef={this.autoGroupColumnDef}
                             localeText={AG_GRID_LOCALE_RU}
+                            pagination={true}
                             sideBar={{
                               toolPanels: [
                                 {
@@ -967,291 +850,316 @@ export class Main extends Component {
                             }}
                           ></AgGridReact>
                         </div>
-                        {/* общая информация о датасете */}
-                        <p>Count rows = {countRows}</p>
-                        <p>Count columns = {countColumns}</p>
-                        <button
-                          type="button"
-                          onClick={() => this.updateClick(dataset)}
-                        >
-                          Обновить
-                        </button>
-                      </>
-                    ) : null}
-                  </div>
-                </Tab.Panel>
-                <Tab.Panel
-                  className={classNames(
-                    "min-h-screen rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg",
-                    "focus:outline-none"
-                  )}
-                >
-                  {/* Графики для датасета */}
-                  <h2 class="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    Графики
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Выбор графика и осей */}
-                    {datasetRows.length !== 0 ? (
-                      <>
-                        <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                            График
-                          </label>
-                          <Select
-                            className="basic-single"
-                            classNamePrefix="select"
-                            options={AllowedGrafics}
-                            getOptionLabel={(option) => `${option["name"]}`}
-                            getOptionValue={(option) => `${option["id"]}`}
-                            value={choicedGrafic}
-                            noOptionsMessage={() => "Пусто"}
-                            onChange={this.changeGrafic}
-                            placeholder="Выберите график"
-                          />
-                          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                            X label
-                          </label>
-                          <Select
-                            className="basic-single"
-                            classNamePrefix="select"
-                            options={datasetColumns}
-                            getOptionLabel={(option) => `${option["field"]}`}
-                            getOptionValue={(option) => `${option["field"]}`}
-                            value={x_label}
-                            noOptionsMessage={() => "Пусто"}
-                            onChange={this.changeX}
-                            placeholder="Выберите X"
-                          />
-                          {choicedGrafic ? (
-                            choicedGrafic.name === "histogram" ? null : (
-                              <>
-                                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                  Y label
-                                </label>
-                                <Select
-                                  className="basic-single"
-                                  classNamePrefix="select"
-                                  options={datasetColumns}
-                                  getOptionLabel={(option) =>
-                                    `${option["field"]}`
-                                  }
-                                  getOptionValue={(option) =>
-                                    `${option["field"]}`
-                                  }
-                                  value={y_label}
-                                  noOptionsMessage={() => "Пусто"}
-                                  onChange={this.changeY}
-                                  placeholder="Выберите Y"
-                                />
-                              </>
-                            )
-                          ) : null}
-                          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                            Group label
-                          </label>
-                          <Select
-                            className="basic-single"
-                            classNamePrefix="select"
-                            options={datasetColumns}
-                            getOptionLabel={(option) => `${option["field"]}`}
-                            getOptionValue={(option) => `${option["field"]}`}
-                            value={group_label}
-                            noOptionsMessage={() => "Пусто"}
-                            onChange={this.changeGroup}
-                            placeholder="Выберите Y"
-                          />
+                        <div className="flex items-baseline space-x-4">
+                          {/* общая информация о датасете */}
+                          <p> Количество строк: {countRows}</p>
+                          <p>Количество колонок: {countColumns}</p>
                           <button
-                            class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
                             type="button"
-                            onClick={() => this.resetGrafic()}
+                            className="mt-4 px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                            onClick={() => this.updateClick(dataset)}
                           >
-                            Очистить
+                            Сохранить изменения
                           </button>
                         </div>
-                        {/* Отрисовка графика */}
-                        <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                          <PlotGrafic
-                            graffic={choicedGrafic}
-                            x_label={x_label ? x_label.field : null}
-                            y_label={y_label ? y_label.field : null}
-                            group_label={group_data}
-                            x_data={x_data}
-                            y_data={y_data}
-                          />
+                      </div>
+                    ) : null}
+                  </Tab.Panel>
+                  <Tab.Panel
+                    className={classNames(
+                      "h-full bg-white dark:bg-gray-800",
+                      "focus:outline-none"
+                    )}
+                  >
+                    {/* Графики для датасета */}
+                    <InfoPanel>
+                      <span class="sr-only">Info</span>
+                      <div class="ml-3 text-sm">
+                        Данный раздел содержит функционал для графического
+                        отображения данных. После загрузки датасета на странице
+                        "Загрузка данных", здесь отобразится панель настройки
+                        графиков.
+                      </div>
+                    </InfoPanel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Выбор графика и осей */}
+                      {datasetRows.length !== 0 ? (
+                        <>
+                          <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                              График
+                            </label>
+                            <Select
+                              className="basic-single"
+                              classNamePrefix="select"
+                              options={AllowedGrafics}
+                              getOptionLabel={(option) => `${option["name"]}`}
+                              getOptionValue={(option) => `${option["id"]}`}
+                              value={choicedGrafic}
+                              noOptionsMessage={() => "Пусто"}
+                              onChange={this.changeGrafic}
+                              placeholder="Выберите график"
+                            />
+                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                              X label
+                            </label>
+                            <Select
+                              className="basic-single"
+                              classNamePrefix="select"
+                              options={datasetColumns}
+                              getOptionLabel={(option) => `${option["field"]}`}
+                              getOptionValue={(option) => `${option["field"]}`}
+                              value={x_label}
+                              noOptionsMessage={() => "Пусто"}
+                              onChange={this.changeX}
+                              placeholder="Выберите X"
+                            />
+                            {choicedGrafic ? (
+                              choicedGrafic.name === "histogram" ? null : (
+                                <>
+                                  <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                    Y label
+                                  </label>
+                                  <Select
+                                    className="basic-single"
+                                    classNamePrefix="select"
+                                    options={datasetColumns}
+                                    getOptionLabel={(option) =>
+                                      `${option["field"]}`
+                                    }
+                                    getOptionValue={(option) =>
+                                      `${option["field"]}`
+                                    }
+                                    value={y_label}
+                                    noOptionsMessage={() => "Пусто"}
+                                    onChange={this.changeY}
+                                    placeholder="Выберите Y"
+                                  />
+                                </>
+                              )
+                            ) : null}
+                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                              Group label
+                            </label>
+                            <Select
+                              className="basic-single"
+                              classNamePrefix="select"
+                              options={datasetColumns}
+                              getOptionLabel={(option) => `${option["field"]}`}
+                              getOptionValue={(option) => `${option["field"]}`}
+                              value={group_label}
+                              noOptionsMessage={() => "Пусто"}
+                              onChange={this.changeGroup}
+                              placeholder="Выберите Y"
+                            />
+                            <button
+                              class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                              type="button"
+                              onClick={() => this.resetGrafic()}
+                            >
+                              Очистить
+                            </button>
+                          </div>
+                          {/* Отрисовка графика */}
+                          <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                            <PlotGrafic
+                              graffic={choicedGrafic}
+                              x_label={x_label ? x_label.field : null}
+                              y_label={y_label ? y_label.field : null}
+                              group_label={group_data}
+                              x_data={x_data}
+                              y_data={y_data}
+                            />
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                    <div className="flex mt-28">
+                      <img className="ml-16 h-full w-80" src={Gr1} alt="" />
+                      <img className="ml-16 h-full w-80" src={Gr2} alt="" />
+                    </div>
+                  </Tab.Panel>
+
+                  <Tab.Panel
+                    className={classNames(
+                      "h-dvh flex flex-col bg-white dark:bg-gray-800",
+                      "focus:outline-none"
+                    )}
+                  >
+                    {/* Статистика для датасета */}
+                    <InfoPanel>
+                      <span class="sr-only">Info</span>
+                      <div class="ml-3 text-sm">
+                        Данный раздел отображает сводный анализ данных,
+                        содержащихся в датасете.
+                      </div>
+                    </InfoPanel>
+                    {datasetRows.length !== 0 ? (
+                      <>
+                        <div className="">
+                          {currentElem === null ? (
+                            loading ? (
+                              "Загрузка..."
+                            ) : (
+                              <button
+                                type="button"
+                                className="mt-4 px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                onClick={() => this.createStatistic(dataset)}
+                              >
+                                Создать
+                              </button>
+                            )
+                          ) : (
+                            <>
+                              <iframe
+                                srcdoc={currentElem}
+                                style={{
+                                  height: 1000,
+                                  width: "100%",
+                                }}
+                              ></iframe>
+                              <button
+                                type="button"
+                                className="mt-4 px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                onClick={() => this.createStatistic(dataset)}
+                              >
+                                Обновить
+                              </button>
+                            </>
+                          )}
                         </div>
                       </>
                     ) : null}
-                  </div>
-                </Tab.Panel>
-                <Tab.Panel
-                  className={classNames(
-                    "min-h-screen rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg",
-                    "focus:outline-none"
-                  )}
-                >
-                  {/* Статистика для датасета */}
-                  <h2 class="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    Статистика
-                  </h2>
-                  {datasetRows.length !== 0 ? (
-                    <>
-                      <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                        {currentElem === null ? (
-                          loading ? (
-                            "Загрузка..."
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => this.createStatistic(dataset)}
-                            >
-                              Создать
-                            </button>
-                          )
-                        ) : (
-                          <>
-                            <iframe
-                              srcdoc={currentElem}
-                              style={{ height: 1000, width: "100%" }}
-                            ></iframe>
-                            <button
-                              type="button"
-                              onClick={() => this.createStatistic(dataset)}
-                            >
-                              Обновить
-                            </button>
-                          </>
-                        )}
+                  </Tab.Panel>
+                  <Tab.Panel
+                    className={classNames(
+                      "h-dvh flex flex-col bg-white dark:bg-gray-800",
+                      "focus:outline-none"
+                    )}
+                  >
+                    {/* Обучение моделей */}
+                    <InfoPanel>
+                      <span class="sr-only">Info</span>
+                      <div class="ml-3 text-sm">
+                        Этот раздел позволяет обучить нейросеть для дальнейшей
+                        работы с данными.
                       </div>
-                    </>
-                  ) : null}
-                </Tab.Panel>
-                <Tab.Panel
-                  className={classNames(
-                    "min-h-screen rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg",
-                    "focus:outline-none"
-                  )}
-                >
-                  {/* Обучение моделей */}
-                  <h2 class="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    Обучение
-                  </h2>
-                  {/* Выбор для обучения */}
-                  {datasetRows.length !== 0 ? (
-                    <div className="mb-4 block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                      <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        Доступные модели
-                      </label>
-                      <Select
-                        className="basic-single"
-                        classNamePrefix="select"
-                        options={default_models}
-                        getOptionLabel={(option) => `${option["name"]}`}
-                        getOptionValue={(option) => `${option["id"]}`}
-                        value={LearnModel}
-                        noOptionsMessage={() => "Пусто"}
-                        onChange={this.changeModel}
-                        placeholder="Выберите модель для обучения"
-                        isSearchable
-                        isClearable
-                      />
-                      <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        Поле для обучения
-                      </label>
-                      <Select
-                        className="basic-single"
-                        classNamePrefix="select"
-                        options={labels}
-                        getOptionLabel={(option) => `${option["name"]}`}
-                        getOptionValue={(option) => `${option["id"]}`}
-                        value={LearnLabel}
-                        noOptionsMessage={() => "Пусто"}
-                        onChange={(e) => this.changeLabel(e)}
-                        placeholder="Выберите поле для обучения"
-                        isSearchable
-                        isClearable
-                      />
-                      <label
-                        for="date"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        Категориальные данные
-                      </label>
-                      <Select
-                        className="basic-multi-select"
-                        classNamePrefix="select"
-                        options={labels}
-                        getOptionLabel={(option) => `${option["name"]}`}
-                        getOptionValue={(option) => `${option["id"]}`}
-                        value={CategoricalLabels}
-                        onChange={(e) => this.changeCategoricalLabels(e)}
-                        placeholder="Выберите поля на который будете обучать"
-                        isSearchable
-                        isClearable
-                        isMulti
-                      />
-                      <label
-                        for="date"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        Числовые данные
-                      </label>
-                      <Select
-                        className="basic-multi-select"
-                        classNamePrefix="select"
-                        options={labels}
-                        getOptionLabel={(option) => `${option["name"]}`}
-                        getOptionValue={(option) => `${option["id"]}`}
-                        value={NumberLabels}
-                        onChange={(e) => this.changeNumberLabels(e)}
-                        placeholder="Выберите поля на который будете обучать"
-                        isSearchable
-                        isClearable
-                        isMulti
-                      />
-                      <div>
-                        <button
-                          type="button"
-                          class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-                          onClick={() => this.LearnModel(dataset)}
+                    </InfoPanel>
+                    {/* Выбор для обучения */}
+                    {datasetRows.length !== 0 ? (
+                      <div className="mb-4">
+                        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                          Доступные модели
+                        </label>
+                        <Select
+                          className="basic-single"
+                          classNamePrefix="select"
+                          options={default_models}
+                          getOptionLabel={(option) => `${option["name"]}`}
+                          getOptionValue={(option) => `${option["id"]}`}
+                          value={LearnModel}
+                          noOptionsMessage={() => "Пусто"}
+                          onChange={this.changeModel}
+                          placeholder="Выберите модель для обучения"
+                          isSearchable
+                          isClearable
+                        />
+                        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                          Поле для обучения
+                        </label>
+                        <Select
+                          className="basic-single"
+                          classNamePrefix="select"
+                          options={labels}
+                          getOptionLabel={(option) => `${option["name"]}`}
+                          getOptionValue={(option) => `${option["id"]}`}
+                          value={LearnLabel}
+                          noOptionsMessage={() => "Пусто"}
+                          onChange={(e) => this.changeLabel(e)}
+                          placeholder="Выберите поле для обучения"
+                          isSearchable
+                          isClearable
+                        />
+                        <label
+                          for="date"
+                          class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                         >
-                          Обучить
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                  {/* Информация об обучении */}
-
-                  {LearnInfo ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 gap-y-4">
-                      {/* таблица с результатами */}
-                      <div className="mb-4 block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-                        <div
-                          className="ag-theme-alpine ag-theme-acmecorp"
-                          style={{ height: "100%", width: "100%" }}
+                          Категориальные данные
+                        </label>
+                        <Select
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                          options={labels}
+                          getOptionLabel={(option) => `${option["name"]}`}
+                          getOptionValue={(option) => `${option["id"]}`}
+                          value={CategoricalLabels}
+                          onChange={(e) => this.changeCategoricalLabels(e)}
+                          placeholder="Выберите поля на который будете обучать"
+                          isSearchable
+                          isClearable
+                          isMulti
+                        />
+                        <label
+                          for="date"
+                          class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                         >
-                          <AgGridReact
-                            rowData={LearnInfo.classification_matrix}
-                            columnDefs={[
-                              { field: LearnLabel.name },
-                              { field: "SE" },
-                              { field: "SP" },
-                              { field: "PPV" },
-                              { field: "NPV" },
-                              { field: "FPR" },
-                              { field: "FNR" },
-                              { field: "Overall accuracy" },
-                              { field: "LR+" },
-                              { field: "LR-" },
-                              { field: "DOR" },
-                            ]}
-                          ></AgGridReact>
+                          Числовые данные
+                        </label>
+                        <Select
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                          options={labels}
+                          getOptionLabel={(option) => `${option["name"]}`}
+                          getOptionValue={(option) => `${option["id"]}`}
+                          value={NumberLabels}
+                          onChange={(e) => this.changeNumberLabels(e)}
+                          placeholder="Выберите поля на который будете обучать"
+                          isSearchable
+                          isClearable
+                          isMulti
+                        />
+                        <div>
+                          <button
+                            type="button"
+                            class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                            onClick={() => this.LearnModel(dataset)}
+                          >
+                            Обучить
+                          </button>
                         </div>
                       </div>
-                      {/* Графики обучения */}
-                      <div>
+                    ) : null}
+                    {/* Информация об обучении */}
+
+                    {LearnInfo ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* таблица с результатами */}
+                        <div className="h-96 col-span-2">
+                          <div
+                            className="ag-theme-alpine ag-theme-acmecorp"
+                            style={{ height: "100%", width: "100%" }}
+                          >
+                            <AgGridReact
+                              rowData={LearnInfo.classification_matrix}
+                              columnDefs={[
+                                { field: LearnLabel.name },
+                                { field: "SE" },
+                                { field: "SP" },
+                                { field: "PPV" },
+                                { field: "NPV" },
+                                { field: "FPR" },
+                                { field: "FNR" },
+                                { field: "Overall accuracy" },
+                                { field: "LR+" },
+                                { field: "LR-" },
+                                { field: "DOR" },
+                              ]}
+                            ></AgGridReact>
+                          </div>
+                        </div>
+                        {/* Графики обучения */}
                         {/* график правилных результатов */}
-                        <div className="mb-4 block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                           <Plot
                             data={this.PlotHeatmap(
                               LearnInfo.cm_model,
@@ -1264,7 +1172,7 @@ export class Main extends Component {
                           />
                         </div>
                         {/* Roc кривая */}
-                        <div className="mb-4 block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                           <Plot
                             data={this.PlotRocCurve(LearnInfo.y_scores)}
                             layout={{
@@ -1275,12 +1183,12 @@ export class Main extends Component {
                           />
                         </div>
                       </div>
-                    </div>
-                  ) : null}
-                </Tab.Panel>
-              </Tab.Panels>
-            </main>
-          </Tab.Group>
+                    ) : null}
+                  </Tab.Panel>
+                </Tab.Panels>
+              </div>
+            </Tab.Group>
+          </div>
         </div>
       );
     }
