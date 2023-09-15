@@ -294,7 +294,7 @@ def prepare_y_scores_to_js(y_scores, y_onehot):
         result.append(tpr.tolist())
         result.append(fpr.tolist())
         result.append(name)
-        labels.append(str(y_onehot.columns[i]) + "_")
+        labels.append(str(y_onehot.columns[i]) + "<br />")
 
     print(labels)
     return results, labels
