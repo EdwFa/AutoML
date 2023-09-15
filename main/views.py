@@ -127,6 +127,7 @@ def upload_dataset(request):
         user=request.user,
         size=dataset.size,
         format=dataset_type,
+        info=dataset_name,
         path='/'
     )
     dataset_table.save()

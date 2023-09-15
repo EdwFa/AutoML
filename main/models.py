@@ -23,7 +23,7 @@ class Dataset(models.Model):
     upload_date = models.DateTimeField(auto_now=True)
     format = models.CharField(max_length=8)
     size = models.IntegerField()
-    info = models.TextFiled(null=True)
+    info = models.TextField(null=True)
 
     def __str__(self):
         return f'{self.user.username} - {self.name}'
