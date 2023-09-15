@@ -5,6 +5,7 @@ import os
 import time
 import pandas as pd
 from ydata_profiling import ProfileReport
+from io import StringIO
 
 # import redis
 
@@ -19,11 +20,12 @@ def check_status():
 @analise.route('/create_stat', methods=['POST'])
 def createStat():
     current_app.logger.info(f'Start create statistic data...')
-    data = request.json
-    if 'dataset' not in data:
+    data = request.files
+    print(data)
+    if 'key' not in data:
         return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
     current_app.logger.info(f'Find dataset and convert them to pandas DataFrame...')
-    dataset = pd.DataFrame.from_records(data['dataset'])
+    dataset = pd.read_csv(data['key'].stream)
     if 'ID' in dataset.columns:
         dataset = dataset.drop(['ID'], axis=1)
     elif 'id' in dataset.columns:
