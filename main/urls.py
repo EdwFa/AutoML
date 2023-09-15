@@ -9,6 +9,7 @@ urlpatterns = [
     path('datasets', get_datasets),
     path('dataset/delete', delete_dataset),
     path('dataset/update', update_dataset),
+    path('dataset/update_info', update_dataset_table),
 
     # Загрузка датасета и статистики
     path('datasets/upload', upload_dataset, name='upload'),

@@ -79,7 +79,7 @@ def create_info_request(dataset, type_model, request, broker_key):
         'number_columns': request.data.get('number_columns', None),
         'params': []
     }
-    print(data)
+    # print(data)
     return data
 
 def convert_data_type(label, value, type_data, **kwargs):

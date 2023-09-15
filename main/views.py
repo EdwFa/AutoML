@@ -88,6 +88,25 @@ def update_dataset(request):
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
 @parser_classes([MultiPartParser, FormParser, FileUploadParser])
+def update_dataset_table(request):
+    dataset_table = get_dataset_obj(request)
+    if dataset_table is None:
+        return Response(data={'status': 'error'}, status=404)
+
+    if 'info' not in request.data:
+        return Response(data={'status': 'error'}, status=403)
+
+    dataset_table.info = request.data['info']
+    dataset_table.save()
+    data = {'status': ''}
+
+    data['status'] = 'Created'
+    return Response(data=data, status=201)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+@parser_classes([MultiPartParser, FormParser, FileUploadParser])
 def upload_dataset(request):
     dataset = request.FILES.get('file')
     dataset_name = ''.join(dataset.name.split('.')[:-1])
@@ -177,13 +196,15 @@ def get_statistic(request):
         }
     return Response(data=data, status=200)
 
-async def stat_response(**kwargs):
+async def stat_response(dataset):
     async with aiohttp.ClientSession() as session:
-        response = await session.post(f'{HOST_TO_CONNECT_STATISTIC}/create_stat', json=kwargs['json_data'], headers={'User-Agent': 'Mozilla/5.0'})
+        with open(dataset.get_dataset_path(), 'r') as f:
+            response = await session.post(f'{HOST_TO_CONNECT_STATISTIC}/create_stat', data={'key': f},
+                                          headers={'User-Agent': 'Mozilla/5.0'})
         if response.status > 299:
             return 500
 
-        statistic_file = os.path.join(kwargs['path'], 'statistic.html')
+        statistic_file = dataset.get_stat_path()
         stat = await response.read()
         with open(statistic_file, 'wb') as fs:
             fs.write(stat)
@@ -198,8 +219,7 @@ async def upload_statistic(request):
     dataset = await get_dataset_obj_async(request)
     if dataset is None:
         return Response(data='Error', status=404)
-    dataset_table = read_dataset_file(dataset)
-    status_response = await stat_response(json_data={'dataset': dataset_table[0], 'title': dataset.name}, path=dataset.path)
+    status_response = await stat_response(dataset)
     if status_response == 200:
         return Response(data={'success'}, status=200)
     else:
