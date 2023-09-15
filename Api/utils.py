@@ -17,6 +17,7 @@ from sklearn.linear_model import SGDClassifier
 
 import numpy as np
 import pandas as pd
+import math
 
 
 # models = {
@@ -86,6 +87,8 @@ def preprocess_data(data, target, labels):
     for label in labels:
         if labels[label]['use'] == False:
             print('Not Use --> ', label)
+            categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
+            print(f"Column {label} Catefory list == ", categ_list)
             continue
         column = data[label].copy()
         if labels[label]['type'] == 1:
@@ -100,16 +103,14 @@ def preprocess_data(data, target, labels):
             matrix = np.zeros((column.shape[0], len(categ_list)))
             for i, val in zip(range(column.shape[0]), column):
                 matrix[i, categ_list[val]] = 1
-            print(matrix)
             print(f"Column {label} Catefory list == ", categ_list)
             columns.append(matrix)
     print([len(column.shape) for column in columns])
     columns = [column.reshape(column.shape[0], 1) if len(column.shape) == 1 else column for column in columns]
     print([column.shape for column in columns])
     dataset = np.concatenate(columns, axis=1)
-    # dataset = np.transpose(dataset)
     print(dataset.shape)
-    X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=0.18, random_state=401)
+    X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=0.20, random_state=786)
     return X_train, y_train, X_test, y_test
 
 def check_filename(filename):
@@ -125,6 +126,7 @@ def trainer(X_train, y_train, X_test, y_test, model_name, label_name, **params):
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     y_test_org = np.unique(y_test)
+    print(y_test_org)
     targets_org = [label for label in y_test_org]
     print("Targets original == ", targets_org)
     cm_model = confusion_matrix(y_test, pred)
@@ -144,6 +146,10 @@ def trainer(X_train, y_train, X_test, y_test, model_name, label_name, **params):
 
     return cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org
 
+def confidence_interval(s, n, z=1.96):
+  down = (s + z*z/(2*n) - z*math.sqrt((s*(1-s)+z*z/(4*n))/n))/(1+z*z/n)
+  up = (s + z*z/(2*n) + z*math.sqrt((s*(1-s)+z*z/(4*n))/n))/(1+z*z/n)
+  return down, up
 
 def create_classification_report(table_accuracy, y_test, pred, label_name):
     """Create matrix with columns:
@@ -156,6 +162,7 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
     print("Table accuracy == ", table_accuracy)
     uniq_vals = list(set(y_test))
     print("uniq values == ", uniq_vals)
+    intervals = []
     dict_results = {k: {'TP': 0, 'TN': 0, 'FP': 0, 'FN': 0} for k in uniq_vals}
     for label in uniq_vals:
         for expect, fact in zip(y_test, pred):
@@ -180,9 +187,17 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
         except ZeroDivisionError:
             SE = 0
         try:
+            SE_min, SE_max = confidence_interval(SE, v['TP'] + v['FN'])
+        except:
+            SE_min, SE_max = 0, 0
+        try:
             SP = v['FP'] / (v['FP'] + v['TN'])
         except ZeroDivisionError:
             SP = 0
+        try:
+            SP_min, SP_max = confidence_interval(SP, v['FP'] + v['TN'])
+        except ZeroDivisionError:
+            SP_min, SP_max = 0, 0
         try:
             PPV = v['TP'] / (v['TP'] + v['FP'])
         except ZeroDivisionError:
@@ -191,7 +206,6 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
             NPV = v['TN'] / (v['TN'] + v['FN'])
         except ZeroDivisionError:
             NPV = 0
-
         try:
             FPR = 1 - SP
         except ZeroDivisionError:
@@ -200,6 +214,23 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
             FNR = 1 - SE
         except ZeroDivisionError:
             FNR = 0
+        try:
+            FPR_min, FPR_max = confidence_interval(FPR, v['FP'] + v['TN'])
+        except ZeroDivisionError:
+            FPR_min, FPR_max = 0, 0
+        try:
+            FNR_min, FNR_max = confidence_interval(FNR, v['FP'] + v['TN'])
+        except ZeroDivisionError:
+            FNR_min, FNR_max = 0, 0
+        try:
+            PPV_min, PPV_max = confidence_interval(PPV, v['TP'] + v['FP'])
+        except ZeroDivisionError:
+            PPV_min, PPV_max = 0, 0
+        try:
+            NPV_min, NPV_max = confidence_interval(NPV, v['TN'] + v['FN'])
+        except ZeroDivisionError:
+            NPV_min, NPV_max = 0, 0
+
         try:
             OA = SP + SE
         except ZeroDivisionError:
@@ -216,17 +247,26 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
             DOR = SE / (1 - SP) + (1 - SE) / SP
         except ZeroDivisionError:
             DOR = 0
-
-        classification_matrix[k] = [round(SE, 2), round(SP, 2), round(PPV, 2), round(NPV, 2), round(FPR, 2),
-                                    round(FNR, 2), round(OA, 2), round(LRP, 2), round(LRN, 2), round(DOR, 2)]
-        # table_strings[i+1] = table_strings[i+1] + classification_matrix[k]
-        #
-        # print("таблица значений == ", table_strings)
-        # classification_matrix = pd.DataFrame(table_strings[1:i+2], columns=table_strings[0])
+        classification_matrix[k] = [
+            v['TP'], v['TN'], v['FP'], v['FN'],
+            round(SE, 2), round(SP, 2),
+            SE_min, SE_max, SP_min, SP_max,
+            round(PPV, 2), round(NPV, 2), round(FPR, 2), round(FNR, 2),
+            PPV_min, PPV_max, NPV_min, NPV_max,
+            FPR_min, FPR_max, FNR_min, FNR_max,
+            round(OA, 2), round(LRP, 2), round(LRN, 2), round(DOR, 2)
+        ]
     table_strings = []
     for k, v in classification_matrix.items():
         table_strings.append([k, *v])
-    table_names_columns = [label_name, 'SE', 'SP', 'PPV', 'NPV', 'FPR', 'FNR', 'Overall accuracy', 'LR+', 'LR-', 'DOR']
+
+    table_names_columns = [
+        label_name, 'TP', 'TN', 'FP', 'FN',
+        'SE', 'SP', 'SE_min', 'SE_max', 'SP_min', 'SP_max',
+        'PPV', 'NPV', 'FPR', 'FNR',
+        'PPV_min', 'PPV_max', 'NPV_min', 'NPV_max',
+        'FPR_min', 'FPR_max', 'FNR_min', 'FNR_max',
+        'Overall accuracy', 'LR+', 'LR-', 'DOR']
     classification_matrix = pd.DataFrame(table_strings, columns=table_names_columns)
 
     print("Матрица классификации == ", classification_matrix)
@@ -254,7 +294,7 @@ def prepare_y_scores_to_js(y_scores, y_onehot):
         result.append(tpr.tolist())
         result.append(fpr.tolist())
         result.append(name)
-        labels.append(str(y_onehot.columns[i]))
+        labels.append(str(y_onehot.columns[i]) + "_")
 
     print(labels)
     return results, labels

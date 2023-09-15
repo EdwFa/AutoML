@@ -19,11 +19,11 @@ def check_status():
 @analise.route('/learner', methods=['POST'])
 def learner():
     current_app.logger.info(f'Connected to learning model SVM...')
-    print(request.json)
     r_data = request.json
 
     dataset = load_data(r_data['dataset'], r_data['target'], *r_data['categorical_columns'], *r_data['number_columns'])
     labels = sort_data(dataset, r_data['categorical_columns'], r_data['number_columns'])
+    labels[r_data['target']]['use'] = False
     X_train, y_train, X_test, y_test = preprocess_data(dataset, dataset[r_data['target']].copy(), labels)
     cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org = trainer(
         X_train, y_train, X_test, y_test, r_data['model_name'],
