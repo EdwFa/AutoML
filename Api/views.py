@@ -4,13 +4,22 @@ import json
 import os
 import time
 import pandas as pd
-
 import redis
+from dotenv import load_dotenv
 
 from .utils import *
 
+
 analise = Blueprint('analise', __name__)
 
+load_dotenv()
+
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = int(os.getenv('REDIS_PORT'))
+
+print(f'redis on {REDIS_HOST}{REDIS_PORT}')
+
+redis_cli = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
 @analise.route('/', methods=['GET'])
 def check_status():
@@ -19,9 +28,17 @@ def check_status():
 @analise.route('/learner', methods=['POST'])
 def learner():
     current_app.logger.info(f'Connected to learning model SVM...')
-    r_data = request.json
+    broker_key = request.args.get('broker_key')
+    r_data = redis_cli.hgetall(broker_key)
+    r_data['number_columns'] = r_data['number_columns'].split(',') if r_data['number_columns'] != "" else []
+    r_data['categorical_columns'] = r_data['categorical_columns'].split(',') if r_data['categorical_columns'] != "" else []
+    data = request.files
+    print(data)
+    if 'key' not in data:
+        return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
+    current_app.logger.info(f'Find dataset and convert them to pandas DataFrame...')
 
-    dataset = load_data(r_data['dataset'], r_data['target'], *r_data['categorical_columns'], *r_data['number_columns'])
+    dataset = load_data(data['key'], r_data['target'], *r_data['categorical_columns'], *r_data['number_columns'])
     labels = sort_data(dataset, r_data['categorical_columns'], r_data['number_columns'])
     labels[r_data['target']]['use'] = False
     X_train, y_train, X_test, y_test = preprocess_data(dataset, dataset[r_data['target']].copy(), labels)
@@ -42,7 +59,5 @@ def learner():
         'y_scores': y_scores,
         'y_onehot': y_labels,
         'cm_model': cm_model.tolist(),
-        # 'path': request.data['model_path'],
-        # 'size': os.stat(request.data['model_path']).st_size,
     }
     return jsonify(data), 200

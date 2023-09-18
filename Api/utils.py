@@ -48,7 +48,7 @@ formats = ['csv', 'xlsx', 'xls']
 
 def load_data(dataset, target, *labels):
     print(f'Load dataset...')
-    data = pd.DataFrame.from_records(dataset)
+    data = pd.read_csv(dataset.stream)
     if labels is not None:
         data = data[[target, *labels]]
     print(data.columns)
@@ -183,6 +183,23 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
     for i, (k, v) in enumerate(dict_results.items()):
         print(k, v)
         try:
+            Accuracy = (v['TP'] + v['TN']) / (v['TP'] + v['TN'] + v['FP'] + v['FN'])
+        except ZeroDivisionError:
+            Accuracy = 0
+        try:
+            Precision = v['TP'] / (v['FP'] + v['TP'])
+        except ZeroDivisionError:
+            Precision = 0
+        try:
+            Recall = v['TP'] / (v['FN'] + v['TP'])
+        except ZeroDivisionError:
+            Recall = 0
+        try:
+            F1_SCORE = 2 * Precision * Recall / (Precision + Recall)
+        except ZeroDivisionError:
+            F1_SCORE = 0
+
+        try:
             SE = v['TP'] / (v['TP'] + v['FN'])
         except ZeroDivisionError:
             SE = 0
@@ -249,6 +266,7 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
             DOR = 0
         classification_matrix[k] = [
             v['TP'], v['TN'], v['FP'], v['FN'],
+            round(Accuracy, 2), round(Precision, 2), round(Recall, 2), round(F1_SCORE, 2),
             round(SE, 2), round(SP, 2),
             SE_min, SE_max, SP_min, SP_max,
             round(PPV, 2), round(NPV, 2), round(FPR, 2), round(FNR, 2),
@@ -262,6 +280,7 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
 
     table_names_columns = [
         label_name, 'TP', 'TN', 'FP', 'FN',
+        'accuracy', 'precision', 'recall', 'f1-score',
         'SE', 'SP', 'SE_min', 'SE_max', 'SP_min', 'SP_max',
         'PPV', 'NPV', 'FPR', 'FNR',
         'PPV_min', 'PPV_max', 'NPV_min', 'NPV_max',
