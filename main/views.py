@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 
 allowed_types = ['csv', 'xlsx', 'xls']
 
+time_out_time = 5 * 60
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -35,10 +37,6 @@ allowed_types = ['csv', 'xlsx', 'xls']
 def get_datasets(request):
     if not request.user.is_active:
         return Response(data={'status': 'is not active'}, status=403)
-    # if request.user.is_superuser:
-    #     datasets = Dataset.objects.all()
-    # else:
-    #     datasets = Dataset.objects.filter(user=request.user).select_related('user')
     datasets = Dataset.objects.filter(user=request.user).select_related('user')
     datasets = DatasetSerializer(datasets, many=True).data
     return Response(data={'status': 'success', 'datasets': datasets}, status=200)
@@ -109,7 +107,7 @@ def update_dataset_table(request):
 @parser_classes([MultiPartParser, FormParser, FileUploadParser])
 def upload_dataset(request):
     dataset = request.FILES.get('file')
-    dataset_name = ''.join(dataset.name.split('.')[:-1])
+    dataset_name = '.'.join(dataset.name.split('.')[:-1])
     dataset_type = dataset.name.split('.')[-1]
 
     data = {
@@ -169,7 +167,9 @@ def get_dataset(request):
                 'enableRowGroup': True,
                 'enableValue': True,
                 'resizable': True,
-                'editable': True
+                'editable': True,
+                'width': 90,
+                'minWidth': 50,
             }
             for col, dtype in zip(columns, dtypes)
         ],
@@ -198,7 +198,8 @@ def get_statistic(request):
     return Response(data=data, status=200)
 
 async def stat_response(dataset):
-    async with aiohttp.ClientSession() as session:
+    timeout = aiohttp.ClientTimeout(total=time_out_time)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         with open(dataset.get_dataset_path(), 'r') as f:
             response = await session.post(f'{HOST_TO_CONNECT_STATISTIC}/create_stat', data={'key': f},
                                           headers={'User-Agent': 'Mozilla/5.0'})
@@ -245,12 +246,14 @@ def get_models(request):
 
 
 async def learn_response(**kwargs):
-    async with aiohttp.ClientSession() as session:
-        response = await session.post(
-            f'{HOST_TO_CONNECT_LEARNER}/learner',
-            json=kwargs['json_data'],
-            headers={'User-Agent': 'Mozilla/5.0'}
-        )
+    timeout = aiohttp.ClientTimeout(total=time_out_time)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        with open(kwargs['dataset'].get_dataset_path(), 'r') as f:
+            response = await session.post(
+                f'{HOST_TO_CONNECT_LEARNER}/learner?broker_key={kwargs["key"]}',
+                data={'key': f},
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
 
         if response.status > 299:
             logger.info(await response.text())
@@ -268,13 +271,13 @@ async def learn_model(request):
         'Content-Type': 'application/json'
     }
     type_model = request.data["model"]["name"]
-    broker_key = f'ml_{request.user.username}_{dataset.name}_{type_model}'
+    broker_key = f'ml_{request.user.username}_{dataset.id}_{type_model}'
 
-    send_data = create_info_request(dataset, type_model, request, broker_key)
+    send_data = create_info_request(request)
 
-    redis_cli.set(broker_key, 'Use')
+    redis_cli.hset(broker_key, mapping=send_data)
 
-    response = await learn_response(json_data=send_data, headers=headers)
+    response = await learn_response(dataset=dataset, headers=headers, key=broker_key)
     if response is None:
         return Response(data={'status': 'error'}, status=500)
     return Response(data=response, status=201)

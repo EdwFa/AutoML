@@ -67,19 +67,20 @@ def read_dataset_file(dataset, drop_or_fill='fill'):
 # ----------
 
 
-def create_info_request(dataset, type_model, request, broker_key):
+def create_info_request(request):
     print(request.data)
-    records, _, _, _, _ = read_dataset_file(dataset, drop_or_fill='drop')
     data = {
-        'model_name': type_model,
-        'broker_key': broker_key,
-        'dataset': records,
+        'model_name': request.data["model"]["name"],
         'target': request.data['target'],
-        'categorical_columns': request.data.get('categorical_columns', None),
-        'number_columns': request.data.get('number_columns', None),
-        'params': []
+        'categorical_columns': request.data.get('categorical_columns', ""),
+        'number_columns': request.data.get('number_columns', ""),
+        'params': ""
     }
-    # print(data)
+    if data['categorical_columns'] != "":
+        data['categorical_columns'] = ','.join(data['categorical_columns'])
+    if data['number_columns'] != "":
+        data['number_columns'] = ','.join(data['number_columns'])
+    print(data)
     return data
 
 def convert_data_type(label, value, type_data, **kwargs):

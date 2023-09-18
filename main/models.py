@@ -35,7 +35,7 @@ class Dataset(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        if self.path != '/':
+        if self.path != '/' and  os.path.exists(self.path):
             for comp in os.listdir(self.path):
                 print(comp)
                 if os.path.isfile(os.path.join(self.path, comp)):

@@ -217,3 +217,14 @@ REDIS_PORT = int(os.getenv('REDIS_PORT'))
 print(f'redis on {REDIS_HOST}{REDIS_PORT}')
 
 redis_cli = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+
+# Email configs
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 8025
+EMAIL_URL = os.getenv("EMAIL_URL")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+EMAIL_AUTH = os.getenv("EMAIL_AUTH")

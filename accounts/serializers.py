@@ -12,15 +12,30 @@ class UserSerializer(serializers.ModelSerializer):
         exclude = ['password']
 
 
+# class UserCreateSerializer(serializers.ModelSerializer):
+#
+#     class Meta:
+#         model = User
+#         fields = ('username', 'password', 'email', 'first_name', 'last_name', 'city', 'employment')
+#
+#     def create(self, validated_data):
+#         new_user = User.objects.create_user(**validated_data)
+#         return new_user
+
 class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'email', 'first_name', 'last_name', 'city', 'employment')
+        fields = ('username', 'email', 'first_name', 'last_name', 'city', 'employment')
 
     def create(self, validated_data):
+        password = User.objects.make_random_password(length=20)
+        print("Password == ")
+        print(password)
+        validated_data.update(password=password)
         new_user = User.objects.create_user(**validated_data)
-        return new_user
+        new_user.save()
+        return password
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
