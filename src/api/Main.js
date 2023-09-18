@@ -497,8 +497,8 @@ export class Main extends Component {
     var zValues = cm_model;
 
     var colorscaleValue = [
-      [0, "#60a5fa"],
-      [1, "#1d4ed8"],
+      [0, "#FFFFFF"],
+      [1, "#191970"],
     ];
 
     var data = [
@@ -520,6 +520,12 @@ export class Main extends Component {
     var yValues = labels;
 
     var zValues = cm_model;
+    var SumValues = 0;
+    for (let i = 0; i < zValues.length; i++) {
+      for (let j = 0; j < zValues.length; j++) {
+        SumValues = SumValues + zValues[i][j];
+      }
+    }
 
     var layout = {
       title: "Heatmap",
@@ -533,14 +539,179 @@ export class Main extends Component {
       yaxis: {
         ticks: "",
         ticksuffix: " ",
-        autosize: false,
+        autosize: true,
       },
     };
 
     for (var i = 0; i < yValues.length; i++) {
       for (var j = 0; j < xValues.length; j++) {
         var currentValue = zValues[i][j];
-        if (currentValue != 0.0) {
+        if (currentValue > SumValues * 0.25) {
+          var textColor = "white";
+        } else {
+          var textColor = "black";
+        }
+        var result = {
+          xref: "x1",
+          yref: "y1",
+          x: xValues[j],
+          y: yValues[i],
+          text: zValues[i][j],
+          font: {
+            family: "Arial",
+            size: 12,
+            color: "rgb(171, 78, 50)",
+          },
+          showarrow: false,
+          font: {
+            color: textColor,
+          },
+        };
+        layout.annotations.push(result);
+      }
+    }
+    return layout;
+  }
+
+  // Графики для отрисовки по каджому label
+
+  PlotMetricsLabel(row) {
+    var metrics = ["Se", "Sp", "PPV", "NPV", "FPR", "FNR"];
+    var rowData = [row.SE, row.SP, row.PPV, row.NPV, row.FPR, row.FNR];
+    var data = [
+      {
+        x: metrics,
+        y: rowData,
+        name: "metric",
+        error_y: {
+          type: "data",
+          array: [
+            row.SE - row.SE_min,
+            row.SP - row.SP_min,
+            row.PPV - row.PPV_min,
+            row.NPV - row.NPV_min,
+            row.FPR - row.FPR_min,
+            row.FNR - row.FNR_min,
+          ],
+          visible: true,
+        },
+        type: "bar",
+      },
+    ];
+    return data;
+  }
+
+  PlotIntervalsLabel(row) {
+    var metrics = ["Se", "Sp", "PPV", "NPV", "FPR", "FNR"];
+    var textList = [
+      `${row.SE_max.toFixed(2)}<br>${row.SE_min.toFixed(2)}`,
+      `${row.SP_max.toFixed(2)}<br>${row.SP_min.toFixed(2)}`,
+      `${row.PPV_max.toFixed(2)}<br>${row.PPV_min.toFixed(2)}`,
+      `${row.NPV_max.toFixed(2)}<br>${row.NPV_min.toFixed(2)}`,
+      `${row.FPR_max.toFixed(2)}<br>${row.FPR_min.toFixed(2)}`,
+      `${row.FNR_max.toFixed(2)}<br>${row.FNR_min.toFixed(2)}`,
+    ];
+    var data = [
+      {
+        x: metrics,
+        y: [
+          row.SE_min,
+          row.SP_min,
+          row.PPV_min,
+          row.NPV_min,
+          row.FPR_min,
+          row.FNR_min,
+        ],
+        name: "Control2",
+        marker: {
+          color: "rgba(1,1,1,0.0)",
+        },
+        type: "bar",
+      },
+      {
+        x: metrics,
+        y: [
+          row.SE_max - row.SE_min,
+          row.SP_max - row.SP_min,
+          row.PPV_max - row.PPV_min,
+          row.NPV_max - row.NPV_min,
+          row.FPR_max - row.FPR_min,
+          row.FNR_max - row.FNR_min,
+        ],
+        text: textList,
+        name: "Interval",
+        type: "bar",
+        marker: {
+          line: {
+            color: "black",
+            width: 2,
+          },
+        },
+      },
+    ];
+    return data;
+  }
+
+  PlotHeatmapLabel(row) {
+    var xValues = ["True", "False"];
+
+    var yValues = ["True", "False"];
+
+    var zValues = [
+      [row.TP, row.FN],
+      [row.FP, row.TN],
+    ];
+
+    var colorscaleValue = [
+      [0, "#FFFFFF"],
+      [1, "#191970"],
+    ];
+
+    var data = [
+      {
+        x: xValues,
+        y: yValues,
+        z: zValues,
+        type: "heatmap",
+        colorscale: colorscaleValue,
+        showscale: false,
+      },
+    ];
+    return data;
+  }
+
+  PlotHeatmapLabelLayOut(row) {
+    var xValues = ["True", "False"];
+
+    var yValues = ["True", "False"];
+
+    var zValues = [
+      [row.TP, row.FN],
+      [row.FP, row.TN],
+    ];
+
+    var SumValues = row.TP + row.FN + row.FP + row.TN;
+
+    var layout = {
+      title: `${this.state.LearnLabel.name} ${
+        row[this.state.LearnLabel.name]
+      }: Se = ${row.SE} Sp = ${row.SP}`,
+      annotations: [],
+      xaxis: {
+        ticks: "",
+        side: "top",
+      },
+      yaxis: {
+        ticks: "",
+        ticksuffix: " ",
+        autosize: true,
+      },
+    };
+
+    for (var i = 0; i < yValues.length; i++) {
+      for (var j = 0; j < xValues.length; j++) {
+        var currentValue = zValues[i][j];
+        if (currentValue > SumValues * 0.25) {
           var textColor = "white";
         } else {
           var textColor = "black";
@@ -742,7 +913,7 @@ export class Main extends Component {
                         type="file"
                         onChange={this.uploadClick}
                       />
-                      <p className="mt-1 text-xs leading-5 text-gray-600">
+                      <p className="mt-2 text-xs leading-5 text-gray-600">
                         XLS, XLSX, CSV не более 10MB
                       </p>
                     </div>
@@ -758,13 +929,54 @@ export class Main extends Component {
                           rowData={datasets}
                           pagination={true}
                           columnDefs={[
-                            { field: "id" },
-                            { field: "name" },
-                            { field: "format" },
-                            { field: "size" },
-                            { field: "statistic" },
-                            { field: "upload_date" },
-                            { field: "user" },
+                            {
+                              field: "info",
+                              sortable: true,
+                              enableRowGroup: true,
+                              enableValue: true,
+                              resizable: true,
+                              headerName: "Описание",
+                            },
+                            {
+                              field: "name",
+                              sortable: true,
+                              enableRowGroup: true,
+                              enableValue: true,
+                              resizable: true,
+                              headerName: "Название файла",
+                            },
+                            {
+                              field: "format",
+                              sortable: true,
+                              enableRowGroup: true,
+                              enableValue: true,
+                              resizable: true,
+                              headerName: "Формат файла",
+                            },
+                            {
+                              field: "size",
+                              sortable: true,
+                              enableRowGroup: true,
+                              enableValue: true,
+                              resizable: true,
+                              headerName: "Размер(в байтах)",
+                            },
+                            {
+                              field: "upload_date",
+                              sortable: true,
+                              enableRowGroup: true,
+                              enableValue: true,
+                              resizable: true,
+                              headerName: "Дата загрузки",
+                            },
+                            {
+                              field: "user",
+                              sortable: true,
+                              enableRowGroup: true,
+                              enableValue: true,
+                              resizable: true,
+                              headerName: "Владелец",
+                            },
                           ]}
                           rowSelection={"single"}
                           onSelectionChanged={this.onSelectionChanged}
@@ -774,7 +986,10 @@ export class Main extends Component {
                     <div>
                       {dataset ? (
                         <>
-                          <p className="mt-4">Выбран датасет: {dataset.name}</p>
+                          <p className="mt-4">
+                            Выбран датасет: {dataset.name}.{dataset.format}
+                          </p>
+                          <p className="mt-4">Описание: {dataset.info} </p>
                           <div className="mt-4 flex justify-start">
                             <button
                               type="button"
@@ -1011,6 +1226,21 @@ export class Main extends Component {
                             )
                           ) : (
                             <>
+                              <div class="w-full bg-gray-50">
+                                <div class="relative overflow-hidden">
+                                  <div class="flex-row items-center justify-between my-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        this.createStatistic(dataset)
+                                      }
+                                      class="flex items-center justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                    >
+                                      Обновить
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
                               <iframe
                                 srcdoc={currentElem}
                                 style={{
@@ -1018,13 +1248,6 @@ export class Main extends Component {
                                   width: "100%",
                                 }}
                               ></iframe>
-                              <button
-                                type="button"
-                                className="mt-4 px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                                onClick={() => this.createStatistic(dataset)}
-                              >
-                                Обновить
-                              </button>
                             </>
                           )}
                         </div>
@@ -1169,6 +1392,7 @@ export class Main extends Component {
                               LearnInfo.cm_model,
                               LearnInfo.y_onehot
                             )}
+                            style={{ height: "100%", width: "100%" }}
                           />
                         </div>
                         {/* Roc кривая */}
@@ -1176,12 +1400,58 @@ export class Main extends Component {
                           <Plot
                             data={this.PlotRocCurve(LearnInfo.y_scores)}
                             layout={{
-                              width: "100%",
-                              height: "100%",
                               title: "Roc Curve",
+                              autosize: true,
                             }}
+                            style={{ height: "100%", width: "100%" }}
                           />
                         </div>
+                        {/* Вывод по каждому значению target столбца */}
+                        {LearnInfo.classification_matrix?.map((row) => (
+                          <>
+                            <div className="col-span-2 grid grid-cols-3 gap-4">
+                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                {/* Метрики */}
+                                <Plot
+                                  data={this.PlotMetricsLabel(row)}
+                                  layout={{
+                                    autosize: true,
+                                    title: `${this.state.LearnLabel.name} ${
+                                      row[this.state.LearnLabel.name]
+                                    }: Метрики`,
+                                    yaxis: { range: [0, 1] },
+                                  }}
+                                  style={{ height: "100%", width: "100%" }}
+                                />
+                              </div>
+                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                {/* Доверительные интервалы */}
+                                <Plot
+                                  data={this.PlotIntervalsLabel(row)}
+                                  layout={{
+                                    title: `${this.state.LearnLabel.name} ${
+                                      row[this.state.LearnLabel.name]
+                                    }: Интервалы`,
+                                    barmode: "stack",
+                                    showlegend: false,
+                                    autosize: true,
+                                    annotations: [],
+                                    yaxis: { range: [0, 1] },
+                                  }}
+                                  style={{ height: "100%", width: "100%" }}
+                                />
+                              </div>
+                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                {/* Матрица ошибок */}
+                                <Plot
+                                  data={this.PlotHeatmapLabel(row)}
+                                  layout={this.PlotHeatmapLabelLayOut(row)}
+                                  style={{ height: "100%", width: "100%" }}
+                                />
+                              </div>
+                            </div>
+                          </>
+                        ))}
                       </div>
                     ) : null}
                   </Tab.Panel>

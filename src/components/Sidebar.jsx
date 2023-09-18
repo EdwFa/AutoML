@@ -16,7 +16,7 @@ export default function Aside() {
       aria-label="Sidebar"
     >
       <div class="px-3 py-4 w-full">
-        <a href="https://datamed.pro" class="flex items-center pl-2.5 mb-5">
+        <a href="https://dk.sechenov.ru" class="flex items-center pl-2.5 mb-5">
           <img src={Logo1} class="h-24" alt="Sechenov University" />
         </a>
         <ul class="hidden space-y-2 font-medium">
