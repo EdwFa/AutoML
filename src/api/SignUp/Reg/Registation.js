@@ -21,7 +21,7 @@ export class Registration extends Component {
 
     this.state = {
       error: null,
-      token: variables.token,
+      created: false,
       formUsername: "",
       formPassword: "",
       formPasswordDual: "",
@@ -30,10 +30,7 @@ export class Registration extends Component {
       Email: "",
       City: "",
       Employment: "",
-      email: "",
-      username: "",
-      is_staff: false,
-      is_admin: false,
+
     };
   }
 
@@ -62,43 +59,7 @@ export class Registration extends Component {
     this.setState({ Employment: e });
   };
 
-  refreshUser() {
-    // Перезапускаем get наших списков
-    this.setState({ token: variables.token });
-    if (this.state.token != "") {
-      fetch(variables.API_URL + "accounts/profile", {
-        headers: {
-          "Content-Type": "application/json;charset=utf-8",
-          Authorization: `Token ${this.state.token}`,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          this.setState({
-            username: data.data.username,
-            email: data.data.email,
-            is_staff: data.data.is_staff,
-            is_admin: data.data.is_superuser,
-            error: null,
-          });
-          variables.user = data.data;
-        })
-        .catch((error) => {
-          console.log(error);
-          this.setState({ error: error });
-        });
-    }
-  }
-
   SignUp() {
-    if (!(this.state.formPassword || this.state.formUsername)) {
-      alert("Заполните поля!");
-      return;
-    }
-    if (this.state.formPassword != this.state.formPasswordDual) {
-      alert("Пароли не совпадают!");
-      return;
-    }
     fetch("accounts/sign-up", {
       method: "POST",
       headers: {
@@ -106,7 +67,6 @@ export class Registration extends Component {
       },
       body: JSON.stringify({
         username: this.state.formUsername,
-        password: this.state.formPassword,
         first_name: this.state.firstName,
         last_name: this.state.lastName,
         email: this.state.Email,
@@ -115,43 +75,37 @@ export class Registration extends Component {
       }),
     })
       .then((response) => {
-        if (response.ok) {
+        if (response.status < 404) {
           return response.json();
         } else {
           throw Error(`Something went wrong: code ${response.status}`);
         }
       })
-      .then(({ key }) => {
-        variables.token = key;
-        this.setState({ error: null, token: key });
-        this.refreshUser();
+      .then((data) => {
+        console.log(data);
+        if (data.error !== null)
+            throw Error(data.error);
+        else
+            this.setState({ error: null, created: true });
       })
       .catch((error) => {
         console.log(error);
-        this.setState({ error: "Ошибка, подробности в консоли" });
+        this.setState({ error: "Ошибка, при регистрации" });
+        alert(error)
       });
-    this.refreshUser();
-  }
-
-  componentDidMount() {
-    this.refreshUser();
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (this.state.token !== prevState.token) {
-      this.refreshUser();
+    if (this.state.created) {
+      return <Navigate push to="/login" />;
     }
-  }
-
-  nextPath() {
-    return <Navigate push to="/viewer" />;
   }
 
   render() {
     const {
       loading,
+      created,
       error,
-      token,
       formUsername,
       formPassword,
       formPasswordDual,
@@ -160,13 +114,9 @@ export class Registration extends Component {
       Email,
       City,
       Employment,
-      email,
-      username,
-      is_staff,
-      is_admin,
     } = this.state;
 
-    if (token != "") {
+    if (created) {
       return (
         <div>
           {/* окно после успешной регистации там приветсвие и кнопка на главную страницу */}
@@ -174,9 +124,9 @@ export class Registration extends Component {
           <br />
           <span>We welcome to our machine learning simplification site! </span>
           <br />
-          <span>Success</span>
+          <span>Ваш пароль выслан на почту указаную при регистрации! </span>
           <br />
-          <Button as={Link} to={"/viewer"}>
+          <Button as={Link} to={"/login"}>
             Start
           </Button>
         </div>
@@ -201,7 +151,6 @@ export class Registration extends Component {
                   <input
                     type="text"
                     id="username"
-                    name="username"
                     value={formUsername}
                     onChange={this.changeUserNameForm}
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -219,6 +168,7 @@ export class Registration extends Component {
                   <input
                     type="email"
                     id="email"
+                    name="email"
                     value={Email}
                     onChange={this.changeEmail}
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -282,6 +232,7 @@ export class Registration extends Component {
                     isClearable
                   />
                 </div>
+                {/*
                 <div class="mb-6">
                   <label
                     for="password"
@@ -315,10 +266,12 @@ export class Registration extends Component {
                     placeholder="••••••••"
                     required
                   />
+
                 </div>
+                */}
                 <div className="flex">
                   <button
-                    type="submit"
+                    type="button"
                     onClick={() => this.SignUp()}
                     class="text-white w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                   >

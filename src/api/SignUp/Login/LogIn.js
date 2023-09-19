@@ -192,21 +192,12 @@ export class LogIn extends Component {
                 </div>
                 <div className="flex justify-between mb-6">
                   <div className="flex items-start">
-                    <div className="flex items-center">
-                      <input
-                        id="remember"
-                        type="checkbox"
-                        value=""
-                        className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
-                        required
-                      />
-                    </div>
-                    <label
-                      for="remember"
-                      className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                    <Link
+                      to="/sign-up"
+                      className="text-sm font-medium text-blue-700 dark:text-blue-800"
                     >
-                      Запомнить меня
-                    </label>
+                      Не зарегистрированы?
+                    </Link>
                   </div>
                   <div className="flex items-center">
                     <Link className="ml-2 text-sm font-medium text-blue-700 dark:text-blue-800">
@@ -216,20 +207,12 @@ export class LogIn extends Component {
                 </div>
                 <div className="flex">
                   <button
-                    type="submit"
+                    type="button"
                     onClick={() => this.submitUp()}
                     className="text-white w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                   >
                     Войти
                   </button>
-                </div>
-                <div className="flex items-start">
-                  <Link
-                    to="/sign-up"
-                    className="mt-5 ml-2 text-sm font-medium text-blue-700 dark:text-blue-800"
-                  >
-                    Не зарегистрированы?
-                  </Link>
                 </div>
               </form>
             </div>

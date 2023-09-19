@@ -46,6 +46,36 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
+function GetLearnInfo(props) {
+  console.log("get info...");
+  return <p>Loading</p>;
+  fetch(
+    variables.API_URL +
+      "main/dataset/learner_info" +
+      `?datasetId=${props.datasetId}&${props.LearnModel}`,
+    {
+      headers: {
+        "Content-Type": "application/json;charset=utf-8",
+        Authorization: `Token ${props.token}`,
+      },
+    }
+  )
+    .then((res) => {
+      if (res.ok) {
+        return res.json();
+      } else {
+        throw Error(res.statusText);
+      }
+    })
+    .then((data) => {
+      console.log(data);
+      return <p>Learning</p>;
+    })
+    .catch((error) => {
+      alert("Ошибка");
+    });
+}
+
 export class Main extends Component {
   constructor(props) {
     super(props);
@@ -56,7 +86,9 @@ export class Main extends Component {
       // user data
       user: variables.user,
       token: variables.token,
-      loading: false,
+      loadingStat: false,
+      loadingLearn: false,
+      learnInfo: null,
 
       // dataset
       uploaded_file: null,
@@ -304,6 +336,7 @@ export class Main extends Component {
 
   // Статистика датасета
   LoadStatistic(dataset) {
+    this.setState({ loadingStat: true });
     fetch(
       variables.API_URL + "main/dataset/statistic" + `?datasetId=${dataset.id}`,
       {
@@ -329,11 +362,11 @@ export class Main extends Component {
         console.log(error);
         this.setState({ info: [], currentElem: null });
       });
+    this.setState({ loadingStat: false });
   }
 
   createStatistic(dataset) {
-    console.log(this.state.loading);
-    this.setState({ loading: true });
+    this.setState({ loadingStat: true });
 
     fetch(
       variables.API_URL + "main/statistic/upload" + `?datasetId=${dataset.id}`,
@@ -352,13 +385,13 @@ export class Main extends Component {
         throw Error("Ошибка при создании статистических данных");
       })
       .then((data) => {
-        this.setState({ loading: false });
         this.LoadStatistic(dataset);
+        this.setState({ loadingStat: false });
       })
       .catch((error) => {
         console.log(error);
         alert(error);
-        this.setState({ info: [], loading: false });
+        this.setState({ loadingStat: false });
       });
   }
 
@@ -376,6 +409,8 @@ export class Main extends Component {
       .then((response) => response.json())
       .then((data) => {
         this.setState({
+          LearnLabel: null,
+          LearnInfo: null,
           default_models: data.models?.map((model) => ({
             id: model,
             name: model,
@@ -441,6 +476,7 @@ export class Main extends Component {
       return;
     }
 
+    this.setState({ loadingLearn: true });
     fetch(
       variables.API_URL + "main/dataset/learner" + `?datasetId=${dataset.id}`,
       {
@@ -468,10 +504,12 @@ export class Main extends Component {
       })
       .then((data) => {
         console.log(data);
-        this.setState({ LearnInfo: data, loading: false });
+        this.setState({ LearnInfo: data });
+        this.setState({ loadingLearn: false });
       })
       .catch((error) => {
         alert("Ошибка");
+        this.setState({ loadingLearn: false });
       });
   }
 
@@ -492,9 +530,9 @@ export class Main extends Component {
   PlotHeatmap(cm_model, labels) {
     var xValues = labels;
 
-    var yValues = labels;
+    var yValues = [...labels].reverse();
 
-    var zValues = cm_model;
+    var zValues = [...cm_model].reverse();
 
     var colorscaleValue = [
       [0, "#FFFFFF"],
@@ -517,9 +555,9 @@ export class Main extends Component {
   PlotLayoutHeatmap(cm_model, labels) {
     var xValues = labels;
 
-    var yValues = labels;
+    var yValues = [...labels].reverse();
 
-    var zValues = cm_model;
+    var zValues = [...cm_model].reverse();
     var SumValues = 0;
     for (let i = 0; i < zValues.length; i++) {
       for (let j = 0; j < zValues.length; j++) {
@@ -655,12 +693,12 @@ export class Main extends Component {
   PlotHeatmapLabel(row) {
     var xValues = ["True", "False"];
 
-    var yValues = ["True", "False"];
+    var yValues = ["True", "False"].reverse();
 
     var zValues = [
       [row.TP, row.FN],
       [row.FP, row.TN],
-    ];
+    ].reverse();
 
     var colorscaleValue = [
       [0, "#FFFFFF"],
@@ -683,12 +721,12 @@ export class Main extends Component {
   PlotHeatmapLabelLayOut(row) {
     var xValues = ["True", "False"];
 
-    var yValues = ["True", "False"];
+    var yValues = ["True", "False"].reverse();
 
     var zValues = [
       [row.TP, row.FN],
       [row.FP, row.TN],
-    ];
+    ].reverse();
 
     var SumValues = row.TP + row.FN + row.FP + row.TN;
 
@@ -742,7 +780,8 @@ export class Main extends Component {
     const {
       token,
       user,
-      loading,
+      loadingStat,
+      loadingLearn,
       uploaded_file,
 
       datasets,
@@ -1038,6 +1077,7 @@ export class Main extends Component {
                             autoGroupColumnDef={this.autoGroupColumnDef}
                             localeText={AG_GRID_LOCALE_RU}
                             pagination={true}
+                            autosize={true}
                             sideBar={{
                               toolPanels: [
                                 {
@@ -1213,12 +1253,13 @@ export class Main extends Component {
                       <>
                         <div className="">
                           {currentElem === null ? (
-                            loading ? (
-                              <button
-                                type="button"
-                                className="mt-4 px-3 py-2 text-sm font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                                onClick={() => this.createStatistic(dataset)}
-                              >
+                            <button
+                              type="button"
+                              disabled={loadingStat}
+                              className="mt-4 px-3 py-2 text-sm font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                              onClick={() => this.createStatistic(dataset)}
+                            >
+                              {loadingStat ? (
                                 <svg
                                   aria-hidden="true"
                                   role="status"
@@ -1236,17 +1277,10 @@ export class Main extends Component {
                                     fill="currentColor"
                                   />
                                 </svg>
-                                Загрузка ...
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="mt-4 px-3 py-2 text-sm font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                                onClick={() => this.createStatistic(dataset)}
-                              >
-                                Создать
-                              </button>
-                            )
+                              ) : (
+                                "Вычислить статистичекие значения по датасету"
+                              )}
+                            </button>
                           ) : (
                             <>
                               <div class="w-full bg-gray-50">
@@ -1254,40 +1288,68 @@ export class Main extends Component {
                                   <div class="flex-row items-center justify-between my-2">
                                     <button
                                       type="button"
+                                      disabled={loadingStat}
                                       className="mt-4 px-3 py-2 text-sm font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                                       onClick={() =>
                                         this.createStatistic(dataset)
                                       }
                                     >
-                                      <svg
-                                        aria-hidden="true"
-                                        role="status"
-                                        class="inline w-4 h-4 mr-3 text-white animate-spin"
-                                        viewBox="0 0 100 101"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                          fill="#E5E7EB"
-                                        />
-                                        <path
-                                          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                          fill="currentColor"
-                                        />
-                                      </svg>
-                                      Обновить
+                                      {loadingStat ? (
+                                        <>
+                                          <svg
+                                            aria-hidden="true"
+                                            role="status"
+                                            class="inline w-4 h-4 mr-3 text-white animate-spin"
+                                            viewBox="0 0 100 101"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                          >
+                                            <path
+                                              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                              fill="#E5E7EB"
+                                            />
+                                            <path
+                                              d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                              fill="currentColor"
+                                            />
+                                          </svg>
+                                          Вычисление
+                                        </>
+                                      ) : (
+                                        "Обновить"
+                                      )}
                                     </button>
                                   </div>
                                 </div>
                               </div>
-                              <iframe
-                                srcdoc={currentElem}
-                                style={{
-                                  height: 1000,
-                                  width: "100%",
-                                }}
-                              ></iframe>
+                              {loadingStat ? (
+                                <div>
+                                  <h2 className="mb-2">
+                                    Подсчитываем статистические парметры...
+                                  </h2>
+                                  <p className="mb-2">
+                                    Считаем кол-во пропущеных, пустых и
+                                    уникальных значений...
+                                  </p>
+                                  <p className="mb-2">
+                                    Считаем данные по каждому столбцу...
+                                  </p>
+                                  <p className="mb-2">
+                                    Вычисляем корреляции между столбцами...
+                                  </p>
+                                  <p className="mb-2">
+                                    Пожайлуста дождитесь ее окончания.
+                                  </p>
+                                </div>
+                              ) : (
+                                <iframe
+                                  srcdoc={currentElem}
+                                  style={{
+                                    height: 1000,
+                                    width: "100%",
+                                  }}
+                                ></iframe>
+                              )}
                             </>
                           )}
                         </div>
@@ -1384,37 +1446,50 @@ export class Main extends Component {
                         <div>
                           <button
                             type="button"
+                            disabled={loadingLearn}
                             class="mt-4 flex items-center justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                             onClick={() => this.LearnModel(dataset)}
                           >
-                            <svg
-                              aria-hidden="true"
-                              role="status"
-                              class="inline w-4 h-4 mr-3 text-white animate-spin"
-                              viewBox="0 0 100 101"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                fill="#E5E7EB"
-                              />
-                              <path
-                                d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                fill="currentColor"
-                              />
-                            </svg>
-                            Обучить
+                            {loadingLearn ? (
+                              <>
+                                <svg
+                                  aria-hidden="true"
+                                  role="status"
+                                  class="inline w-4 h-4 mr-3 text-white animate-spin"
+                                  viewBox="0 0 100 101"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                    fill="#E5E7EB"
+                                  />
+                                  <path
+                                    d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                    fill="currentColor"
+                                  />
+                                </svg>
+                                Обучение
+                              </>
+                            ) : (
+                              "Обучить"
+                            )}
                           </button>
                         </div>
                       </div>
                     ) : null}
                     {/* Информация об обучении */}
-
-                    {LearnInfo ? (
+                    {loadingLearn ? (
+                      <GetLearnInfo
+                        token={token}
+                        datasetId={dataset.id}
+                        LearnModel={LearnModel.name}
+                      />
+                    ) : LearnInfo ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* таблица с результатами */}
                         <div className="h-96 col-span-2">
+                          {/*
                           <div
                             className="ag-theme-alpine ag-theme-acmecorp"
                             style={{ height: "100%", width: "100%" }}
@@ -1422,19 +1497,129 @@ export class Main extends Component {
                             <AgGridReact
                               rowData={LearnInfo.classification_matrix}
                               columnDefs={[
-                                { field: LearnLabel.name },
-                                { field: "SE" },
-                                { field: "SP" },
-                                { field: "PPV" },
-                                { field: "NPV" },
-                                { field: "FPR" },
-                                { field: "FNR" },
-                                { field: "Overall accuracy" },
-                                { field: "LR+" },
-                                { field: "LR-" },
-                                { field: "DOR" },
+                                { field: LearnLabel.name, width: 90, minWidth: 50, maxWidth: 150, resizable: true},
+                                { field: "accuracy", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "precision", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "recall", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "f1-score", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "SE", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "SP", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "PPV", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "NPV", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "FPR", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "FNR", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "Overall accuracy", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "LR+", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "LR-", width: 90, minWidth: 50, maxWidth: 150 },
+                                { field: "DOR", width: 90, minWidth: 50, maxWidth: 150 },
                               ]}
                             ></AgGridReact>
+                          </div>
+                          */}
+                          <div class="relative overflow-x-auto">
+                            <table className="table-auto w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                <tr className="table-row">
+                                  <th className="table-cell text-left px-6 py-3">
+                                    {LearnLabel.name}
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    accuracy
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    precision
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    recall
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    f1-score
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    SE
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    SP
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    PPV
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    NPV
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    FPR
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    FNR
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    Overall accuracy
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    LR+
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    LR-
+                                  </th>
+                                  <th className="table-cell text-left px-6 py-3">
+                                    DOR
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="table-row-group">
+                                {LearnInfo.classification_matrix?.map((row) => (
+                                  <tr
+                                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                                    key={row[LearnLabel.name]}
+                                  >
+                                    <td>{row[`${LearnLabel.name}`]}</td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.accuracy}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.precision}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.recall}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row[`f1-score`]}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.SE}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.SP}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.PPV}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.NPV}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.FPR}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.FNR}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row[`Overall accuracy`]}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row[`LR+`]}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row[`LR-`]}
+                                    </td>
+                                    <td className="table-cell px-6 py-4">
+                                      {row.DOR}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
                         {/* Графики обучения */}
