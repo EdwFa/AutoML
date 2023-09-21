@@ -1,6 +1,6 @@
 *.pyc
 .idea
-datasets
+.datasets
 db.sqlite3
 venv
 logs
