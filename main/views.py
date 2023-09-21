@@ -39,7 +39,7 @@ def get_datasets(request):
         return Response(data={'status': 'is not active'}, status=403)
     datasets = Dataset.objects.filter(user=request.user).select_related('user')
     datasets = DatasetSerializer(datasets, many=True).data
-    return Response(data={'status': 'success', 'datasets': datasets}, status=200)
+    return Response(data={'status': 'success', 'base_datasets': datasets}, status=200)
 
 
 @api_view(['DELETE'])
@@ -129,7 +129,7 @@ def upload_dataset(request):
         path='/'
     )
     dataset_table.save()
-    path_to_save_folder = os.path.join('datasets', request.user.username, f'{dataset_table.id}_{dataset_table.name}')
+    path_to_save_folder = os.path.join('base_datasets', request.user.username, f'{dataset_table.id}_{dataset_table.name}')
     dataset_table.path = path_to_save_folder
     if not os.path.exists(path_to_save_folder):
         os.mkdir(path_to_save_folder)

@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('path', models.CharField(max_length=255)),
                 ('format', models.CharField(max_length=8)),
                 ('size', models.IntegerField()),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='datasets', related_query_name='datasets', to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='base_datasets', related_query_name='base_datasets', to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(

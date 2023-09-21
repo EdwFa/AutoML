@@ -71,7 +71,7 @@ ROOT_URLCONF = 'ML_Datamed.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,"datasets")],
+        'DIRS': [os.path.join(BASE_DIR,"base_datasets")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -154,8 +154,8 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-if not os.path.exists('datasets'):
-    os.mkdir('datasets')
+if not os.path.exists('base_datasets'):
+    os.mkdir('base_datasets')
 
 
 # Logging
