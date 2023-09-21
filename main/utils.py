@@ -67,10 +67,10 @@ def read_dataset_file(dataset, drop_or_fill='fill'):
 # ----------
 
 
-def create_info_request(request):
+def create_info_request(request, type_models):
     print(request.data)
     data = {
-        'model_name': request.data["model"]["name"],
+        'model_name': type_models,
         'target': request.data['target'],
         'categorical_columns': request.data.get('categorical_columns', ""),
         'number_columns': request.data.get('number_columns', ""),

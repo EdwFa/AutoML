@@ -39,7 +39,7 @@ def get_datasets(request):
         return Response(data={'status': 'is not active'}, status=403)
     datasets = Dataset.objects.filter(user=request.user).select_related('user')
     datasets = DatasetSerializer(datasets, many=True).data
-    return Response(data={'status': 'success', 'base_datasets': datasets}, status=200)
+    return Response(data={'status': 'success', 'datasets': datasets}, status=200)
 
 
 @api_view(['DELETE'])
@@ -129,7 +129,7 @@ def upload_dataset(request):
         path='/'
     )
     dataset_table.save()
-    path_to_save_folder = os.path.join('base_datasets', request.user.username, f'{dataset_table.id}_{dataset_table.name}')
+    path_to_save_folder = os.path.join('datasets', request.user.username, f'{dataset_table.id}_{dataset_table.name}')
     dataset_table.path = path_to_save_folder
     if not os.path.exists(path_to_save_folder):
         os.mkdir(path_to_save_folder)
@@ -201,8 +201,13 @@ async def stat_response(dataset):
     timeout = aiohttp.ClientTimeout(total=time_out_time)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         with open(dataset.get_dataset_path(), 'r') as f:
-            response = await session.post(f'{HOST_TO_CONNECT_STATISTIC}/create_stat', data={'key': f},
-                                          headers={'User-Agent': 'Mozilla/5.0'})
+            try:
+                response = await session.post(f'{HOST_TO_CONNECT_STATISTIC}/create_stat', data={'key': f},
+                                           headers={'User-Agent': 'Mozilla/5.0'})
+            except asyncio.exceptions.TimeoutError:
+                print("time out exception")
+                return 504
+
         if response.status > 299:
             return 500
 
@@ -221,8 +226,11 @@ async def upload_statistic(request):
     dataset = await get_dataset_obj_async(request)
     if dataset is None:
         return Response(data='Error', status=404)
+
     status_response = await stat_response(dataset)
-    if status_response == 200:
+    if status_response == 504:
+        return Response(data={'timeout'}, status=504)
+    elif status_response == 200:
         return Response(data={'success'}, status=200)
     else:
         return Response(data={'error'}, status=500)
@@ -249,15 +257,19 @@ async def learn_response(**kwargs):
     timeout = aiohttp.ClientTimeout(total=time_out_time)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         with open(kwargs['dataset'].get_dataset_path(), 'r') as f:
-            response = await session.post(
-                f'{HOST_TO_CONNECT_LEARNER}/learner?broker_key={kwargs["key"]}',
-                data={'key': f},
-                headers={'User-Agent': 'Mozilla/5.0'}
-            )
+            try:
+                response = await session.post(
+                    f'{HOST_TO_CONNECT_LEARNER}/learner?broker_key={kwargs["key"]}',
+                    data={'key': f},
+                    headers={'User-Agent': 'Mozilla/5.0'}
+                )
+            except asyncio.exceptions.TimeoutError:
+                print("time out exception")
+                return 504
 
         if response.status > 299:
             logger.info(await response.text())
-            return None
+            return 500
         return await response.json()
 
 @api_view(['POST'])
@@ -270,15 +282,21 @@ async def learn_model(request):
     headers = {
         'Content-Type': 'application/json'
     }
-    type_model = request.data["model"]["name"]
+    type_model = request.data.get("model", "")
+    if type_model == "":
+        return Response(data={'status': 'error'}, status=500)
+
+    type_model = ','.join(type_model)
     broker_key = f'ml_{request.user.username}_{dataset.id}_{type_model}'
 
-    send_data = create_info_request(request)
+    send_data = create_info_request(request, type_model)
 
     redis_cli.hset(broker_key, mapping=send_data)
 
     response = await learn_response(dataset=dataset, headers=headers, key=broker_key)
-    if response is None:
+    if response == 500:
         return Response(data={'status': 'error'}, status=500)
+    elif response == 504:
+        return Response(data={'status': 'error'}, status=504)
     return Response(data=response, status=201)
 

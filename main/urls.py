@@ -6,13 +6,13 @@ app_name = 'main'
 
 urlpatterns = [
     # датасеты
-    path('base_datasets', get_datasets),
+    path('datasets', get_datasets),
     path('dataset/delete', delete_dataset),
     path('dataset/update', update_dataset),
     path('dataset/update_info', update_dataset_table),
 
     # Загрузка датасета и статистики
-    path('base_datasets/upload', upload_dataset, name='upload'),
+    path('datasets/upload', upload_dataset, name='upload'),
     path('statistic/upload', upload_statistic, name='upload'),
 
     # Разделы для анализа и обучения датасета
