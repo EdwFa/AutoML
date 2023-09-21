@@ -108,19 +108,26 @@ class RegistrationApiView(APIView):
             if email is None and not re.fullmatch(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+', email):
                 return Response(data={'Status': 'Not valid', 'error': "Данный email введен некорректно"}, status=403)
 
+            password = User.objects.make_random_password(length=20)
+            print("Password == ")
+            print(password)
+            request.data.update(password=password)
+
+            send_mail(
+                'Message from ml.datamed.pro',
+                f'Your password for system : {password}',
+                from_email=EMAIL_URL,
+                recipient_list=[request.data.get('email')],
+                fail_silently=False,
+                auth_user=EMAIL_AUTH,
+                auth_password=EMAIL_PASSWORD
+            )
+
             new_user = UserCreateSerializer(data=request.data, many=False)
             if not new_user.is_valid():
                 logger.debug(new_user.errors)
                 logger.debug('Data for sign up not valid')
                 return Response(data={'Status': 'Not valid', 'error': ""}, status=403)
-            password = new_user.save()
-            send_mail(
-                'Message from ml.datamed.pro',
-                f'Your password for system : {password}',
-                from_email=EMAIL_URL,
-                recipient_list=[new_user.validated_data.get('email')],
-                fail_silently=False,
-                auth_user=EMAIL_AUTH,
-                auth_password=EMAIL_PASSWORD
-            )
+            new_user.save()
+
             return Response(data={'Status': 'Success', 'error': None}, status=201)
