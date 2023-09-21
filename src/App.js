@@ -4,12 +4,15 @@ import { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 // Импорт страниц
-import { LogIn } from "./api/SignUp/Login/LogIn.js";
+import { LogIn } from "./pages/LogIn";
+import Help from "./pages/Help";
 import Doc1 from "./pages/Doc1";
 import Doc2 from "./pages/Doc2";
-import { Registration } from "./api/SignUp/Reg/Registation.js";
+import Doc3 from "./pages/Doc3";
+import Doc4 from "./pages/Doc4";
 
-import { Main } from "./api/Main.js";
+import { Registration } from "./pages/Registation";
+import { Main } from "./pages/Main";
 
 function App() {
   useEffect(() => {
@@ -21,8 +24,11 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<LogIn />} />
+        <Route path="/help" element={<Help />} />
         <Route path="/doc1" element={<Doc1 />} />
         <Route path="/doc2" element={<Doc2 />} />
+        <Route path="/doc3" element={<Doc3 />} />
+        <Route path="/doc4" element={<Doc4 />} />
         <Route path="/sign-up" element={<Registration />} />
         <Route path="/" element={<Main />} />
       </Routes>
