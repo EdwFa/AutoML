@@ -111,7 +111,7 @@ class RegistrationApiView(APIView):
             password = User.objects.make_random_password(length=20)
             print("Password == ")
             print(password)
-            request.data.update(password=password)
+            request.data['password'] = password
 
             send_mail(
                 'Message from ml.datamed.pro',
@@ -124,10 +124,13 @@ class RegistrationApiView(APIView):
             )
 
             new_user = UserCreateSerializer(data=request.data, many=False)
+            print(new_user)
             if not new_user.is_valid():
                 logger.debug(new_user.errors)
                 logger.debug('Data for sign up not valid')
                 return Response(data={'Status': 'Not valid', 'error': ""}, status=403)
             new_user.save()
+
+
 
             return Response(data={'Status': 'Success', 'error': None}, status=201)
