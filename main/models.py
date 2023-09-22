@@ -19,7 +19,7 @@ class Dataset(models.Model):
     """Таблица для храниния общей информации о датасете, так же хранит пользоватлея который загрузил ее и путь до файла"""
     name = models.CharField(max_length=64)
     path = models.CharField(max_length=255)
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='datasets', related_query_name='datasets')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='datasets', related_query_name='datasets')
     upload_date = models.DateTimeField(auto_now=True)
     format = models.CharField(max_length=8)
     size = models.IntegerField()
