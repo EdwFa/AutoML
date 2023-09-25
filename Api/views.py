@@ -8,6 +8,7 @@ from ydata_profiling import ProfileReport
 from io import StringIO
 
 # import redis
+from .utils import TranslateStat
 
 
 analise = Blueprint('analise', __name__)
@@ -20,6 +21,7 @@ def check_status():
 @analise.route('/create_stat', methods=['POST'])
 def createStat():
     current_app.logger.info(f'Start create statistic data...')
+    save_file = "report.html"
     data = request.files
     print(data)
     if 'key' not in data:
@@ -37,7 +39,9 @@ def createStat():
         dataset, title=title, html={"style": {"full_width": True}}, sort=None
     )
     current_app.logger.info(f'Save dataset...')
-    save_file = "report.html"
     profile.to_file(save_file)
+    translateHTML = TranslateStat(save_file)
+    translateHTML.translate()
+    translateHTML.reload_changes(save_file)
     current_app.logger.info(f'Response dataset...')
     return send_file(save_file, as_attachment=True)
