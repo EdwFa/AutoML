@@ -28,7 +28,8 @@ logger = logging.getLogger(__name__)
 
 allowed_types = ['csv', 'xlsx', 'xls']
 
-time_out_time = 5 * 60
+time_out_time_learn = 5 * 60
+time_out_time_stat = 10 * 60
 
 
 @api_view(['GET'])
@@ -198,7 +199,7 @@ def get_statistic(request):
     return Response(data=data, status=200)
 
 async def stat_response(dataset):
-    timeout = aiohttp.ClientTimeout(total=time_out_time)
+    timeout = aiohttp.ClientTimeout(total=time_out_time_stat)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         with open(dataset.get_dataset_path(), 'r') as f:
             try:
@@ -254,7 +255,7 @@ def get_models(request):
 
 
 async def learn_response(**kwargs):
-    timeout = aiohttp.ClientTimeout(total=time_out_time)
+    timeout = aiohttp.ClientTimeout(total=time_out_time_learn)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         with open(kwargs['dataset'].get_dataset_path(), 'r') as f:
             try:
