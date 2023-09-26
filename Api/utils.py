@@ -188,9 +188,12 @@ class TranslateStat:
         self.translate_samples()
         self.translate_duplicates()
 
-        f = self.body.find('footer', class_='container-fluid')
+        f = self.body.find('footer')
         if f is not None:
             f.find('p').string = "Статистика произведена ml.datamed.pro"
+        for table in self.body.find_all('table', class_="freq table table-hover table-striped table-0"):
+            for cell, text in zip(table.thead.tr.find_all('td'), ('Значение', 'Кол-во', 'Частота (%)')):
+                cell.string = text
         return
 
     def translate_main(self):
