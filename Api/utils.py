@@ -18,7 +18,7 @@ reproductionTable = [
     'Начало анализа',
     'Конец анализа',
     'Продолжительность',
-    'Версия ПО',
+    ['Версия ПО', 'ml.datamed.pro'],
     'Скачать конфигурацию',
 ]
 
@@ -50,7 +50,7 @@ tableNum2 = [
     'Нулей (%)',
     'Отрицательных',
     'Отрицательных (%)',
-    'Занимает памяти',
+    'В памяти',
 ]
 
 tableNum3 = [
@@ -61,7 +61,7 @@ tableNum3 = [
     'Q3',
     '95-ый процентиль',
     'Максимум',
-    'Промежуток',
+    'Размах выборки',
     "Межквартильный размах (IQR)",
 ]
 
@@ -82,8 +82,8 @@ tableNavsNums = [
     "Гистограмма",
     "Частота значения",
     "Крайние значения",
-    "10 мин. значений",
-    "10 макс. значений"
+    "10 минимальных",
+    "10 максимальных"
 ]
 
 tableCars1 = [
@@ -91,7 +91,7 @@ tableCars1 = [
     "Уникальных (%)",
     'Пропущенных',
     'Пропушенных (%)',
-    'Занимает памяти',
+    'В памяти',
 ]
 
 tableCars2 = [
@@ -186,10 +186,11 @@ class TranslateStat:
         self.translate_correlations()
         self.translate_missing()
         self.translate_samples()
+        self.translate_duplicates()
         return
 
     def translate_main(self):
-        navTexts = ['Обзор', 'Переменные', 'Взаимодействия', 'Корреляции', 'Пропущенные значения', 'Образец']
+        navTexts = ['Общие сведения', 'Переменные', 'Взаимодействия', 'Корреляции', 'Пропущенные значения', 'Образцы', 'Повторяющиеся строки']
         log = self.body.find("a", class_="navbar-brand anchor",href="#top")
         log.string = "Статистика"
         navBar = self.body.find('div', id='navbar', class_="navbar-collapse collapse")
@@ -203,7 +204,7 @@ class TranslateStat:
 
     def translate_overview(self):
         overview = self.sections['overview']
-        for li, text in zip(overview.find_all('li'), ('Обзор', 'Предупреждения', 'Воспроизведение')):
+        for li, text in zip(overview.find_all('li'), ('Обзор', 'Предупреждения', 'Служебная информация')):
             li.a.string = text
         overview_o = overview.find('div', id="overview-dataset_overview")
         for h4, text in zip(overview_o.find_all('p', class_='h4'), ('Статистика датасета', 'Типы переменных')):
@@ -216,9 +217,13 @@ class TranslateStat:
         overview_a.find('p', class_='h4').string = "Предупреждения"
 
         overview_r = overview.find('div', id="overview-reproduction")
-        overview_r.find('p', class_='h4').string = "Воспроизведение"
+        overview_r.find('p', class_='h4').string = "Служебная информация"
         for row, text in zip(overview_r.find_all('tr'), reproductionTable):
-            row.th.string = text
+            if isinstance(text, list):
+                row.td.string = text[1]
+                row.th.string = text[0]
+            else:
+                row.th.string = text
         return
 
     def translate_variables(self):
@@ -264,7 +269,7 @@ class TranslateStat:
                 pass
 
             try:
-                info.find('div', class_="col-sm-12 text-right").button.string = "Больше деталей"
+                info.find('div', class_="col-sm-12 text-right").button.string = "Подробнее"
             except:
                 print(info.find('div', class_="col-sm-12 text-right"))
 
@@ -277,13 +282,13 @@ class TranslateStat:
 
     def translate_correlations(self):
         variables = self.sections['correlations_tab']
-        for li, text in zip(variables.find_all('li'), ('Автоматически', 'Heapmap', 'Таблица')):
+        for li, text in zip(variables.find_all('li'), ('Автоматически', 'Heatmap', 'Таблица')):
             li.a.string = text
         return
 
     def translate_missing(self):
         variables = self.sections['missing']
-        for li, text in zip(variables.find_all('li'), ('Кол-во', 'Таблица', 'Heapmap')):
+        for li, text in zip(variables.find_all('li'), ('Кол-во', 'Таблица', 'Heatmap')):
             li.a.string = text
         return
 
@@ -291,4 +296,9 @@ class TranslateStat:
         variables = self.sections['sample']
         for li, text in zip(variables.find_all('li'), ('Первые строки', 'Последние строки')):
             li.a.string = text
+        return
+
+    def translate_duplicates(self):
+        variables = self.sections['duplicate']
+        variables.find('h4').string = "Чаще всего встречается"
         return
