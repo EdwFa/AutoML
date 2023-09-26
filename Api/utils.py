@@ -190,7 +190,7 @@ class TranslateStat:
 
         f = self.body.find('footer')
         if f is not None:
-            f.find('p').string = "Статистика произведена ml.datamed.pro"
+            f.find('p').string = "Выполнен расчет статистических характеристик"
         for table in self.body.find_all('table', class_="freq table table-hover table-striped table-0"):
             for cell, text in zip(table.thead.tr.find_all('td'), ('Значение', 'Кол-во', 'Частота (%)')):
                 cell.string = text
