@@ -30,8 +30,8 @@ def learner():
     current_app.logger.info(f'Connected to learning model SVM...')
     broker_key = request.args.get('broker_key')
     r_data = redis_cli.hgetall(broker_key)
-    r_data['number_columns'] = r_data['number_columns'].split(',') if r_data['number_columns'] != "" else []
-    r_data['categorical_columns'] = r_data['categorical_columns'].split(',') if r_data['categorical_columns'] != "" else []
+    r_data['number_columns'] = r_data['number_columns'].split(';;;') if r_data['number_columns'] != "" else []
+    r_data['categorical_columns'] = r_data['categorical_columns'].split(';;;') if r_data['categorical_columns'] != "" else []
     models = r_data['model_name'].split(',')
     if len(models) == 0:
         return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
@@ -44,12 +44,20 @@ def learner():
     dataset = load_data(data['key'], r_data['target'], *r_data['categorical_columns'], *r_data['number_columns'])
     labels = sort_data(dataset, r_data['categorical_columns'], r_data['number_columns'])
     labels[r_data['target']]['use'] = False
-    X_train, y_train, X_test, y_test = preprocess_data(dataset, dataset[r_data['target']].copy(), labels)
+    try:
+        X_train, y_train, X_test, y_test = preprocess_data(dataset, dataset[r_data['target']].copy(), labels)
+    except Exception as e:
+        print(e)
+        return jsonify({'message': str(e), 'status': 500}), 500
 
     all_data = []
     for model in models:
-        cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org = trainer(
-            X_train, y_train, X_test, y_test, model, label_name=r_data['target'])
+        try:
+            cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org = trainer(
+                X_train, y_train, X_test, y_test, model, label_name=r_data['target'])
+        except Exception as e:
+            print(e)
+            return jsonify({'message': str(e), 'status': 500}), 500
         print('Train accuracy = ', round(train_accuracy, 2))
         print('Test accuracy = ', round(test_accuracy, 2))
         print(classification_matrix)
@@ -66,4 +74,4 @@ def learner():
             'cm_model': cm_model.tolist(),
         }
         all_data.append({"model": model, "data": data})
-    return jsonify(all_data), 200
+    return jsonify({'data': all_data, 'status': 200}), 200
