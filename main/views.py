@@ -266,12 +266,11 @@ async def learn_response(**kwargs):
                 )
             except asyncio.exceptions.TimeoutError:
                 print("time out exception")
-                return 504
+                return 504, None
 
         if response.status > 299:
-            logger.info(await response.text())
-            return 500
-        return await response.json()
+            return 500, await response.json()
+        return 200, await response.json()
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -294,10 +293,10 @@ async def learn_model(request):
 
     redis_cli.hset(broker_key, mapping=send_data)
 
-    response = await learn_response(dataset=dataset, headers=headers, key=broker_key)
-    if response == 500:
-        return Response(data={'status': 'error'}, status=500)
-    elif response == 504:
+    response_status, response = await learn_response(dataset=dataset, headers=headers, key=broker_key)
+    if response_status == 500:
+        return Response(data=response, status=201)
+    elif response_status == 504:
         return Response(data={'status': 'error'}, status=504)
     return Response(data=response, status=201)
 

@@ -77,9 +77,9 @@ def create_info_request(request, type_models):
         'params': ""
     }
     if data['categorical_columns'] != "":
-        data['categorical_columns'] = ','.join(data['categorical_columns'])
+        data['categorical_columns'] = ';;;'.join(data['categorical_columns'])
     if data['number_columns'] != "":
-        data['number_columns'] = ','.join(data['number_columns'])
+        data['number_columns'] = ';;;'.join(data['number_columns'])
     print(data)
     return data
 
