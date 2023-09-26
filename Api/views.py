@@ -52,12 +52,12 @@ def learner():
 
     all_data = []
     for model in models:
-        try:
-            cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org = trainer(
-                X_train, y_train, X_test, y_test, model, label_name=r_data['target'])
-        except Exception as e:
-            print(e)
-            return jsonify({'message': str(e), 'status': 500}), 500
+        # try:
+        cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants = trainer(
+                X_train, y_train, X_test, y_test, model, label_name=r_data['target'], labels=labels)
+        # except Exception as e:
+        #     print(e)
+        #     return jsonify({'message': str(e), 'status': 500}), 500
         print('Train accuracy = ', round(train_accuracy, 2))
         print('Test accuracy = ', round(test_accuracy, 2))
         print(classification_matrix)
@@ -72,6 +72,7 @@ def learner():
             'y_scores': y_scores,
             'y_onehot': y_labels,
             'cm_model': cm_model.tolist(),
+            'features_importants': features_importants
         }
         all_data.append({"model": model, "data": data})
     return jsonify({'data': all_data, 'status': 200}), 200

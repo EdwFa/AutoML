@@ -84,6 +84,7 @@ def sort_data(data, categorical, number):
 
 def preprocess_data(data, target, labels):
     columns = []
+    columns_labels = []
     for label in labels:
         if labels[label]['use'] == False:
             print('Not Use --> ', label)
@@ -97,6 +98,7 @@ def preprocess_data(data, target, labels):
             print(f'Column {label} mean = ', mean)
             column = column / mean
             columns.append(column.to_numpy())
+            labels[label]['count'] = 1
         else:
             column.fillna(column.mode().values[0], inplace=True)
             categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
@@ -105,6 +107,7 @@ def preprocess_data(data, target, labels):
                 matrix[i, categ_list[val]] = 1
             print(f"Column {label} Catefory list == ", categ_list)
             columns.append(matrix)
+            labels[label]['count'] = len(categ_list)
     print([len(column.shape) for column in columns])
     columns = [column.reshape(column.shape[0], 1) if len(column.shape) == 1 else column for column in columns]
     print([column.shape for column in columns])
@@ -113,6 +116,7 @@ def preprocess_data(data, target, labels):
     X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=0.20, random_state=786)
     return X_train, y_train, X_test, y_test
 
+
 def check_filename(filename):
     file_path = '/'.join(filename.split('/')[:-1])
     print(file_path)
@@ -120,10 +124,69 @@ def check_filename(filename):
         os.mkdir(file_path)
     return filename
 
-def trainer(X_train, y_train, X_test, y_test, model_name, label_name, **params):
+
+def get_score_after_permutation(model, X, y, curr_feat, start_pos, count):
+    """return the score of model when curr_feat is permuted"""
+
+    X_permuted = X.copy()
+    # permute one column
+    X_permuted[:, start_pos:count] = np.random.permutation(
+        X_permuted[:, start_pos:count]
+    )
+
+    permuted_score = model.score(X_permuted, y)
+    return permuted_score
+
+
+def get_feature_importance(model, X, y, curr_feat, start_pos, count):
+    """compare the score when curr_feat is permuted"""
+
+    baseline_score_train = model.score(X, y)
+    permuted_score_train = get_score_after_permutation(model, X, y, curr_feat, start_pos, count)
+
+    # feature importance is the difference between the two scores
+    feature_importance = baseline_score_train - permuted_score_train
+    return feature_importance
+
+
+def permutation_importance(model, X, y, labels, n_repeats=10):
+    """Calculate importance score for each feature."""
+
+    importances = []
+    i = 0
+    f_labels = []
+    for k, v in labels.items():
+        if v['use'] == False:
+            continue
+        print(k)
+        f_labels.append(k)
+        print(X[:, i:i+v['count']])
+        list_feature_importance = []
+        for n_round in range(n_repeats):
+            list_feature_importance.append(
+                get_feature_importance(model, X, y, k, i, i+v['count'])
+            )
+        i = i + v['count']
+        importances.append(list_feature_importance)
+
+    data = {
+        "labels": f_labels,
+        "importances_mean": np.mean(importances, axis=1),
+        "importances_std": np.std(importances, axis=1),
+        "importances": importances,
+    }
+    indices = data["importances_mean"].argsort()
+    data["importances_mean"] = data["importances_mean"][indices].tolist()
+    data["importances_std"] = data["importances_std"][indices].tolist()
+    return data
+
+def trainer(X_train, y_train, X_test, y_test, model_name, label_name, labels, **params):
     print("params ", params)
     model = models[model_name]
     model.fit(X_train, y_train)
+    features_importants = permutation_importance(model, X_train, y_train, labels)
+    print(features_importants)
+
     pred = model.predict(X_test)
     y_test_org = np.unique(y_test)
     print(y_test_org)
@@ -144,7 +207,7 @@ def trainer(X_train, y_train, X_test, y_test, model_name, label_name, **params):
     y_onehot = pd.get_dummies(y_test, columns=model.classes_)
     # pickle.dump(model, open(check_filename(filename), 'wb'))
 
-    return cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org
+    return cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants
 
 def confidence_interval(s, n, z=1.96):
   down = (s + z*z/(2*n) - z*math.sqrt((s*(1-s)+z*z/(4*n))/n))/(1+z*z/n)
