@@ -187,10 +187,14 @@ class TranslateStat:
         self.translate_missing()
         self.translate_samples()
         self.translate_duplicates()
+
+        f = self.body.find('footer', class_='container-fluid')
+        if f is not None:
+            f.find('p').string = "Статистика произведена ml.datamed.pro"
         return
 
     def translate_main(self):
-        navTexts = ['Общие сведения', 'Переменные', 'Взаимодействия', 'Корреляции', 'Пропущенные значения', 'Образцы', 'Повторяющиеся строки']
+        navTexts = ['Общие сведения', 'Переменные', 'Взаимодействия', 'Корреляции', 'Пропущенные значения', 'Датасет', 'Повторяющиеся строки']
         log = self.body.find("a", class_="navbar-brand anchor",href="#top")
         log.string = "Статистика"
         navBar = self.body.find('div', id='navbar', class_="navbar-collapse collapse")
@@ -287,7 +291,9 @@ class TranslateStat:
         return
 
     def translate_missing(self):
-        variables = self.sections['missing']
+        variables = self.sections.get('missing', None)
+        if variables is None:
+            return
         for li, text in zip(variables.find_all('li'), ('Кол-во', 'Таблица', 'Heatmap')):
             li.a.string = text
         return
@@ -299,6 +305,8 @@ class TranslateStat:
         return
 
     def translate_duplicates(self):
-        variables = self.sections['duplicate']
+        variables = self.sections.get('duplicate', None)
+        if variables is None:
+            return
         variables.find('h4').string = "Чаще всего встречается"
         return
