@@ -22,7 +22,16 @@ reproductionTable = [
     'Скачать конфигурацию',
 ]
 
-cat_or_real = lambda x : f"Вещественное число (ℝ)" if x == """Real number (ℝ)""" else ("Категориальный" if x == """Categorical""" else "Логический")
+def cat_or_real(x):
+    if x == "Real number (ℝ)":
+        return "Вещественное число (ℝ)"
+    if x == """Categorical""":
+        return "Категориальный"
+    if x == "Text":
+        return "Текст"
+    if x == "Boolean":
+        return "Логический"
+    return x
 
 tableNum1 = [
     'Уникальных',
@@ -225,6 +234,9 @@ class TranslateStat:
             print(type_val)
             info.find('div', class_="col-sm-12").find('small').string = type_val
 
+            if type_val == 'Unsupported':
+                continue
+
             if type_val == 'Вещественное число (ℝ)':
                 for table, translateTable in zip(info.find_all('div', class_="col-sm-4", limit=2), (tableNum1, tableNum2)):
                     self.translate_table(table, translateTable)
@@ -234,7 +246,7 @@ class TranslateStat:
                 for li, text in zip(info.find_all('li'), tableNavsNums):
                     li.a.string = text
 
-            elif type_val == 'Категориальный':
+            elif type_val == 'Категориальный' or type_val == 'Текст':
                 self.translate_table(info.find('div', class_="col-sm-6"), tableCars1)
                 for li, text in zip(info.find_all('li'), tableNavCars):
                     li.a.string = text
@@ -251,7 +263,10 @@ class TranslateStat:
             else:
                 pass
 
-            info.find('div', class_="col-sm-12 text-right").button.string = "Больше деталей"
+            try:
+                info.find('div', class_="col-sm-12 text-right").button.string = "Больше деталей"
+            except:
+                print(info.find('div', class_="col-sm-12 text-right"))
 
         return
 
