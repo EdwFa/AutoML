@@ -4,6 +4,7 @@ from django.core.files.storage import default_storage
 from django.urls import reverse
 
 import os
+import json
 
 User = get_user_model()
 
@@ -57,17 +58,39 @@ class Dataset(models.Model):
 
 
 class LearnModel(models.Model):
-    dataset = models.ForeignKey(Dataset, on_delete=models.PROTECT, related_name='models')
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='models', related_query_name='models', null=True)
     name = models.CharField(max_length=64)
+    configs = models.JSONField(null=True)
+    info = models.TextField(null=True)
+    date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.dataset.name}({self.dataset.user.username}) - {self.name}'
+        return f'({self.user.username}) - {self.id}{self.name}'
 
     def save(self, *args, **kwargs):
+        user_folder = os.path.join('models', self.user.username)
+        if not os.path.exists(user_folder):
+            os.mkdir(user_folder)
         super().save(*args, **kwargs)
 
+    def get_model_file(self):
+        model_dir = os.path.join('models', self.user.username, f'{self.id}.sav')
+        if not os.path.exists(model_dir):
+            raise Exception("Model file doesnt exist")
+        return model_dir
+
+    def get_configs(self):
+        return json.load(self.configs)
+
+    def get_user(self):
+        return self.user.username
+
     def delete(self, *args, **kwargs):
-        os.remove(os.path.join(self.dataset.path, 'models', self.name))
-        super().delete(*args, **kwargs)
+        try:
+            os.remove(self.get_model_file())
+        except:
+            pass
+        finally:
+            super().delete(*args, **kwargs)
 
 

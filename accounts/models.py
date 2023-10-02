@@ -57,6 +57,7 @@ class User(AbstractUser):
                 dataset_table.save()
                 dataset.to_csv(os.path.join(path_to_save_folder, f'{dataset_table.id}_{dataset_table.name}.csv'), index=False)
 
+
     def delete(self, *args, **kwargs):
         for dataset in self.datasets.all():
             dataset.delete()

@@ -157,6 +157,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 if not os.path.exists('datasets'):
     os.mkdir('datasets')
 
+if not os.path.exists('models'):
+    os.mkdir('models')
 
 # Logging
 if not os.path.exists('logs'):

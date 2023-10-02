@@ -1,7 +1,17 @@
 from django.core.exceptions import ObjectDoesNotExist
 
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
+
 import pandas as pd
 import numpy as np
+import pickle
+from joblib import dump, load
 from statsmodels import robust
 from .models import LearnModel, Dataset, User
 import os
@@ -67,10 +77,11 @@ def read_dataset_file(dataset, drop_or_fill='fill'):
 # ----------
 
 
-def create_info_request(request, type_models):
+def create_info_request(request, type_models, dataset):
     print(request.data)
     data = {
         'model_name': type_models,
+        'user': request.user.username,
         'target': request.data['target'],
         'categorical_columns': request.data.get('categorical_columns', ""),
         'number_columns': request.data.get('number_columns', ""),
@@ -173,5 +184,39 @@ def get_statistic_info(dataset_table):
     # data = ProfileReport(dataset, title="Profiling Report")
     # data = data.to_json()
     return data
+
+
+# ----------
+# Сохранение и использование
+# ----------
+
+def predict(data, modelId):
+    model = LearnModel.objects.get(id=modelId)
+    predict_params = []
+    for value, param in zip(data['params'], model.configs):
+        print(value)
+        print(param)
+        if value[1] == None:
+            raise Exception('Params cant be null value')
+        if isinstance(value[1], dict):
+            i = [0 for j in param['params']]
+            i[value[1]['val']] = 1
+            for j in i:
+                predict_params.append(j)
+        else:
+            i = (value[1] - param['mean']) / param['std']
+            predict_params.append(i)
+        print('----')
+    print(predict_params)
+    m = load(model.get_model_file())
+    max = m.predict([predict_params])
+    pred_softmax = m.predict_proba([predict_params])
+    configs = model.configs[-1]
+    pred = [{'label': configs[0], 'target': i, 'value': round(j, 2), 'max': False} for i, j in zip(configs[1:], pred_softmax[0])]
+    pred[max[0]]['max'] = True
+    return pred
+
+
+
 
 
