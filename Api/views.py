@@ -1,13 +1,16 @@
 from flask import Blueprint, current_app, jsonify, request
 from flask import send_file
-import json
 import os
-import time
-import pandas as pd
 import redis
+import threading
 from dotenv import load_dotenv
 
+import pickle
+from joblib import dump, load
+
 from .utils import *
+
+
 
 
 analise = Blueprint('analise', __name__)
@@ -33,6 +36,17 @@ def learner():
     r_data['number_columns'] = r_data['number_columns'].split(';;;') if r_data['number_columns'] != "" else []
     r_data['categorical_columns'] = r_data['categorical_columns'].split(';;;') if r_data['categorical_columns'] != "" else []
     models = r_data['model_name'].split(',')
+
+    user = r_data['user']
+    user_folder = os.path.abspath(f'models/{user}')
+    print(user_folder)
+    if not os.path.exists(user_folder) and not os.path.isdir(user_folder):
+        print('DONT EXIST!!!!!!!!!!!!!!!!!!!')
+        os.mkdir(user_folder)
+
+    checker = threading.Thread(target=check_models, args=(user_folder, ))
+    checker.start()
+
     if len(models) == 0:
         return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
     data = request.files
@@ -45,24 +59,30 @@ def learner():
     labels = sort_data(dataset, r_data['categorical_columns'], r_data['number_columns'])
     labels[r_data['target']]['use'] = False
     try:
-        X_train, y_train, X_test, y_test = preprocess_data(dataset, dataset[r_data['target']].copy(), labels)
+        X_train, y_train, X_test, y_test, columns_info = preprocess_data(dataset, dataset[r_data['target']].copy(), labels)
     except Exception as e:
         print(e)
         return jsonify({'message': str(e), 'status': 500}), 500
 
     all_data = []
-    for model in models:
-        # try:
-        cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants = trainer(
-                X_train, y_train, X_test, y_test, model, label_name=r_data['target'], labels=labels)
-        # except Exception as e:
-        #     print(e)
-        #     return jsonify({'message': str(e), 'status': 500}), 500
+    for model_name in models:
+        try:
+            model, cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants = trainer(
+                X_train, y_train, X_test, y_test, model_name, label_name=r_data['target'], labels=labels)
+        except Exception as e:
+            print(e)
+            return jsonify({'message': str(e), 'status': 500}), 500
+
+        print(y_onehot.columns.tolist())
+
         print('Train accuracy = ', round(train_accuracy, 2))
         print('Test accuracy = ', round(test_accuracy, 2))
         print(classification_matrix)
         classification_matrix, columns = prepare_matrix_to_grid(classification_matrix)
         y_scores, y_labels = prepare_y_scores_to_js(y_scores, y_onehot)
+
+        with open(os.path.join(user_folder, f'model_{model_name}.sav'), 'wb') as f:
+            dump(model, f)
 
         data = {
             'train_accuracy': round(train_accuracy, 2),
@@ -72,7 +92,33 @@ def learner():
             'y_scores': y_scores,
             'y_onehot': y_labels,
             'cm_model': cm_model.tolist(),
-            'features_importants': features_importants
+            'features_importants': features_importants,
+            'columns_info': columns_info,
         }
-        all_data.append({"model": model, "data": data})
+        all_data.append({"model": model_name, "data": data, "target": r_data['target']})
+
     return jsonify({'data': all_data, 'status': 200}), 200
+
+
+@analise.route('/saver', methods=['POST'])
+def save_model():
+    print('save model')
+    user = request.args.get('user')
+    model_name = request.args.get('model')
+    save_file = f'models/{user}/model_{model_name}.sav'
+    if not os.path.exists(save_file) and not os.path.isfile(save_file):
+        return jsonify({'message': "File doesnt exist", 'status': 500}), 500
+    return send_file(save_file, as_attachment=True)
+
+
+def check_models(*args):
+    print('-------')
+    print('Start checking use/useless models...')
+    print('-------')
+    user_folder = args[0]
+    for file in os.listdir(user_folder):
+        print(file)
+        os.remove(os.path.join(user_folder, file))
+    print('-------')
+    print('Clear all useless models...')
+    print('-------')

@@ -84,7 +84,7 @@ def sort_data(data, categorical, number):
 
 def preprocess_data(data, target, labels):
     columns = []
-    columns_labels = []
+    columns_info = []
     for label in labels:
         if labels[label]['use'] == False:
             print('Not Use --> ', label)
@@ -95,10 +95,12 @@ def preprocess_data(data, target, labels):
         if labels[label]['type'] == 1:
             column.fillna(column.median(), inplace=True)
             mean = column.mean()
+            std = column.std()
             print(f'Column {label} mean = ', mean)
-            column = column / mean
+            column = (column - mean) / std
             columns.append(column.to_numpy())
             labels[label]['count'] = 1
+            columns_info.append(dict(label=label, type='num', mean=mean, std=std))
         else:
             column.fillna(column.mode().values[0], inplace=True)
             categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
@@ -108,13 +110,15 @@ def preprocess_data(data, target, labels):
             print(f"Column {label} Catefory list == ", categ_list)
             columns.append(matrix)
             labels[label]['count'] = len(categ_list)
+            params = [{'cat': k, 'val': v} for k, v in categ_list.items()]
+            columns_info.append(dict(label=label, type='cat', params=params))
     print([len(column.shape) for column in columns])
     columns = [column.reshape(column.shape[0], 1) if len(column.shape) == 1 else column for column in columns]
     print([column.shape for column in columns])
     dataset = np.concatenate(columns, axis=1)
     print(dataset.shape)
     X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=0.20, random_state=786)
-    return X_train, y_train, X_test, y_test
+    return X_train, y_train, X_test, y_test, columns_info
 
 
 def check_filename(filename):
@@ -160,7 +164,6 @@ def permutation_importance(model, X, y, labels, n_repeats=10):
             continue
         print(k)
         f_labels.append(k)
-        print(X[:, i:i+v['count']])
         list_feature_importance = []
         for n_round in range(n_repeats):
             list_feature_importance.append(
@@ -207,7 +210,7 @@ def trainer(X_train, y_train, X_test, y_test, model_name, label_name, labels, **
     y_onehot = pd.get_dummies(y_test, columns=model.classes_)
     # pickle.dump(model, open(check_filename(filename), 'wb'))
 
-    return cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants
+    return model, cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants
 
 def confidence_interval(s, n, z=1.96):
   down = (s + z*z/(2*n) - z*math.sqrt((s*(1-s)+z*z/(4*n))/n))/(1+z*z/n)
@@ -380,3 +383,7 @@ def prepare_y_scores_to_js(y_scores, y_onehot):
 
     print(labels)
     return results, labels
+
+
+
+

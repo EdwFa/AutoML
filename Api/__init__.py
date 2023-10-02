@@ -1,1 +1,1 @@
-from .views import analise
+from .views import analise, check_models
