@@ -40,7 +40,7 @@ def learner():
     user = r_data['user']
     user_folder = os.path.abspath(f'models/{user}')
     print(user_folder)
-    if not os.path.exists(user_folder) and not os.path.isdir(user_folder):
+    if not os.path.exists(user_folder):
         print('DONT EXIST!!!!!!!!!!!!!!!!!!!')
         os.mkdir(user_folder)
 
