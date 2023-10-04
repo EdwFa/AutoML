@@ -26,7 +26,8 @@ default_models = [
     'AdaBoostClassifier',
     'KNeighborsClassifier',
     'ExtraTreesClassifier',
-    'MLPClassifier'
+    'MLPClassifier',
+    'HistGradientBoostingClassifier'
 ]
 
 get_grid_type = lambda x : "agNumberColumnFilter" if (x == 'int' or x == 'float') else "agTextColumnFilter"
