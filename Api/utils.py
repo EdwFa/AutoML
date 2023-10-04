@@ -4,6 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 
@@ -41,7 +42,8 @@ models = {
     'AdaBoostClassifier': AdaBoostClassifier(),
     'KNeighborsClassifier': KNeighborsClassifier(),
     'ExtraTreesClassifier': ExtraTreesClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0),
-    'MLPClassifier': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
+    'MLPClassifier': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1),
+    'HistGradientBoostingClassifier': HistGradientBoostingClassifier(max_iter=100),
 }
 
 formats = ['csv', 'xlsx', 'xls']
