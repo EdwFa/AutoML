@@ -21,18 +21,18 @@ import pandas as pd
 import math
 
 
-# models = {
-#     'SVM': SVC,
-#     'Decision Tree': DecisionTreeClassifier,
-#     'Random Forest': RandomForestClassifier,
-#     'Logistic Regression': LogisticRegression,
-#     'GradientBoostingClassifier': GradientBoostingClassifier,
-#     'AdaBoost': AdaBoostClassifier,
-#     'KNN': KNeighborsClassifier,
-#     'ExtraTrees': ExtraTreesClassifier,
-#     'MLPClassifier': MLPClassifier
-# }
 models = {
+    'SVM': SVC,
+    'Decision Tree': DecisionTreeClassifier,
+    'Random Forest': RandomForestClassifier,
+    'Logistic Regression': LogisticRegression,
+    'GradientBoostingClassifier': GradientBoostingClassifier,
+    'AdaBoost': AdaBoostClassifier,
+    'KNN': KNeighborsClassifier,
+    'ExtraTrees': ExtraTreesClassifier,
+    'MLPClassifier': MLPClassifier
+}
+default_models = {
     'SVM': SVC(probability=True),
     'Decision Tree': DecisionTreeClassifier(),
     'RandomForestClassifier': RandomForestClassifier(),
@@ -54,13 +54,8 @@ def load_data(dataset, target, *labels):
     if labels is not None:
         data = data[[target, *labels]]
     print(data.columns)
-    if 'ID' in data.columns:
-        return data.drop(['ID'], axis=1)
-    elif 'id' in data.columns:
-        return data.drop(['id'], axis=1)
-    else:
-        print('No one id column')
-        return data
+
+    return data
 
 
 def sort_data(data, categorical, number):
@@ -187,7 +182,16 @@ def permutation_importance(model, X, y, labels, n_repeats=10):
 
 def trainer(X_train, y_train, X_test, y_test, model_name, label_name, labels, **params):
     print("params ", params)
-    model = models[model_name]
+    if 'clear' in params:
+        model = default_models[model_name]
+    else:
+        model = models[model_name]
+        for k, v in params.items():
+            if v is None:
+                params.pop(k)
+        print(params)
+        model = model(**params)
+
     model.fit(X_train, y_train)
     features_importants = permutation_importance(model, X_train, y_train, labels)
     print(features_importants)
@@ -272,17 +276,9 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
         except ZeroDivisionError:
             SE = 0
         try:
-            SE_min, SE_max = confidence_interval(SE, v['TP'] + v['FN'])
-        except:
-            SE_min, SE_max = 0, 0
-        try:
             SP = v['FP'] / (v['FP'] + v['TN'])
         except ZeroDivisionError:
             SP = 0
-        try:
-            SP_min, SP_max = confidence_interval(SP, v['FP'] + v['TN'])
-        except ZeroDivisionError:
-            SP_min, SP_max = 0, 0
         try:
             PPV = v['TP'] / (v['TP'] + v['FP'])
         except ZeroDivisionError:
@@ -299,22 +295,6 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
             FNR = 1 - SE
         except ZeroDivisionError:
             FNR = 0
-        try:
-            FPR_min, FPR_max = confidence_interval(FPR, v['FP'] + v['TN'])
-        except ZeroDivisionError:
-            FPR_min, FPR_max = 0, 0
-        try:
-            FNR_min, FNR_max = confidence_interval(FNR, v['FP'] + v['TN'])
-        except ZeroDivisionError:
-            FNR_min, FNR_max = 0, 0
-        try:
-            PPV_min, PPV_max = confidence_interval(PPV, v['TP'] + v['FP'])
-        except ZeroDivisionError:
-            PPV_min, PPV_max = 0, 0
-        try:
-            NPV_min, NPV_max = confidence_interval(NPV, v['TN'] + v['FN'])
-        except ZeroDivisionError:
-            NPV_min, NPV_max = 0, 0
 
         try:
             OA = SP + SE
@@ -336,10 +316,7 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
             v['TP'], v['TN'], v['FP'], v['FN'],
             round(Accuracy, 2), round(Precision, 2), round(Recall, 2), round(F1_SCORE, 2),
             round(SE, 2), round(SP, 2),
-            SE_min, SE_max, SP_min, SP_max,
             round(PPV, 2), round(NPV, 2), round(FPR, 2), round(FNR, 2),
-            PPV_min, PPV_max, NPV_min, NPV_max,
-            FPR_min, FPR_max, FNR_min, FNR_max,
             round(OA, 2), round(LRP, 2), round(LRN, 2), round(DOR, 2)
         ]
     table_strings = []
@@ -349,10 +326,8 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
     table_names_columns = [
         label_name, 'TP', 'TN', 'FP', 'FN',
         'accuracy', 'precision', 'recall', 'f1-score',
-        'SE', 'SP', 'SE_min', 'SE_max', 'SP_min', 'SP_max',
+        'SE', 'SP',
         'PPV', 'NPV', 'FPR', 'FNR',
-        'PPV_min', 'PPV_max', 'NPV_min', 'NPV_max',
-        'FPR_min', 'FPR_max', 'FNR_min', 'FNR_max',
         'Overall accuracy', 'LR+', 'LR-', 'DOR']
     classification_matrix = pd.DataFrame(table_strings, columns=table_names_columns)
 

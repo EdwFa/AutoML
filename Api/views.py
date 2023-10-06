@@ -1,3 +1,5 @@
+import json
+
 from flask import Blueprint, current_app, jsonify, request
 from flask import send_file
 import os
@@ -36,6 +38,7 @@ def learner():
     r_data['number_columns'] = r_data['number_columns'].split(';;;') if r_data['number_columns'] != "" else []
     r_data['categorical_columns'] = r_data['categorical_columns'].split(';;;') if r_data['categorical_columns'] != "" else []
     models = r_data['model_name'].split(',')
+    models_params = json.loads(r_data['params'])
 
     user = r_data['user']
     user_folder = os.path.abspath(f'models/{user}')
@@ -65,10 +68,12 @@ def learner():
         return jsonify({'message': str(e), 'status': 500}), 500
 
     all_data = []
-    for model_name in models:
+    for model_name, params in zip(models, models_params):
+        if params is None:
+            params = {'clear': True}
         try:
             model, cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants = trainer(
-                X_train, y_train, X_test, y_test, model_name, label_name=r_data['target'], labels=labels)
+                X_train, y_train, X_test, y_test, model_name, label_name=r_data['target'], labels=labels, **params)
         except Exception as e:
             print(e)
             return jsonify({'message': str(e), 'status': 500}), 500
