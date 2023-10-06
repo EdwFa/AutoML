@@ -3,6 +3,7 @@ import React, { Component, useState, useEffect, createRef } from "react";
 import { Navigate, Link } from "react-router-dom";
 
 import InfoPanel from "../components/InfoPanel";
+import ControlPanel from "../components/ControlPanel";
 
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
@@ -11,6 +12,7 @@ import ReactSelect, { createFilter } from "react-select";
 import { Tab } from "@headlessui/react";
 import { PhotoIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 
+import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import Aside from "../components/Sidebar";
 
 import { Disclosure } from "@headlessui/react";
@@ -85,8 +87,10 @@ export class Main extends Component {
       // user data
       user: variables.user,
       token: variables.token,
+      loading: false,
       loadingStat: false,
       loadingLearn: false,
+      loadingSave: false,
       learnInfo: null,
 
       // dataset
@@ -261,6 +265,13 @@ export class Main extends Component {
   // Подгрзка датасета с сервера и его визуализация
 
   LoadDataset(dataset) {
+    this.setState({
+      loading: true,
+      datasetRows: [],
+      datasetColumns: [],
+      countRows: 0,
+      countColumns: 0,
+    });
     fetch(
       variables.API_URL + "main/dataset/viewer" + `?datasetId=${dataset.id}`,
       {
@@ -273,6 +284,7 @@ export class Main extends Component {
       .then((response) => response.json())
       .then((data) => {
         this.setState({
+          loading: false,
           datasetRows: data.dataset,
           datasetColumns: data.columns,
           countRows: data.count_rows,
@@ -284,6 +296,7 @@ export class Main extends Component {
       })
       .catch((error) => {
         console.log(error);
+        this.setState({ loading: false });
         alert("Ошибка при загрузке");
         this.setState({
           datasetRows: [],
@@ -381,8 +394,8 @@ export class Main extends Component {
       .then((response) => {
         if (response.ok) {
           return response.json();
-        }
-        throw Error("Ошибка при создании статистических данных");
+        } else if (response.status == 504) throw Error("Время ожидания вышло");
+        else throw Error("Ошибка при создании статистических данных");
       })
       .then((data) => {
         this.LoadStatistic(dataset);
@@ -471,7 +484,8 @@ export class Main extends Component {
   };
 
   LearnModel(dataset) {
-    if (!(this.state.LearnModel && this.state.LearnLabel)) {
+    console.log(this.state.LearnModel);
+    if (!(this.state.LearnModel.length !== 0 && this.state.LearnLabel)) {
       alert("Не выбрана модель или поле для обучения");
       return;
     }
@@ -486,7 +500,7 @@ export class Main extends Component {
           Authorization: `Token ${this.state.token}`,
         },
         body: JSON.stringify({
-          model: this.state.LearnModel,
+          model: this.state.LearnModel?.map((model) => model.name),
           target: this.state.LearnLabel.name,
           categorical_columns: this.state.CategoricalLabels.map(
             (label) => label.name
@@ -496,21 +510,83 @@ export class Main extends Component {
       }
     )
       .then((res) => {
-        if (res.status == 201) {
-          return res.json();
-        } else {
-          throw Error(res.statusText);
-        }
+        if (res.ok) return res.json();
+        if (res.status == 504) throw Error("Время ожидания вышло");
+        else throw Error(res.statusText);
       })
       .then((data) => {
-        console.log(data);
-        this.setState({ LearnInfo: data });
-        this.setState({ loadingLearn: false });
+        if (data.status == 200) {
+          console.log(data);
+          this.setState({
+            LearnInfo: data.data,
+            saved: data.data?.map((i) => false),
+          });
+          this.setState({ loadingLearn: false });
+        } else {
+          throw Error(data.message);
+        }
       })
       .catch((error) => {
-        alert("Ошибка");
+        alert(error);
         this.setState({ loadingLearn: false });
       });
+  }
+
+  saveModel(info, index) {
+    console.log(info);
+    this.setState({ loadingSave: true });
+    fetch(variables.API_URL + "main/dataset/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json;charset=utf-8",
+        Authorization: `Token ${this.state.token}`,
+      },
+      body: JSON.stringify({
+        model: info.model,
+        target: info.target,
+        columns: info.data.columns_info,
+        target_info: info.data.y_onehot,
+      }),
+    })
+      .then((res) => {
+        if (res.ok) return res.json();
+        if (res.status == 504) throw Error("Время ожидания вышло");
+        else throw Error(res.statusText);
+      })
+      .then((data) => {
+        if (data.status == 200) {
+          console.log(data);
+          let new_saved = this.state.saved.map((i) => i);
+          new_saved[index] = true;
+          this.setState({ loadingSave: false, saved: new_saved });
+        } else {
+          throw Error(data.message);
+        }
+      })
+      .catch((error) => {
+        alert(error);
+        this.setState({ loadingSave: false });
+      });
+  }
+
+  PlotBarModels(modelsInfo, param, label) {
+    console.log(label);
+    var models = modelsInfo.map((info) => info.model);
+    var rowData = modelsInfo.map(
+      (info) => info.data.classification_matrix[label][`${param}`]
+    );
+    console.log(models);
+    console.log(rowData);
+    var data = [
+      {
+        y: models,
+        x: rowData,
+        name: `models ${param} label ${label}`,
+        type: "bar",
+        orientation: "h",
+      },
+    ];
+    return data;
   }
 
   PlotRocCurve(y_scores) {
@@ -566,7 +642,7 @@ export class Main extends Component {
     }
 
     var layout = {
-      title: "Heatmap",
+      title: "Матрица ошибок",
       width: 550,
       height: 500,
       annotations: [],
@@ -611,6 +687,19 @@ export class Main extends Component {
     return layout;
   }
 
+  PlotFeatureImportants(means, labels) {
+    var data = [
+      {
+        x: means,
+        y: labels,
+        name: `значимость факторов`,
+        type: "bar",
+        orientation: "h",
+      },
+    ];
+    return data;
+  }
+
   // Графики для отрисовки по каджому label
 
   PlotMetricsLabel(row) {
@@ -618,10 +707,10 @@ export class Main extends Component {
     var rowData = [row.SE, row.SP, row.PPV, row.NPV, row.FPR, row.FNR];
     var data = [
       {
-        x: metrics,
-        y: rowData,
+        y: metrics,
+        x: rowData,
         name: "metric",
-        error_y: {
+        error_x: {
           type: "data",
           array: [
             row.SE - row.SE_min,
@@ -634,6 +723,7 @@ export class Main extends Component {
           visible: true,
         },
         type: "bar",
+        orientation: "h",
       },
     ];
     return data;
@@ -780,9 +870,12 @@ export class Main extends Component {
     const {
       token,
       user,
+      loading,
       loadingStat,
       loadingLearn,
+      loadingSave,
       uploaded_file,
+      saved,
 
       datasets,
       dataset,
@@ -821,7 +914,7 @@ export class Main extends Component {
           {/*Контент*/}
           <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
             {/*Хлебные крошки*/}
-            <header className="bg-white px-4 lg:px-6 py-1 dark:bg-gray-800 border-b border-gray-200">
+            <header className="bg-white px-4 py-1 dark:bg-gray-800 border-b border-gray-200">
               <nav class="flex" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
                   <li class="inline-flex items-center">
@@ -842,29 +935,31 @@ export class Main extends Component {
                     </a>
                   </li>
                   <li>
-                    <div class="flex items-center">
-                      <svg
-                        class="w-3 h-3 text-gray-400 mx-1"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 6 10"
-                      >
-                        <path
-                          stroke="currentColor"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="m1 9 4-4-4-4"
-                        />
-                      </svg>
-                      <a
-                        href=""
-                        class="p-2 rounded-lg ml-1 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
-                      >
-                        AutoML
-                      </a>
-                    </div>
+                    <Link to="/">
+                      <div class="flex items-center">
+                        <svg
+                          class="w-3 h-3 text-gray-400 mx-1"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 6 10"
+                        >
+                          <path
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="m1 9 4-4-4-4"
+                          />
+                        </svg>
+                        <a
+                          href="#"
+                          class="p-2 rounded-lg ml-1 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
+                        >
+                          AutoML
+                        </a>
+                      </div>
+                    </Link>
                   </li>
                 </ol>
               </nav>
@@ -873,7 +968,7 @@ export class Main extends Component {
               <div>
                 <Disclosure
                   as="nav"
-                  className="bg-white border-gray-200 px-4 lg:px-6 dark:bg-gray-800"
+                  className="bg-white border-gray-200 px-4 dark:bg-gray-800"
                 >
                   {({ open }) => (
                     <div className="flex h-16 items-center justify-between">
@@ -944,7 +1039,10 @@ export class Main extends Component {
                                   )
                                 }
                               >
-                                Обучение
+                                <div className="inline-flex items-center">
+                                  Обучение
+                                  <Cog6ToothIcon className="ml-2 shrink-0 w-4 h-4 text-blue-500 transition duration-75 hover:text-blue-700 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+                                </div>
                               </Tab>
                             </Tab.List>
                           </div>
@@ -1075,12 +1173,19 @@ export class Main extends Component {
                       {dataset ? (
                         <>
                           <p className="mt-4">
-                            Выбран датасет: {dataset.name}.{dataset.format}
+                            Выбран датасет:{" "}
+                            <span className="font-bold">
+                              {dataset.name}.{dataset.format}
+                            </span>
                           </p>
-                          <p className="mt-4">Описание: {dataset.info} </p>
+                          <p>
+                            Описание:{" "}
+                            <span className="font-bold">{dataset.info}</span>
+                          </p>
                           <div className="mt-4 flex justify-start">
                             <button
                               type="button"
+                              disabled={loading}
                               className="mr-2 px-3 py-2 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
                               onClick={() => this.deleteDataset(dataset)}
                             >
@@ -1089,10 +1194,34 @@ export class Main extends Component {
                             <br />
                             <button
                               type="button"
+                              disabled={loading}
                               className="px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                               onClick={() => this.LoadDataset(dataset)}
                             >
-                              Открыть
+                              {loading ? (
+                                <>
+                                  <svg
+                                    aria-hidden="true"
+                                    role="status"
+                                    class="inline w-4 h-4 mr-3 text-white animate-spin"
+                                    viewBox="0 0 100 101"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                      fill="#E5E7EB"
+                                    />
+                                    <path
+                                      d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                      fill="currentColor"
+                                    />
+                                  </svg>
+                                  Загрузка
+                                </>
+                              ) : (
+                                "Открыть"
+                              )}
                             </button>
                           </div>
                         </>
@@ -1444,6 +1573,78 @@ export class Main extends Component {
                         работы с данными.
                       </div>
                     </InfoPanel>
+                    <ControlPanel>
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                          <div className="mb-2">SVM</div>
+                          <label
+                            for="small"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                          >
+                            Опции выбора
+                          </label>
+                          <select
+                            id="small"
+                            class="block w-full p-2 mb-4 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                          >
+                            <option selected>Параметры</option>
+                            <option value="1">Параметр 1</option>
+                            <option value="2">Параметр 2</option>
+                            <option value="3">Параметр 3</option>
+                            <option value="4">Параметр 4</option>
+                          </select>
+                          <div class="flex items-center mb-4">
+                            <input
+                              id="default-checkbox"
+                              type="checkbox"
+                              value=""
+                              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            />
+                            <label
+                              for="default-checkbox"
+                              class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                            >
+                              Checkbox
+                            </label>
+                          </div>
+                          <div class="flex items-center mb-4">
+                            <input
+                              id="default-checkbox"
+                              type="checkbox"
+                              value=""
+                              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            />
+                            <label
+                              for="default-checkbox"
+                              class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                            >
+                              Checkbox
+                            </label>
+                          </div>
+                        </div>
+                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                          <div className="mb-2">RandomForestClassifier</div>
+                        </div>
+                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                          <div className="mb-2">GradientBoostingClassifier</div>
+                        </div>
+                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                          <div className="mb-2">AdaBoostClassifier</div>
+                        </div>
+                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                          <div className="mb-2">Decision Tree</div>
+                        </div>
+                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                          <div className="mb-2">LogisticRegression</div>
+                        </div>
+                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                          <div className="mb-2">NeighborsClassifier</div>
+                        </div>
+                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                          <div className="mb-2">MLPClassifier</div>
+                        </div>
+                      </div>
+                    </ControlPanel>
                     {/* Выбор для обучения */}
                     {datasetRows.length !== 0 ? (
                       <div className="mb-4">
@@ -1451,17 +1652,17 @@ export class Main extends Component {
                           Доступные модели
                         </label>
                         <Select
-                          className="basic-single"
+                          className="basic-multi-select"
                           classNamePrefix="select"
                           options={default_models}
                           getOptionLabel={(option) => `${option["name"]}`}
                           getOptionValue={(option) => `${option["id"]}`}
                           value={LearnModel}
-                          noOptionsMessage={() => "Пусто"}
-                          onChange={this.changeModel}
-                          placeholder="Выберите модель для обучения"
+                          onChange={(e) => this.changeModel(e)}
+                          placeholder="Выберите модели для обучения"
                           isSearchable
                           isClearable
+                          isMulti
                         />
                         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                           Поле для обучения
@@ -1559,214 +1760,332 @@ export class Main extends Component {
                         datasetId={dataset.id}
                         LearnModel={LearnModel.name}
                       />
-                    ) : LearnInfo ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* таблица с результатами */}
-                        <div className="h-96 col-span-2">
-                          {/*
-                          <div
-                            className="ag-theme-alpine ag-theme-acmecorp"
-                            style={{ height: "100%", width: "100%" }}
-                          >
-                            <AgGridReact
-                              rowData={LearnInfo.classification_matrix}
-                              columnDefs={[
-                                { field: LearnLabel.name, width: 90, minWidth: 50, maxWidth: 150, resizable: true},
-                                { field: "accuracy", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "precision", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "recall", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "f1-score", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "SE", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "SP", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "PPV", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "NPV", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "FPR", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "FNR", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "Overall accuracy", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "LR+", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "LR-", width: 90, minWidth: 50, maxWidth: 150 },
-                                { field: "DOR", width: 90, minWidth: 50, maxWidth: 150 },
-                              ]}
-                            ></AgGridReact>
-                          </div>
-                          */}
-                          <div class="relative overflow-x-auto">
-                            <table className="table-auto w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                                <tr className="table-row">
-                                  <th className="table-cell text-left px-6 py-3">
-                                    {LearnLabel.name}
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    accuracy
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    precision
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    recall
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    f1-score
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    SE
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    SP
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    PPV
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    NPV
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    FPR
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    FNR
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    Overall accuracy
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    LR+
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    LR-
-                                  </th>
-                                  <th className="table-cell text-left px-6 py-3">
-                                    DOR
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="table-row-group">
-                                {LearnInfo.classification_matrix?.map((row) => (
-                                  <tr
-                                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
-                                    key={row[LearnLabel.name]}
+                    ) : LearnInfo && LearnLabel && LearnModel ? (
+                      <div>
+                        <h1 className="mb-2 font-bold">Models results</h1>
+                        <div className="col-span-2 grid grid-cols-3 gap-4">
+                          {LearnInfo[0].data.y_onehot.map((label, index) => (
+                            <>
+                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                <div>
+                                  <select
+                                    name="#"
+                                    id="#"
+                                    className="relative z-20 inline-flex appearance-none bg-transparent py-1 text-sm font-medium outline-none"
                                   >
-                                    <td>{row[`${LearnLabel.name}`]}</td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.accuracy}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.precision}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.recall}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row[`f1-score`]}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.SE}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.SP}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.PPV}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.NPV}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.FPR}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.FNR}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row[`Overall accuracy`]}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row[`LR+`]}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row[`LR-`]}
-                                    </td>
-                                    <td className="table-cell px-6 py-4">
-                                      {row.DOR}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                        {/* Графики обучения */}
-                        {/* график правилных результатов */}
-                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <Plot
-                            data={this.PlotHeatmap(
-                              LearnInfo.cm_model,
-                              LearnInfo.y_onehot
-                            )}
-                            layout={this.PlotLayoutHeatmap(
-                              LearnInfo.cm_model,
-                              LearnInfo.y_onehot
-                            )}
-                            style={{ height: "100%", width: "100%" }}
-                          />
-                        </div>
-                        {/* Roc кривая */}
-                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <Plot
-                            data={this.PlotRocCurve(LearnInfo.y_scores)}
-                            layout={{
-                              title: "Roc Curve",
-                              autosize: true,
-                            }}
-                            style={{ height: "100%", width: "100%" }}
-                          />
-                        </div>
-                        {/* Вывод по каждому значению target столбца */}
-                        {LearnInfo.classification_matrix?.map((row) => (
-                          <>
-                            <div className="col-span-2 grid grid-cols-3 gap-4">
+                                    <option value="">Вид 1</option>
+                                    <option value="">Вид 2</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  {/* Метрики */}
+                                  <Plot
+                                    data={this.PlotBarModels(
+                                      LearnInfo,
+                                      "SE",
+                                      index
+                                    )}
+                                    layout={{
+                                      autosize: true,
+                                      title: `${LearnLabel.name} = ${label} Чувствительность`,
+                                      xaxis: { range: [0, 1] },
+                                    }}
+                                    style={{ height: "100%", width: "100%" }}
+                                  />
+                                </div>
+                              </div>
                               <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                 {/* Метрики */}
                                 <Plot
-                                  data={this.PlotMetricsLabel(row)}
+                                  data={this.PlotBarModels(
+                                    LearnInfo,
+                                    "SP",
+                                    index
+                                  )}
                                   layout={{
                                     autosize: true,
-                                    title: `${this.state.LearnLabel.name} ${
-                                      row[this.state.LearnLabel.name]
-                                    }: Метрики`,
-                                    yaxis: { range: [0, 1] },
+                                    title: `${LearnLabel.name} = ${label} Специфичность`,
+                                    xaxis: { range: [0, 1] },
                                   }}
                                   style={{ height: "100%", width: "100%" }}
                                 />
                               </div>
                               <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Доверительные интервалы */}
+                                {/* Метрики */}
                                 <Plot
-                                  data={this.PlotIntervalsLabel(row)}
+                                  data={this.PlotBarModels(
+                                    LearnInfo,
+                                    "accuracy",
+                                    index
+                                  )}
                                   layout={{
-                                    title: `${this.state.LearnLabel.name} ${
-                                      row[this.state.LearnLabel.name]
-                                    }: Интервалы`,
-                                    barmode: "stack",
-                                    showlegend: false,
                                     autosize: true,
-                                    annotations: [],
-                                    yaxis: { range: [0, 1] },
+                                    title: `${LearnLabel.name} = ${label} Точность`,
+                                    xaxis: { range: [0, 1] },
                                   }}
                                   style={{ height: "100%", width: "100%" }}
                                 />
                               </div>
-                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Матрица ошибок */}
-                                <Plot
-                                  data={this.PlotHeatmapLabel(row)}
-                                  layout={this.PlotHeatmapLabelLayOut(row)}
-                                  style={{ height: "100%", width: "100%" }}
-                                />
+                            </>
+                          ))}
+                        </div>
+                        {LearnInfo.map((modelInfo, index) => (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <h1>{modelInfo.model}</h1>
+                            {saved[index] ? null : (
+                              <div>
+                                <button
+                                  type="button"
+                                  disabled={loadingSave}
+                                  class="mt-4 flex items-center justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                  onClick={() =>
+                                    this.saveModel(modelInfo, index)
+                                  }
+                                >
+                                  {loadingSave ? (
+                                    <>
+                                      <svg
+                                        aria-hidden="true"
+                                        role="status"
+                                        class="inline w-4 h-4 mr-3 text-white animate-spin"
+                                        viewBox="0 0 100 101"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                          fill="#E5E7EB"
+                                        />
+                                        <path
+                                          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                          fill="currentColor"
+                                        />
+                                      </svg>
+                                      Сохранение
+                                    </>
+                                  ) : (
+                                    "Сохранить модель"
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                            {/* таблица с результатами */}
+                            <div className="h-96 col-span-2">
+                              <div class="relative overflow-x-auto">
+                                <table className="table-auto w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                                  <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                    <tr className="table-row">
+                                      <th className="table-cell text-left px-6 py-3">
+                                        {LearnLabel.name}
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        accuracy
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        precision
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        recall
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        f1-score
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        SE
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        SP
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        PPV
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        NPV
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        FPR
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        FNR
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        Overall accuracy
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        LR+
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        LR-
+                                      </th>
+                                      <th className="table-cell text-left px-6 py-3">
+                                        DOR
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="table-row-group">
+                                    {modelInfo.data.classification_matrix?.map(
+                                      (row) => (
+                                        <tr
+                                          className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                                          key={row[LearnLabel.name]}
+                                        >
+                                          <td>{row[`${LearnLabel.name}`]}</td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.accuracy}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.precision}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.recall}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row[`f1-score`]}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.SE}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.SP}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.PPV}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.NPV}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.FPR}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.FNR}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row[`Overall accuracy`]}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row[`LR+`]}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row[`LR-`]}
+                                          </td>
+                                          <td className="table-cell px-6 py-4">
+                                            {row.DOR}
+                                          </td>
+                                        </tr>
+                                      )
+                                    )}
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
-                          </>
+                            {/* Графики обучения */}
+                            {/* график правилных результатов */}
+                            <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                              <Plot
+                                data={this.PlotHeatmap(
+                                  modelInfo.data.cm_model,
+                                  modelInfo.data.y_onehot
+                                )}
+                                layout={this.PlotLayoutHeatmap(
+                                  modelInfo.data.cm_model,
+                                  modelInfo.data.y_onehot
+                                )}
+                                style={{ height: "100%", width: "100%" }}
+                              />
+                            </div>
+                            {/* Roc кривая */}
+                            <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                              <Plot
+                                data={this.PlotRocCurve(
+                                  modelInfo.data.y_scores
+                                )}
+                                layout={{
+                                  title: "Roc кривая",
+                                  autosize: true,
+                                }}
+                                style={{ height: "100%", width: "100%" }}
+                              />
+                            </div>
+                            {/* график значимости факторов */}
+                            <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                              <Plot
+                                data={this.PlotFeatureImportants(
+                                  modelInfo.data.features_importants
+                                    .importances_mean,
+                                  modelInfo.data.features_importants.labels
+                                )}
+                                layout={{
+                                  title: "Значимость факторов",
+                                  autosize: true,
+                                }}
+                                style={{ height: "100%", width: "100%" }}
+                              />
+                            </div>
+                            {/* Вывод по каждому значению target столбца */}
+                            {modelInfo.data.classification_matrix?.map(
+                              (row) => (
+                                <>
+                                  <div className="col-span-2 grid grid-cols-3 gap-4">
+                                    <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                      {/* Метрики */}
+                                      <Plot
+                                        data={this.PlotMetricsLabel(row)}
+                                        layout={{
+                                          autosize: true,
+                                          title: `${
+                                            this.state.LearnLabel.name
+                                          } ${
+                                            row[this.state.LearnLabel.name]
+                                          }: Метрики`,
+                                          xaxis: { range: [0, 1] },
+                                        }}
+                                        style={{
+                                          height: "100%",
+                                          width: "100%",
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                      {/* Доверительные интервалы */}
+                                      <Plot
+                                        data={this.PlotIntervalsLabel(row)}
+                                        layout={{
+                                          title: `${
+                                            this.state.LearnLabel.name
+                                          } ${
+                                            row[this.state.LearnLabel.name]
+                                          }: Интервалы`,
+                                          barmode: "stack",
+                                          showlegend: false,
+                                          autosize: true,
+                                          annotations: [],
+                                          yaxis: { range: [0, 1] },
+                                        }}
+                                        style={{
+                                          height: "100%",
+                                          width: "100%",
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                      {/* Матрица ошибок */}
+                                      <Plot
+                                        data={this.PlotHeatmapLabel(row)}
+                                        layout={this.PlotHeatmapLabelLayOut(
+                                          row
+                                        )}
+                                        style={{
+                                          height: "100%",
+                                          width: "100%",
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )
+                            )}
+                          </div>
                         ))}
                       </div>
                     ) : null}

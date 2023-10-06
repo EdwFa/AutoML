@@ -13,6 +13,7 @@ import Doc4 from "./pages/Doc4";
 
 import { Registration } from "./pages/Registation";
 import { Main } from "./pages/Main";
+import { Models } from "./pages/Models";
 
 function App() {
   useEffect(() => {
@@ -31,6 +32,7 @@ function App() {
         <Route path="/doc4" element={<Doc4 />} />
         <Route path="/sign-up" element={<Registration />} />
         <Route path="/" element={<Main />} />
+        <Route path="/models" element={<Models />} />
       </Routes>
     </Router>
   );

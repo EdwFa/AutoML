@@ -2,7 +2,7 @@ import React from "react";
 import Aside from "../components/Sidebar";
 import { Link } from "react-router-dom";
 
-import Dataset1 from "../assets/datasets/Прогнозирование_камней_в_почках_по_анализу_мочи.xlsx";
+import Dataset1 from "../assets/datasets/Прогнозирование_камней_в_почках_по_анализу_мочи.xlsx";
 
 // Логотип
 import Logo1 from "../assets/images/ml.datamed.pro - logotype.svg";

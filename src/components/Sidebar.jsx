@@ -15,6 +15,7 @@ import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { ArrowSmallLeftIcon } from "@heroicons/react/24/outline";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { ListBulletIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon } from "@heroicons/react/24/outline";
 
 //Dark Mode
 import Switcher from "../components/Switcher";
@@ -64,9 +65,25 @@ export default function Aside() {
               </span>
             </li>
           </Link>
-          <Link to="/">
+          <Link to="/models">
             <li
               className={`flex items-center px-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
+                !open && "hover:!bg-blue-100"
+              }`}
+            >
+              <DocumentTextIcon className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span
+                className={`ml-3 duration-100 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Сохраненные модели
+              </span>
+            </li>
+          </Link>
+          <Link to="/">
+            <li
+              className={`hidden flex items-center px-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
                 !open && "hover:!bg-blue-100"
               }`}
             >
@@ -80,148 +97,6 @@ export default function Aside() {
               </span>
             </li>
           </Link>
-          {/*Подраздел алгоритмы автообучения*/}
-          <ul
-            className={`ml-8 duration-100 ${
-              !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-            }`}
-          >
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Машины опорных векторов SVM
-                </span>
-              </li>
-            </Link>
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Деревья решений
-                </span>
-              </li>
-            </Link>
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Случайный лес решений
-                </span>
-              </li>
-            </Link>
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Логистическая регрессия
-                </span>
-              </li>
-            </Link>
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Градиентный бустинг
-                </span>
-              </li>
-            </Link>
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Ада бустинг
-                </span>
-              </li>
-            </Link>
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Ближайшие соседи
-                </span>
-              </li>
-            </Link>
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Экстра деревья решений
-                </span>
-              </li>
-            </Link>
-            <Link to="/doc1">
-              <li
-                className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                  !open && "hover:!bg-blue-100"
-                }`}
-              >
-                <span
-                  className={`ml-3 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Нейронная сеть
-                </span>
-              </li>
-            </Link>
-          </ul>
           <Link to="/help">
             <li
               className={`flex items-center px-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
