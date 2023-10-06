@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ObjectDoesNotExist
 
 from sklearn.linear_model import LogisticRegression
@@ -78,7 +80,7 @@ def read_dataset_file(dataset, drop_or_fill='fill'):
 # ----------
 
 
-def create_info_request(request, type_models, dataset):
+def create_info_request(request, type_models, params):
     print(request.data)
     data = {
         'model_name': type_models,
@@ -86,7 +88,7 @@ def create_info_request(request, type_models, dataset):
         'target': request.data['target'],
         'categorical_columns': request.data.get('categorical_columns', ""),
         'number_columns': request.data.get('number_columns', ""),
-        'params': ""
+        'params': json.dumps(params)
     }
     if data['categorical_columns'] != "":
         data['categorical_columns'] = ';;;'.join(data['categorical_columns'])

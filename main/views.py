@@ -1,3 +1,5 @@
+import json
+
 from rest_framework.response import Response
 from rest_framework.decorators import parser_classes, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -244,6 +246,13 @@ def get_models(request):
             {'id': i, 'name': col, 'number': (dtype == 'int' or dtype == 'float')}
         for i, (col, dtype) in enumerate(zip(columns, types))]
     }
+    models = list()
+    for model in data['models']:
+        models.append({'label': model, 'value': None})
+        if not os.path.exists(f'documents/base_models/{model}.json'):
+            continue
+        models[-1]['value'] = json.load(open(f'documents/base_models/{model}.json'))
+    data['models'] = models
     return Response(data=data, status=200)
 
 
@@ -278,14 +287,17 @@ async def learn_model(request):
     type_model = request.data.get("model", "")
     if type_model == "":
         return Response(data={'status': 'error'}, status=500)
+    params = [{param['param']: param['default_value']['value'] if isinstance(param['default_value'], dict) else param['default_value'] for param in m['value']} if m['value'] else None for m in type_model]
+    print(params)
 
-    type_model = ','.join(type_model)
-    broker_key = f'ml_{request.user.username}_{dataset.id}_{type_model}'
+    type_model = ','.join([m['label'] for m in type_model])
+    broker_key = f'ml_{request.user.username}_{dataset.id}'
 
-    send_data = create_info_request(request, type_model, dataset)
+    send_data = create_info_request(request, type_model, params)
     redis_cli.hset(broker_key, mapping=send_data)
 
     response_status, response = await learn_response(dataset=dataset, headers=headers, key=broker_key)
+    redis_cli.delete(broker_key)
     if response_status == 500:
         return Response(data=response, status=201)
     elif response_status == 504:

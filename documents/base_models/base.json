@@ -1,0 +1,4 @@
+[
+  {"id": , "param": , "type": , "default_value": , "name": , "info": , "diap": },
+  {"id": 7, "param": "probability", "type": "bool", "default_value": false, "name": "Включение оценки вероятности", "info": "Включить ли оценку вероятности. Это замедлит работу этого метода, поскольку внутри него используется 5-кратная перекрестная проверка и predict_proba может быть несовместимо с predict.", "diap": null}
+]
