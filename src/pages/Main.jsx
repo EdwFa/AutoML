@@ -1669,7 +1669,6 @@ export class Main extends Component {
                         работы с данными.
                       </div>
                     </InfoPanel>
-                    
                     {/* Выбор для обучения */}
                     {datasetRows.length !== 0 ? (
                       <div className="mb-4">
@@ -2156,6 +2155,7 @@ export class Main extends Component {
                                         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                           {param.name}
                                         </label>
+                                        <p>Описание: {param.info}</p>
                                         <input
                                           type="number"
                                           step="1"
@@ -2172,6 +2172,7 @@ export class Main extends Component {
                                         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                           {param.name}
                                         </label>
+                                        <p>Описание: {param.info}</p>
                                         <input
                                           type="number"
                                           step="any"
@@ -2188,6 +2189,7 @@ export class Main extends Component {
                                         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                           {param.name}
                                         </label>
+                                        <p>Описание: {param.info}</p>
                                         <input
                                             type="checkbox"
                                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
@@ -2201,6 +2203,7 @@ export class Main extends Component {
                                         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                           {param.name}
                                         </label>
+                                        <p>Описание: {param.info}</p>
                                         <Select
                                           className="basic-single"
                                           classNamePrefix="select"
