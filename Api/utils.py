@@ -24,13 +24,14 @@ import math
 models = {
     'SVM': SVC,
     'Decision Tree': DecisionTreeClassifier,
-    'Random Forest': RandomForestClassifier,
-    'Logistic Regression': LogisticRegression,
+    'RandomForestClassifier': RandomForestClassifier,
+    'LogisticRegression': LogisticRegression,
     'GradientBoostingClassifier': GradientBoostingClassifier,
-    'AdaBoost': AdaBoostClassifier,
-    'KNN': KNeighborsClassifier,
-    'ExtraTrees': ExtraTreesClassifier,
-    'MLPClassifier': MLPClassifier
+    'AdaBoostClassifier': AdaBoostClassifier,
+    'KNeighborsClassifier': KNeighborsClassifier,
+    'ExtraTreesClassifier': ExtraTreesClassifier,
+    'MLPClassifier': MLPClassifier,
+    'HistGradientBoostingClassifier': HistGradientBoostingClassifier
 }
 default_models = {
     'SVM': SVC(probability=True),
