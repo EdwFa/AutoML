@@ -124,6 +124,8 @@ export class Main extends Component {
 
       // configs models
       modelConfigs: null,
+      z: 1.64,
+      intervalType: 1
     };
   }
 
@@ -716,6 +718,8 @@ export class Main extends Component {
     var intervals = [['TP', 'TN'], ['FP', 'FN'], ['TP', 'FP'], ['TN', 'FN'], ['FP', 'TN'], ['FP', 'TN']]
     if (type === 1) {
         intervals = intervals.map((values, index) => this.confidence_intervalWillson(row[metrics[index]], row[values[0]] + row[values[1]], z))
+    } else if(type == 2) {
+        intervals = intervals.map((values, index) => this.confidence_intervalVald(row[metrics[index]], row[values[0]] + row[values[1]], z))
     }
     var data = [
       {
@@ -798,6 +802,8 @@ export class Main extends Component {
     var intervals = [['TP', 'TN'], ['FP', 'FN'], ['TP', 'FP'], ['TN', 'FN'], ['FP', 'TN'], ['FP', 'TN']]
     if (type === 1) {
         intervals = intervals.map((values, index) => this.confidence_intervalWillson(row[metrics[index]], row[values[0]] + row[values[1]], z))
+    } else if(type == 2) {
+        intervals = intervals.map((values, index) => this.confidence_intervalVald(row[metrics[index]], row[values[0]] + row[values[1]], z))
     }
     console.log(intervals);
     var textList = intervals.map(interval => `${interval[1].toFixed(2)}<br>${interval[0].toFixed(2)}`)
@@ -983,6 +989,9 @@ export class Main extends Component {
       CategoricalLabels,
       LearnLabel,
       LearnInfo,
+
+      z,
+      intervalType,
     } = this.state;
 
     if (token == "") {
@@ -1792,16 +1801,6 @@ export class Main extends Component {
                             <>
                               <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                 <div>
-                                  <select
-                                    name="#"
-                                    id="#"
-                                    className="relative z-20 inline-flex appearance-none bg-transparent py-1 text-sm font-medium outline-none"
-                                  >
-                                    <option value="">Вид 1</option>
-                                    <option value="">Вид 2</option>
-                                  </select>
-                                </div>
-                                <div>
                                   {/* Метрики */}
                                   <Plot
                                     data={this.PlotBarModels(
@@ -2046,6 +2045,29 @@ export class Main extends Component {
                                 style={{ height: "100%", width: "100%" }}
                               />
                             </div>
+                            <div>
+                                <select
+                                    name="#"
+                                    id="#"
+                                    className="relative z-20 inline-flex appearance-none bg-transparent py-1 text-sm font-medium outline-none"
+                                    onChange={e => this.setState({z: parseInt(e.target.value)})}
+                                >
+                                    <option value="1.64">90 %</option>
+                                    <option value="1.96">95 %</option>
+                                    <option value="2.58">99 %</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select
+                                    name="#"
+                                    id="#"
+                                    className="relative z-20 inline-flex appearance-none bg-transparent py-1 text-sm font-medium outline-none"
+                                    onChange={e => this.setState({intervalType: parseInt(e.target.value)})}
+                                >
+                                    <option value="1">Оценка по Уилсону</option>
+                                    <option value="2">Оценка по Вальду</option>
+                                </select>
+                            </div>
                             {/* Вывод по каждому значению target столбца */}
                             {modelInfo.data.classification_matrix?.map(
                               (row) => (
@@ -2054,7 +2076,7 @@ export class Main extends Component {
                                     <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                       {/* Метрики */}
                                       <Plot
-                                        data={this.PlotMetricsLabel(row)}
+                                        data={this.PlotMetricsLabel(row, intervalType, z)}
                                         layout={{
                                           autosize: true,
                                           title: `${
@@ -2071,9 +2093,10 @@ export class Main extends Component {
                                       />
                                     </div>
                                     <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+
                                       {/* Доверительные интервалы */}
                                       <Plot
-                                        data={this.PlotIntervalsLabel(row)}
+                                        data={this.PlotIntervalsLabel(row, intervalType, z)}
                                         layout={{
                                           title: `${
                                             this.state.LearnLabel.name
