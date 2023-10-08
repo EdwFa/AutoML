@@ -69,9 +69,11 @@ def learner():
 
     all_data = []
     for model_name, params in zip(models, models_params):
+        print(model_name)
         if params is None:
             params = {'clear': True}
         try:
+            params = {k: v for k, v in params.items() if v is not None}
             model, cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants = trainer(
                 X_train, y_train, X_test, y_test, model_name, label_name=r_data['target'], labels=labels, **params)
         except Exception as e:

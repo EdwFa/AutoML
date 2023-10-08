@@ -186,9 +186,6 @@ def trainer(X_train, y_train, X_test, y_test, model_name, label_name, labels, **
         model = default_models[model_name]
     else:
         model = models[model_name]
-        for k, v in params.items():
-            if v is None:
-                params.pop(k)
         print(params)
         model = model(**params)
 
