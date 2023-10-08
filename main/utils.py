@@ -20,16 +20,16 @@ import os
 
 
 default_models = [
-    'SVM',
-    'Decision Tree',
-    'RandomForestClassifier',
-    'LogisticRegression',
-    'GradientBoostingClassifier',
-    'AdaBoostClassifier',
-    'KNeighborsClassifier',
-    'ExtraTreesClassifier',
-    'MLPClassifier',
-    'HistGradientBoostingClassifier'
+    ['Опорные вектора', 'SVM'],
+    ['Деревья решений', 'Decision Tree'],
+    ['Случайный лес', 'RandomForestClassifier'],
+    ['Логистическая регрессия', 'LogisticRegression'],
+    ['Градиентный бустинг', 'GradientBoostingClassifier'],
+    ['Ада бустинг', 'AdaBoostClassifier'],
+    ['Ближайшие соседи', 'KNeighborsClassifier'],
+    ['Дополнительные деравья', 'ExtraTreesClassifier'],
+    ['Нейронная сеть', 'MLPClassifier'],
+    ['Гистограммный бустинг', 'HistGradientBoostingClassifier']
 ]
 
 get_grid_type = lambda x : "agNumberColumnFilter" if (x == 'int' or x == 'float') else "agTextColumnFilter"

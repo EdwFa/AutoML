@@ -248,10 +248,14 @@ def get_models(request):
     }
     models = list()
     for model in data['models']:
-        models.append({'label': model, 'value': None})
-        if not os.path.exists(f'documents/base_models/{model}.json'):
-            continue
-        models[-1]['value'] = json.load(open(f'documents/base_models/{model}.json'))
+        models.append({'label': model[0], 'name': model[1], 'value': None})
+        try:
+            if not os.path.exists(f'documents/base_models/{model[1]}.json'):
+                continue
+            models[-1]['value'] = json.load(open(f'documents/base_models/{model[1]}.json'))
+        except Exception as e:
+            print(model[1])
+            print(e)
     data['models'] = models
     return Response(data=data, status=200)
 
@@ -290,7 +294,7 @@ async def learn_model(request):
     params = [{param['param']: param['default_value']['value'] if isinstance(param['default_value'], dict) else param['default_value'] for param in m['value']} if m['value'] else None for m in type_model]
     print(params)
 
-    type_model = ','.join([m['label'] for m in type_model])
+    type_model = ','.join([m['name'] for m in type_model])
     broker_key = f'ml_{request.user.username}_{dataset.id}'
 
     send_data = create_info_request(request, type_model, params)
