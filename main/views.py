@@ -291,6 +291,15 @@ async def learn_model(request):
     type_model = request.data.get("model", "")
     if type_model == "":
         return Response(data={'status': 'error'}, status=500)
+    for m in type_model:
+        for p in m['value']:
+            if isinstance(p['default_value'], list):
+                l = p['default_value']
+                if len(l) > p['diap'][1] or len(l) < p['diap'][0]:
+                    raise Exception('not current len of array')
+                for el in l:
+                    if el > p['diap'][3] or el < p['diap'][2]:
+                        raise Exception('not current val in array')
     params = [{param['param']: param['default_value']['value'] if isinstance(param['default_value'], dict) else param['default_value'] for param in m['value']} if m['value'] else None for m in type_model]
     print(params)
 
