@@ -114,12 +114,18 @@ export class Main extends Component {
 
       // learner
       default_models: [],
+      models_params: {},
       labels: [],
       LearnModel: null,
       LearnLabel: null,
       NumberLabels: [],
       CategoricalLabels: [],
       LearnInfo: null,
+
+      // configs models
+      modelConfigs: null,
+      z: 1.64,
+      intervalType: 1,
     };
   }
 
@@ -424,10 +430,8 @@ export class Main extends Component {
         this.setState({
           LearnLabel: null,
           LearnInfo: null,
-          default_models: data.models?.map((model) => ({
-            id: model,
-            name: model,
-          })),
+          models_params: data.params,
+          default_models: data.models,
           labels: data.labels,
           CategoricalLabels: data.labels.filter((label) => !label.number),
           NumberLabels: data.labels.filter((label) => label.number),
@@ -440,7 +444,13 @@ export class Main extends Component {
   }
 
   changeModel = (e) => {
+    console.log(e);
     this.setState({ LearnModel: e });
+  };
+
+  changeModelConfigs = (e) => {
+    console.log(e);
+    this.setState({ modelConfigs: e });
   };
 
   changeLabel = (e) => {
@@ -500,7 +510,7 @@ export class Main extends Component {
           Authorization: `Token ${this.state.token}`,
         },
         body: JSON.stringify({
-          model: this.state.LearnModel?.map((model) => model.name),
+          model: this.state.LearnModel?.map((model) => model),
           target: this.state.LearnLabel.name,
           categorical_columns: this.state.CategoricalLabels.map(
             (label) => label.name
@@ -702,9 +712,34 @@ export class Main extends Component {
 
   // Графики для отрисовки по каджому label
 
-  PlotMetricsLabel(row) {
-    var metrics = ["Se", "Sp", "PPV", "NPV", "FPR", "FNR"];
+  PlotMetricsLabel(row, type = 1, z = 1.96) {
+    var metrics = ["SE", "SP", "PPV", "NPV", "FPR", "FNR"];
     var rowData = [row.SE, row.SP, row.PPV, row.NPV, row.FPR, row.FNR];
+    var intervals = [
+      ["TP", "TN"],
+      ["FP", "FN"],
+      ["TP", "FP"],
+      ["TN", "FN"],
+      ["FP", "TN"],
+      ["FP", "TN"],
+    ];
+    if (type === 1) {
+      intervals = intervals.map((values, index) =>
+        this.confidence_intervalWillson(
+          row[metrics[index]],
+          row[values[0]] + row[values[1]],
+          z
+        )
+      );
+    } else if (type == 2) {
+      intervals = intervals.map((values, index) =>
+        this.confidence_intervalVald(
+          row[metrics[index]],
+          row[values[0]] + row[values[1]],
+          z
+        )
+      );
+    }
     var data = [
       {
         y: metrics,
@@ -712,14 +747,7 @@ export class Main extends Component {
         name: "metric",
         error_x: {
           type: "data",
-          array: [
-            row.SE - row.SE_min,
-            row.SP - row.SP_min,
-            row.PPV - row.PPV_min,
-            row.NPV - row.NPV_min,
-            row.FPR - row.FPR_min,
-            row.FNR - row.FNR_min,
-          ],
+          array: intervals.map((values, index) => rowData[index] - values[0]),
           visible: true,
         },
         type: "bar",
@@ -729,27 +757,110 @@ export class Main extends Component {
     return data;
   }
 
-  PlotIntervalsLabel(row) {
-    var metrics = ["Se", "Sp", "PPV", "NPV", "FPR", "FNR"];
-    var textList = [
-      `${row.SE_max.toFixed(2)}<br>${row.SE_min.toFixed(2)}`,
-      `${row.SP_max.toFixed(2)}<br>${row.SP_min.toFixed(2)}`,
-      `${row.PPV_max.toFixed(2)}<br>${row.PPV_min.toFixed(2)}`,
-      `${row.NPV_max.toFixed(2)}<br>${row.NPV_min.toFixed(2)}`,
-      `${row.FPR_max.toFixed(2)}<br>${row.FPR_min.toFixed(2)}`,
-      `${row.FNR_max.toFixed(2)}<br>${row.FNR_min.toFixed(2)}`,
+  confidence_intervalWillson(s, n, z = 1.96) {
+    console.log(s, n);
+    let down;
+    let up;
+    try {
+      down =
+        (2 * n * s +
+          z * z -
+          1 -
+          z * Math.sqrt(z * z - 1 / n + 4 * n * s * (1 - s) + (4 * s - 2))) /
+        (2 * (n + z * z));
+      if (down > 1) down = 1;
+    } catch {
+      down = 0;
+    }
+    try {
+      up =
+        (2 * n * s +
+          z * z +
+          1 +
+          z * Math.sqrt(z * z - 1 / n + 4 * n * s * (1 - s) + (4 * s - 2))) /
+        (2 * (n + z * z));
+      if (up > 1) up = 1;
+    } catch {
+      up = 1;
+    }
+    return [down, up];
+  }
+
+  confidence_intervalPirson(s, n, z = 1.96) {
+    console.log(s, n);
+    let down;
+    let up;
+    try {
+      down = s / (s + (n - s + 1) * 1);
+    } catch {
+      down = 0;
+    }
+    try {
+      up =
+        (s +
+          (z * z) / (2 * n) +
+          z * Math.sqrt((s * (1 - s) + (z * z) / (4 * n)) / n)) /
+        (1 + (z * z) / n);
+    } catch {
+      up = 0;
+    }
+    return [down, up];
+  }
+
+  confidence_intervalVald(s, n, z = 1.96) {
+    console.log(s, n);
+    let down;
+    let up;
+    try {
+      down = s - z * Math.sqrt((s * (1 - s)) / n);
+      if (down > 1) down = 1;
+    } catch {
+      down = 0;
+    }
+    try {
+      up = s + z * Math.sqrt((s * (1 - s)) / n);
+      if (up > 1) up = 1;
+    } catch {
+      up = 1;
+    }
+    return [down, up];
+  }
+
+  PlotIntervalsLabel(row, type = 1, z = 1.96) {
+    var metrics = ["SE", "SP", "PPV", "NPV", "FPR", "FNR"];
+    var intervals = [
+      ["TP", "TN"],
+      ["FP", "FN"],
+      ["TP", "FP"],
+      ["TN", "FN"],
+      ["FP", "TN"],
+      ["FP", "TN"],
     ];
+    if (type === 1) {
+      intervals = intervals.map((values, index) =>
+        this.confidence_intervalWillson(
+          row[metrics[index]],
+          row[values[0]] + row[values[1]],
+          z
+        )
+      );
+    } else if (type == 2) {
+      intervals = intervals.map((values, index) =>
+        this.confidence_intervalVald(
+          row[metrics[index]],
+          row[values[0]] + row[values[1]],
+          z
+        )
+      );
+    }
+    console.log(intervals);
+    var textList = intervals.map(
+      (interval) => `${interval[1].toFixed(2)}<br>${interval[0].toFixed(2)}`
+    );
     var data = [
       {
         x: metrics,
-        y: [
-          row.SE_min,
-          row.SP_min,
-          row.PPV_min,
-          row.NPV_min,
-          row.FPR_min,
-          row.FNR_min,
-        ],
+        y: intervals.map((interval) => interval[0]),
         name: "Control2",
         marker: {
           color: "rgba(1,1,1,0.0)",
@@ -758,14 +869,7 @@ export class Main extends Component {
       },
       {
         x: metrics,
-        y: [
-          row.SE_max - row.SE_min,
-          row.SP_max - row.SP_min,
-          row.PPV_max - row.PPV_min,
-          row.NPV_max - row.NPV_min,
-          row.FPR_max - row.FPR_min,
-          row.FNR_max - row.FNR_min,
-        ],
+        y: intervals.map((interval) => interval[1] - interval[0]),
         text: textList,
         name: "Interval",
         type: "bar",
@@ -866,6 +970,39 @@ export class Main extends Component {
     return layout;
   }
 
+  // configs models
+
+  changeNumber = (e, index) => {
+    this.setState((state) => {
+      let newInfo = this.state.modelConfigs;
+      if (newInfo.value[index]["type"] == "int") {
+        newInfo.value[index]["default_value"] = parseInt(e.target.value);
+      } else {
+        newInfo.value[index]["default_value"] = parseFloat(e.target.value);
+      }
+      return { modelConfigs: newInfo };
+    });
+  };
+
+  changeBool = (index) => {
+    this.setState((state) => {
+      let newInfo = this.state.modelConfigs;
+      console.log(!newInfo.value[index]["default_value"]);
+      newInfo.value[index]["default_value"] =
+        !newInfo.value[index]["default_value"];
+      return { modelConfigs: newInfo };
+    });
+  };
+
+  changeCat = (e, index) => {
+    this.setState((state) => {
+      let newInfo = this.state.modelConfigs;
+      console.log(newInfo.value[index]);
+      newInfo.value[index]["default_value"] = e;
+      return { modelConfigs: newInfo };
+    });
+  };
+
   render() {
     const {
       token,
@@ -896,12 +1033,16 @@ export class Main extends Component {
       currentElem,
 
       default_models,
+      modelConfigs,
       LearnModel,
       labels,
       NumberLabels,
       CategoricalLabels,
       LearnLabel,
       LearnInfo,
+
+      z,
+      intervalType,
     } = this.state;
 
     if (token == "") {
@@ -1041,6 +1182,21 @@ export class Main extends Component {
                               >
                                 <div className="inline-flex items-center">
                                   Обучение
+                                </div>
+                              </Tab>
+                              <Tab
+                                className={({ selected }) =>
+                                  classNames(
+                                    "",
+                                    "inline-block p-2 border-b-2 rounded-t-lg",
+                                    selected
+                                      ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                      : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                  )
+                                }
+                              >
+                                <div className="inline-flex items-center">
+                                  Настройка моделей
                                   <Cog6ToothIcon className="ml-2 shrink-0 w-4 h-4 text-blue-500 transition duration-75 hover:text-blue-700 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
                                 </div>
                               </Tab>
@@ -1573,78 +1729,6 @@ export class Main extends Component {
                         работы с данными.
                       </div>
                     </InfoPanel>
-                    <ControlPanel>
-                      <div className="grid grid-cols-4 gap-4">
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <div className="mb-2">SVM</div>
-                          <label
-                            for="small"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                          >
-                            Опции выбора
-                          </label>
-                          <select
-                            id="small"
-                            class="block w-full p-2 mb-4 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                          >
-                            <option selected>Параметры</option>
-                            <option value="1">Параметр 1</option>
-                            <option value="2">Параметр 2</option>
-                            <option value="3">Параметр 3</option>
-                            <option value="4">Параметр 4</option>
-                          </select>
-                          <div class="flex items-center mb-4">
-                            <input
-                              id="default-checkbox"
-                              type="checkbox"
-                              value=""
-                              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                            />
-                            <label
-                              for="default-checkbox"
-                              class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                            >
-                              Checkbox
-                            </label>
-                          </div>
-                          <div class="flex items-center mb-4">
-                            <input
-                              id="default-checkbox"
-                              type="checkbox"
-                              value=""
-                              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                            />
-                            <label
-                              for="default-checkbox"
-                              class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                            >
-                              Checkbox
-                            </label>
-                          </div>
-                        </div>
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <div className="mb-2">RandomForestClassifier</div>
-                        </div>
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <div className="mb-2">GradientBoostingClassifier</div>
-                        </div>
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <div className="mb-2">AdaBoostClassifier</div>
-                        </div>
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <div className="mb-2">Decision Tree</div>
-                        </div>
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <div className="mb-2">LogisticRegression</div>
-                        </div>
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <div className="mb-2">NeighborsClassifier</div>
-                        </div>
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                          <div className="mb-2">MLPClassifier</div>
-                        </div>
-                      </div>
-                    </ControlPanel>
                     {/* Выбор для обучения */}
                     {datasetRows.length !== 0 ? (
                       <div className="mb-4">
@@ -1655,8 +1739,8 @@ export class Main extends Component {
                           className="basic-multi-select"
                           classNamePrefix="select"
                           options={default_models}
-                          getOptionLabel={(option) => `${option["name"]}`}
-                          getOptionValue={(option) => `${option["id"]}`}
+                          getOptionLabel={(option) => option.label}
+                          getOptionValue={(option) => option}
                           value={LearnModel}
                           onChange={(e) => this.changeModel(e)}
                           placeholder="Выберите модели для обучения"
@@ -1767,16 +1851,6 @@ export class Main extends Component {
                           {LearnInfo[0].data.y_onehot.map((label, index) => (
                             <>
                               <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                <div>
-                                  <select
-                                    name="#"
-                                    id="#"
-                                    className="relative z-20 inline-flex appearance-none bg-transparent py-1 text-sm font-medium outline-none"
-                                  >
-                                    <option value="">Вид 1</option>
-                                    <option value="">Вид 2</option>
-                                  </select>
-                                </div>
                                 <div>
                                   {/* Метрики */}
                                   <Plot
@@ -2022,6 +2096,35 @@ export class Main extends Component {
                                 style={{ height: "100%", width: "100%" }}
                               />
                             </div>
+                            <div>
+                              <select
+                                name="#"
+                                id="#"
+                                className="relative z-20 inline-flex appearance-none bg-transparent py-1 text-sm font-medium outline-none"
+                                onChange={(e) =>
+                                  this.setState({ z: parseInt(e.target.value) })
+                                }
+                              >
+                                <option value="1.64">90 %</option>
+                                <option value="1.96">95 %</option>
+                                <option value="2.58">99 %</option>
+                              </select>
+                            </div>
+                            <div>
+                              <select
+                                name="#"
+                                id="#"
+                                className="relative z-20 inline-flex appearance-none bg-transparent py-1 text-sm font-medium outline-none"
+                                onChange={(e) =>
+                                  this.setState({
+                                    intervalType: parseInt(e.target.value),
+                                  })
+                                }
+                              >
+                                <option value="1">Оценка по Уилсону</option>
+                                <option value="2">Оценка по Вальду</option>
+                              </select>
+                            </div>
                             {/* Вывод по каждому значению target столбца */}
                             {modelInfo.data.classification_matrix?.map(
                               (row) => (
@@ -2030,7 +2133,11 @@ export class Main extends Component {
                                     <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                       {/* Метрики */}
                                       <Plot
-                                        data={this.PlotMetricsLabel(row)}
+                                        data={this.PlotMetricsLabel(
+                                          row,
+                                          intervalType,
+                                          z
+                                        )}
                                         layout={{
                                           autosize: true,
                                           title: `${
@@ -2049,7 +2156,11 @@ export class Main extends Component {
                                     <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                       {/* Доверительные интервалы */}
                                       <Plot
-                                        data={this.PlotIntervalsLabel(row)}
+                                        data={this.PlotIntervalsLabel(
+                                          row,
+                                          intervalType,
+                                          z
+                                        )}
                                         layout={{
                                           title: `${
                                             this.state.LearnLabel.name
@@ -2089,6 +2200,125 @@ export class Main extends Component {
                         ))}
                       </div>
                     ) : null}
+                  </Tab.Panel>
+                  <Tab.Panel
+                    className={classNames(
+                      "h-dvh flex flex-col bg-white dark:bg-gray-800",
+                      "focus:outline-none"
+                    )}
+                  >
+                    {/* Настройка моделей */}
+                    <InfoPanel>
+                      <span class="sr-only">Info</span>
+                      <div class="ml-3 text-sm">
+                        Данный раздел для настройки моделей обучения.
+                      </div>
+                    </InfoPanel>
+                    <>
+                      <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                        Настраиваемая модель
+                      </label>
+                      <Select
+                        className="basic-single"
+                        classNamePrefix="select"
+                        getoptionlabel={(option) => option.label}
+                        getoptionvalue={(option) => option}
+                        options={default_models}
+                        value={modelConfigs}
+                        noOptionsMessage={() => "Пусто"}
+                        onChange={(e) => this.changeModelConfigs(e)}
+                        placeholder="Выберите модель"
+                        isSearchable
+                        isClearable
+                      />
+                      {modelConfigs === null ? null : (
+                        <div className="grid grid-cols-3 gap-4 my-4">
+                          {modelConfigs.value?.map((param, index) =>
+                            !param.use ? null : param.type === "int" ? (
+                              <div className="bg-white shadow-lg rounded-lg py-4 px-4 border border-gray-200">
+                                {/* Если данные int */}
+                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                  {param.name}
+                                </label>
+                                <p className="mb-2">Описание: {param.info}</p>
+                                <input
+                                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                  type="number"
+                                  step="1"
+                                  min={param.diap[0]}
+                                  max={
+                                    param.diap.length === 2
+                                      ? param.diap[1]
+                                      : null
+                                  }
+                                  value={param.default_value}
+                                  onChange={(e) => this.changeNumber(e, index)}
+                                  placeholder="Введите значени поля"
+                                />
+                              </div>
+                            ) : param.type === "float" ? (
+                              <div className="bg-white shadow-lg rounded-lg py-4 px-4 border border-gray-200">
+                                {/* Если данные int */}
+                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                  {param.name}
+                                </label>
+                                <p className="mb-2">Описание: {param.info}</p>
+                                <input
+                                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                  type="number"
+                                  step="any"
+                                  min={param.diap[0]}
+                                  max={
+                                    param.diap.length === 2
+                                      ? param.diap[1]
+                                      : null
+                                  }
+                                  value={param.default_value}
+                                  onChange={(e) => this.changeNumber(e, index)}
+                                  placeholder="Введите значени поля"
+                                />
+                              </div>
+                            ) : param.type === "bool" ? (
+                              <div className="bg-white shadow-lg rounded-lg py-4 px-4 border border-gray-200">
+                                {/* Если данные int */}
+                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                  {param.name}
+                                </label>
+                                <p className="mb-2">Описание: {param.info}</p>
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                  defaultChecked={param.default_value}
+                                  onChange={() => this.changeBool(index)}
+                                />
+                              </div>
+                            ) : param.type === "string" ? (
+                              <div className="bg-white shadow-lg rounded-lg py-4 px-4 border border-gray-200">
+                                {/* Если данные int */}
+                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                  {param.name}
+                                </label>
+                                <p className="mb-2">Описание: {param.info}</p>
+                                <Select
+                                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                  classNamePrefix="select"
+                                  options={param.diap.map((value) => ({
+                                    value: value,
+                                    label: value,
+                                  }))}
+                                  value={param.default_value}
+                                  noOptionsMessage={() => "Пусто"}
+                                  onChange={(e) => this.changeCat(e, index)}
+                                  placeholder="Выберите Параметр"
+                                  isSearchable
+                                  isClearable
+                                />
+                              </div>
+                            ) : null
+                          )}
+                        </div>
+                      )}
+                    </>
                   </Tab.Panel>
                 </Tab.Panels>
               </div>

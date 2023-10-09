@@ -81,7 +81,7 @@ export default function Aside() {
               </span>
             </li>
           </Link>
-          <Link to="/">
+          <Link>
             <li
               className={`hidden flex items-center px-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
                 !open && "hover:!bg-blue-100"
