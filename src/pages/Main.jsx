@@ -1003,6 +1003,31 @@ export class Main extends Component {
     });
   };
 
+  changeArrayLength = (e, index) => {
+    this.setState((state) => {
+      let newInfo = this.state.modelConfigs;
+      console.log(e.target.value);
+      newInfo.value[index]["default_value"] = Array(
+        parseInt(e.target.value)
+      ).fill(newInfo.value[index]["diap"][3]);
+      console.log(
+        newInfo.value[index]["default_value"],
+        newInfo.value[index]["default_value"][0]
+      );
+      return { modelConfigs: newInfo };
+    });
+  };
+
+  changeArrayElem = (e, index, arrayIndex) => {
+    this.setState((state) => {
+      let newInfo = this.state.modelConfigs;
+      newInfo.value[index]["default_value"][arrayIndex] = parseInt(
+        e.target.value
+      );
+      return { modelConfigs: newInfo };
+    });
+  };
+
   render() {
     const {
       token,
@@ -2215,7 +2240,7 @@ export class Main extends Component {
                       </div>
                     </InfoPanel>
                     <>
-                      <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                      <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                         Настраиваемая модель
                       </label>
                       <Select
@@ -2232,17 +2257,16 @@ export class Main extends Component {
                         isClearable
                       />
                       {modelConfigs === null ? null : (
-                        <div className="grid grid-cols-3 gap-4 my-4">
+                        <div className="grid grid-cols-3 gap-4 py-4">
                           {modelConfigs.value?.map((param, index) =>
                             !param.use ? null : param.type === "int" ? (
-                              <div className="bg-white shadow-lg rounded-lg py-4 px-4 border border-gray-200">
+                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                 {/* Если данные int */}
                                 <label className="block mb-2 font-bold text-gray-900 dark:text-white">
                                   {param.name}
                                 </label>
-                                <p className="mb-2">Описание: {param.info}</p>
+                                <p>Описание: {param.info}</p>
                                 <input
-                                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                   type="number"
                                   step="1"
                                   min={param.diap[0]}
@@ -2257,14 +2281,13 @@ export class Main extends Component {
                                 />
                               </div>
                             ) : param.type === "float" ? (
-                              <div className="bg-white shadow-lg rounded-lg py-4 px-4 border border-gray-200">
+                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                 {/* Если данные int */}
                                 <label className="block mb-2 font-bold text-gray-900 dark:text-white">
                                   {param.name}
                                 </label>
-                                <p className="mb-2">Описание: {param.info}</p>
+                                <p>Описание: {param.info}</p>
                                 <input
-                                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                   type="number"
                                   step="any"
                                   min={param.diap[0]}
@@ -2279,12 +2302,12 @@ export class Main extends Component {
                                 />
                               </div>
                             ) : param.type === "bool" ? (
-                              <div className="bg-white shadow-lg rounded-lg py-4 px-4 border border-gray-200">
+                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                 {/* Если данные int */}
                                 <label className="block mb-2 font-bold text-gray-900 dark:text-white">
                                   {param.name}
                                 </label>
-                                <p className="mb-2">Описание: {param.info}</p>
+                                <p>Описание: {param.info}</p>
                                 <input
                                   type="checkbox"
                                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
@@ -2293,12 +2316,12 @@ export class Main extends Component {
                                 />
                               </div>
                             ) : param.type === "string" ? (
-                              <div className="bg-white shadow-lg rounded-lg py-4 px-4 border border-gray-200">
+                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                 {/* Если данные int */}
                                 <label className="block mb-2 font-bold text-gray-900 dark:text-white">
                                   {param.name}
                                 </label>
-                                <p className="mb-2">Описание: {param.info}</p>
+                                <p>Описание: {param.info}</p>
                                 <Select
                                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                   classNamePrefix="select"
@@ -2313,6 +2336,46 @@ export class Main extends Component {
                                   isSearchable
                                   isClearable
                                 />
+                              </div>
+                            ) : param.type === "array" ? (
+                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                {/* Если данные int */}
+                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                  {param.name}
+                                </label>
+                                <p>Описание: {param.info}</p>
+                                <select
+                                  name="#"
+                                  id="#"
+                                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                  onChange={(e) =>
+                                    this.changeArrayLength(e, index)
+                                  }
+                                  value={param.default_value.length}
+                                >
+                                  <option value="1">1</option>
+                                  <option value="2">2</option>
+                                  <option value="3">3</option>
+                                  <option value="4">4</option>
+                                  <option value="5">5</option>
+                                </select>
+                                {param.default_value?.map((elVal, indexArr) => (
+                                  <>
+                                    <p>{indexArr}</p>
+                                    <input
+                                      type="number"
+                                      step="1"
+                                      min={param.diap[2]}
+                                      max={param.diap[3]}
+                                      value={param.default_value[indexArr]}
+                                      onChange={(e) =>
+                                        this.changeArrayElem(e, index, indexArr)
+                                      }
+                                      placeholder="Введите значение поля"
+                                    />
+                                    <br />
+                                  </>
+                                ))}
                               </div>
                             ) : null
                           )}
