@@ -4,6 +4,8 @@ import json
 import os
 import time
 import pandas as pd
+import seaborn as sns
+import plotly.graph_objs as go
 from ydata_profiling import ProfileReport
 from io import StringIO
 
@@ -28,10 +30,6 @@ def createStat():
         return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
     current_app.logger.info(f'Find dataset and convert them to pandas DataFrame...')
     dataset = pd.read_csv(data['key'].stream)
-    if 'ID' in dataset.columns:
-        dataset = dataset.drop(['ID'], axis=1)
-    elif 'id' in dataset.columns:
-        dataset = dataset.drop(['id'], axis=1)
     current_app.logger.info(f'{dataset.shape[0]} {dataset.shape[1]}')
     title = dataset.get('title', 'Statistic')
     current_app.logger.info(f'Title -> {title}')
@@ -44,4 +42,25 @@ def createStat():
     translateHTML.translate()
     translateHTML.reload_changes(save_file)
     current_app.logger.info(f'Response dataset...')
+    return send_file(save_file, as_attachment=True)
+
+
+@analise.route('/create_graphics', methods=['POST'])
+def createGraphics():
+    current_app.logger.info(f'Start create graphics data...')
+    data = request.files
+    save_file = "image.jpeg"
+    print(data)
+    if 'key' not in data:
+        return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
+    current_app.logger.info(f'Find dataset and convert them to pandas DataFrame...')
+    dataset = pd.read_csv(data['key'].stream)
+    current_app.logger.info(f'{dataset.shape[0]} {dataset.shape[1]}')
+
+    g = sns.PairGrid(dataset)
+    g.map_upper(sns.histplot)
+    g.map_lower(sns.kdeplot, fill=True)
+    g.map_diag(sns.histplot, kde=True)
+    g.figure.savefig(save_file)
+
     return send_file(save_file, as_attachment=True)
