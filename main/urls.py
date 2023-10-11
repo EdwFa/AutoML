@@ -14,10 +14,12 @@ urlpatterns = [
     # Загрузка датасета и статистики
     path('datasets/upload', upload_dataset, name='upload'),
     path('statistic/upload', upload_statistic, name='upload'),
+    path('graphics/upload', upload_graphics, name='upload'),
 
     # Разделы для анализа и обучения датасета
     path('dataset/viewer', get_dataset, name='viewer'),
     path('dataset/statistic', get_statistic, name='statistic'),
+    path('dataset/graphics', get_graphics, name='graphics'),
     path('dataset/learner', learn_model, name='learner'),
     path('dataset/models', get_models, name='learner'),
 

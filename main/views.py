@@ -1,5 +1,6 @@
 import json
 
+from django.http import HttpResponse, FileResponse
 from rest_framework.response import Response
 from rest_framework.decorators import parser_classes, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -224,6 +225,59 @@ async def upload_statistic(request):
         return Response(data='Error', status=404)
 
     status_response = await stat_response(dataset)
+    if status_response == 504:
+        return Response(data={'timeout'}, status=504)
+    elif status_response == 200:
+        return Response(data={'success'}, status=200)
+    else:
+        return Response(data={'error'}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def get_graphics(request):
+    dataset = get_dataset_obj(request)
+    if dataset is None:
+        return Response(data='Error', status=404)
+    statistic_file = dataset.get_graphics_path()
+    if not os.path.exists(statistic_file):
+        return Response(data='Error', status=404)
+    img = open(statistic_file, 'rb')
+
+    return FileResponse(img)
+
+async def graphics_response(dataset):
+    timeout = aiohttp.ClientTimeout(total=time_out_time_stat)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        with open(dataset.get_dataset_path(), 'r') as f:
+            try:
+                response = await session.post(f'{HOST_TO_CONNECT_STATISTIC}/create_graphics', data={'key': f},
+                                           headers={'User-Agent': 'Mozilla/5.0'})
+            except asyncio.exceptions.TimeoutError:
+                print("time out exception")
+                return 504
+
+        if response.status > 299:
+            return 500
+
+        statistic_file = dataset.get_graphics_path()
+        stat = await response.read()
+        with open(statistic_file, 'wb') as fs:
+            fs.write(stat)
+        return 200
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+async def upload_graphics(request):
+    print(request.user)
+    dataset = await get_dataset_obj_async(request)
+    if dataset is None:
+        return Response(data='Error', status=404)
+
+    status_response = await graphics_response(dataset)
     if status_response == 504:
         return Response(data={'timeout'}, status=504)
     elif status_response == 200:

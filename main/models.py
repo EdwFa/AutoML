@@ -56,6 +56,8 @@ class Dataset(models.Model):
     def get_stat_path(self):
         return os.path.join(self.path, 'statistic.html')
 
+    def get_graphics_path(self):
+        return os.path.join(self.path, 'graphics.jpeg')
 
 class LearnModel(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='models', related_query_name='models', null=True)
