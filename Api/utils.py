@@ -274,7 +274,7 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
         except ZeroDivisionError:
             SE = 0
         try:
-            SP = v['FP'] / (v['FP'] + v['TN'])
+            SP = v['TN'] / (v['FP'] + v['TN'])
         except ZeroDivisionError:
             SP = 0
         try:
