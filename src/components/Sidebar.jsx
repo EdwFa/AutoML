@@ -2,15 +2,12 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Transition } from "@headlessui/react";
-import { Disclosure } from "@headlessui/react";
 
 // Логотипы
 import Logo1 from "../assets/images/ml.datamed.pro - logotype.svg";
 import Logo2 from "../assets/images/ml.datamed.pro - logotype_shrink.svg";
 
 // Иконки
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
-
 import { LifebuoyIcon } from "@heroicons/react/24/outline";
 import { BookOpenIcon } from "@heroicons/react/24/outline";
 import { ChartPieIcon } from "@heroicons/react/24/outline";
@@ -19,6 +16,7 @@ import { ArrowSmallLeftIcon } from "@heroicons/react/24/outline";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { ListBulletIcon } from "@heroicons/react/24/outline";
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
+import { CircleStackIcon } from "@heroicons/react/24/outline";
 
 //Dark Mode
 import Switcher from "../components/Switcher";
@@ -40,7 +38,7 @@ export default function Aside() {
           {/*Логотип широкий*/}
           <img
             src={Logo1}
-            className={`h-14 ${open ? "w-full" : "hidden"} duration-100`}
+            className={`mb-3 h-14 ${open ? "w-full" : "hidden"} duration-100`}
             alt="Sechenov University"
           />
           {/*Логотип без текста*/}
@@ -51,7 +49,7 @@ export default function Aside() {
           />
         </a>
         {/*Верхнее меню*/}
-        <ul className="py-4 space-y-1 font-medium">
+        <ul class="my-4 space-y-1 font-medium">
           <Link to="/">
             <li
               className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
@@ -84,100 +82,100 @@ export default function Aside() {
               </span>
             </li>
           </Link>
-          <Link to="/help"></Link>
-          <Disclosure>
-            <>
-              <Disclosure.Button className="flex w-full justify-between">
-                <li
-                  className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                    !open && "hover:!bg-blue-100"
-                  }`}
-                >
-                  <ListBulletIcon className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                  <span
-                    className={`ml-3 duration-100 ${
-                      !open && "opacity-0 translate-x-28 overflow-hidden"
-                    }`}
-                  >
-                    Примеры датасетов
-                  </span>
-                </li>
-              </Disclosure.Button>
-              <Disclosure.Panel className="text-gray-500">
-                {/*Подраздел алгоритмы автообучения*/}
-                <ul
-                  className={`ml-6 duration-100 ${
-                    !open && "hidden opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  <Link to="/doc2">
-                    <li
-                      className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                        !open && "hover:!bg-blue-100"
-                      }`}
-                    >
-                      <span
-                        className={`ml-3 duration-100 ${
-                          !open &&
-                          "hidden opacity-0 translate-x-28 overflow-hidden"
-                        }`}
-                      >
-                        Прогнозироване рака легких
-                      </span>
-                    </li>
-                  </Link>
-                  <Link to="/doc3">
-                    <li
-                      className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                        !open && "hover:!bg-blue-100"
-                      }`}
-                    >
-                      <span
-                        className={`ml-3 duration-100 ${
-                          !open &&
-                          "hidden opacity-0 translate-x-28 overflow-hidden"
-                        }`}
-                      >
-                        Биомаркер рака поджелудочной железы
-                      </span>
-                    </li>
-                  </Link>
-                  <Link to="/doc4">
-                    <li
-                      className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                        !open && "hover:!bg-blue-100"
-                      }`}
-                    >
-                      <span
-                        className={`ml-3 duration-100 ${
-                          !open &&
-                          "hidden opacity-0 translate-x-28 overflow-hidden"
-                        }`}
-                      >
-                        Сердечная недостаточность
-                      </span>
-                    </li>
-                  </Link>
-                  <Link to="/doc1">
-                    <li
-                      className={`flex items-center p-1 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
-                        !open && "hover:!bg-blue-100"
-                      }`}
-                    >
-                      <span
-                        className={`ml-3 duration-100 ${
-                          !open &&
-                          "hidden opacity-0 translate-x-28 overflow-hidden"
-                        }`}
-                      >
-                        Прогнозирование камней в почках
-                      </span>
-                    </li>
-                  </Link>
-                </ul>
-              </Disclosure.Panel>
-            </>
-          </Disclosure>
+          <Link>
+            <li
+              className={`hidden flex items-center px-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
+                !open && "hover:!bg-blue-100"
+              }`}
+            >
+              <ShareIcon className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span
+                className={`ml-3 duration-100 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Алгоритмы автообучения
+              </span>
+            </li>
+          </Link>
+        </ul>
+        <span
+          className={`ml-2 mb-3 text-xs font-semibold text-slate-600 dark:text-slate-200 duration-100 ${
+            !open && "opacity-0 translate-x-28 overflow-hidden"
+          }`}
+        >
+          ПРИМЕРЫ ДАТАСЕТОВ
+        </span>
+        {/*Подраздел алгоритмы автообучения*/}
+        <ul
+          className={`duration-100 ${
+            !open && "hidden opacity-0 translate-x-28 overflow-hidden"
+          }`}
+        >
+          <Link to="/doc2">
+            <li
+              className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
+                !open && "hover:!bg-blue-100"
+              }`}
+            >
+              <CircleStackIcon className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span
+                className={`ml-3 duration-100 ${
+                  !open && "hidden opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Прогнозироване рака легких
+              </span>
+            </li>
+          </Link>
+          <Link to="/doc3">
+            <li
+              className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
+                !open && "hover:!bg-blue-100"
+              }`}
+            >
+              <CircleStackIcon className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span
+                className={`ml-3 duration-100 ${
+                  !open && "hidden opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Биомаркер рака поджелудочной железы
+              </span>
+            </li>
+          </Link>
+          <Link to="/doc4">
+            <li
+              className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
+                !open && "hover:!bg-blue-100"
+              }`}
+            >
+              <CircleStackIcon className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span
+                className={`ml-3 duration-100 ${
+                  !open && "hidden opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Сердечная недостаточность
+              </span>
+            </li>
+          </Link>
+          <Link to="/doc1">
+            <li
+              className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
+                !open && "hover:!bg-blue-100"
+              }`}
+            >
+              <CircleStackIcon className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span
+                className={`ml-3 duration-100 ${
+                  !open && "hidden opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Прогнозирование камней в почках
+              </span>
+            </li>
+          </Link>
         </ul>
         {/*Информационная панель*/}
         <Transition
