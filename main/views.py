@@ -357,7 +357,6 @@ async def learn_model(request):
     params = [{param['param']: param['default_value']['value'] if isinstance(param['default_value'], dict) else param['default_value'] for param in m['value']} if m['value'] else None for m in type_model]
     print(params)
 
-    type_model = ','.join([m['name'] for m in type_model])
     broker_key = f'ml_{request.user.username}_{dataset.id}'
 
     send_data = create_info_request(request, type_model, params)
@@ -393,8 +392,7 @@ async def save_response(user, model_name):
 @authentication_classes([TokenAuthentication])
 async def save_model(request):
     print(request.data)
-    response_status, response = await save_response(request.user, request.data['model'])
-    print(response)
+    response_status, response = await save_response(request.user, request.data['model']['name'])
     if response_status == 500:
         return Response(data=response, status=201)
     elif response_status == 504:
@@ -403,7 +401,7 @@ async def save_model(request):
     configs = request.data['columns']
     print([t.rstrip("<br />") for t in request.data['target_info']])
     configs.append([request.data['target'], *[t.rstrip("<br />") for t in request.data['target_info']]])
-    new_model = LearnModel(name=request.data['model'], user=request.user, configs=request.data['columns'])
+    new_model = LearnModel(name=request.data['model']['label'], user=request.user, configs=request.data['columns'])
     await new_model.asave()
     # dump(response, os.path.join('models', request.user.username, f'{new_model.id}.sav'))
     with open(os.path.join('models', request.user.username, f'{new_model.id}.sav'), 'wb') as f:

@@ -83,7 +83,7 @@ def read_dataset_file(dataset, drop_or_fill='fill'):
 def create_info_request(request, type_models, params):
     print(request.data)
     data = {
-        'model_name': type_models,
+        'model_name': json.dumps(type_models),
         'user': request.user.username,
         'target': request.data['target'],
         'categorical_columns': request.data.get('categorical_columns', ""),
