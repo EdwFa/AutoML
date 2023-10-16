@@ -37,7 +37,7 @@ def learner():
     r_data = redis_cli.hgetall(broker_key)
     r_data['number_columns'] = r_data['number_columns'].split(';;;') if r_data['number_columns'] != "" else []
     r_data['categorical_columns'] = r_data['categorical_columns'].split(';;;') if r_data['categorical_columns'] != "" else []
-    models = r_data['model_name'].split(',')
+    models = json.loads(r_data['model_name'])
     models_params = json.loads(r_data['params'])
 
     user = r_data['user']
@@ -75,7 +75,7 @@ def learner():
         try:
             params = {k: v for k, v in params.items() if v is not None}
             model, cm_model, test_accuracy, train_accuracy, y_onehot, y_scores, classification_matrix, table_accuracy, targets_org, features_importants = trainer(
-                X_train, y_train, X_test, y_test, model_name, label_name=r_data['target'], labels=labels, **params)
+                X_train, y_train, X_test, y_test, model_name['name'], label_name=r_data['target'], labels=labels, **params)
         except Exception as e:
             print(e)
             return jsonify({'message': str(e), 'status': 500}), 500
@@ -88,7 +88,7 @@ def learner():
         classification_matrix, columns = prepare_matrix_to_grid(classification_matrix)
         y_scores, y_labels = prepare_y_scores_to_js(y_scores, y_onehot)
 
-        with open(os.path.join(user_folder, f'model_{model_name}.sav'), 'wb') as f:
+        with open(os.path.join(user_folder, f'model_{model_name["name"]}.sav'), 'wb') as f:
             dump(model, f)
 
         data = {
@@ -113,6 +113,7 @@ def save_model():
     user = request.args.get('user')
     model_name = request.args.get('model')
     save_file = f'models/{user}/model_{model_name}.sav'
+    print(save_file)
     if not os.path.exists(save_file) and not os.path.isfile(save_file):
         return jsonify({'message': "File doesnt exist", 'status': 500}), 500
     return send_file(save_file, as_attachment=True)
