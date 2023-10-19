@@ -355,7 +355,7 @@ export class Models extends Component {
                   <div>
                     <div
                       className="grow w-full flex text-sm leading-6 text-gray-600"
-                      style={{ height: 330, width: "100%" }}
+                      style={{ height: 500, width: "100%" }}
                     >
                       <div
                         className="ag-theme-alpine ag-theme-acmecorp"
@@ -373,6 +373,8 @@ export class Models extends Component {
                               enableValue: true,
                               resizable: true,
                               headerName: "Описание",
+                              filter: 'agTextColumnFilter',
+                              sortable: true,
                             },
                             {
                               field: "name",
@@ -381,6 +383,8 @@ export class Models extends Component {
                               enableValue: true,
                               resizable: true,
                               headerName: "Название файла",
+                              filter: 'agTextColumnFilter',
+                              sortable: true,
                             },
                             {
                               field: "date",
@@ -389,6 +393,8 @@ export class Models extends Component {
                               enableValue: true,
                               resizable: true,
                               headerName: "Дата загрузки",
+                              filter: 'agTextColumnFilter',
+                              sortable: true,
                             },
                             {
                               field: "user",
@@ -397,10 +403,41 @@ export class Models extends Component {
                               enableValue: true,
                               resizable: true,
                               headerName: "Владелец",
+                              filter: 'agTextColumnFilter',
+                              sortable: true,
                             },
                           ]}
                           rowSelection={"single"}
                           onSelectionChanged={this.onSelectionChanged}
+                          autoGroupColumnDef={this.autoGroupColumnDef}
+                          localeText={AG_GRID_LOCALE_RU}
+                          pagination={true}
+                          autosize={true}
+                          sideBar={{
+                              toolPanels: [
+                                {
+                                  id: "columns",
+                                  labelDefault: "Columns",
+                                  labelKey: "columns",
+                                  iconKey: "columns",
+                                  toolPanel: "agColumnsToolPanel",
+                                  minWidth: 225,
+                                  width: 225,
+                                  maxWidth: 225,
+                                },
+                                {
+                                  id: "filters",
+                                  labelDefault: "Filters",
+                                  labelKey: "filters",
+                                  iconKey: "filter",
+                                  toolPanel: "agFiltersToolPanel",
+                                  minWidth: 180,
+                                  maxWidth: 400,
+                                  width: 250,
+                                },
+                              ],
+                              position: "left",
+                            }}
                         ></AgGridReact>
                       </div>
                     </div>

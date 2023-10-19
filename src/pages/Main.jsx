@@ -48,7 +48,6 @@ function classNames(...classes) {
 }
 
 function GetLearnInfo(props) {
-  console.log("get info...");
   return <p>Loading</p>;
   fetch(
     variables.API_URL +
@@ -69,7 +68,6 @@ function GetLearnInfo(props) {
       }
     })
     .then((data) => {
-      console.log(data);
       return <p>Learning</p>;
     })
     .catch((error) => {
@@ -205,7 +203,6 @@ export class Main extends Component {
   uploadClick = (e) => {
     e.preventDefault();
     let format = e.target.files[0].name.split(".").slice(-1)[0];
-    console.log(format);
     if (format != "csv" && format != "xlsx" && format != "xls") {
       alert('Загрузите пожайлуста файлы формата ".csv" или ".xlsx"');
       return;
@@ -228,7 +225,6 @@ export class Main extends Component {
         }
       })
       .then((data) => {
-        console.log(data);
         this.setState({ uploaded_file: data.name });
         variables.uploaded_file = data.name;
         this.GetDatasets();
@@ -261,7 +257,6 @@ export class Main extends Component {
         }
       })
       .then((data) => {
-        console.log(data);
         this.setState({ uploaded_file: data.name });
         variables.uploaded_file = data.name;
         this.LoadDataset(dataset);
@@ -318,7 +313,6 @@ export class Main extends Component {
   }
 
   componentDidMount() {
-    console.log(variables);
     this.GetDatasets();
   }
 
@@ -509,12 +503,10 @@ export class Main extends Component {
   }
 
   changeModel = (e) => {
-    console.log(e);
     this.setState({ LearnModel: e });
   };
 
   changeModelConfigs = (e) => {
-    console.log(e);
     this.setState({ modelConfigs: e });
   };
 
@@ -559,7 +551,6 @@ export class Main extends Component {
   };
 
   LearnModel(dataset) {
-    console.log(this.state.LearnModel);
     if (!(this.state.LearnModel.length !== 0 && this.state.LearnLabel)) {
       alert("Не выбрана модель или поле для обучения");
       return;
@@ -591,7 +582,6 @@ export class Main extends Component {
       })
       .then((data) => {
         if (data.status == 200) {
-          console.log(data);
           this.setState({
             LearnInfo: data.data,
             saved: data.data?.map((i) => false),
@@ -608,7 +598,6 @@ export class Main extends Component {
   }
 
   saveModel(info, index) {
-    console.log(info);
     this.setState({ loadingSave: true });
     fetch(variables.API_URL + "main/dataset/save", {
       method: "POST",
@@ -630,7 +619,6 @@ export class Main extends Component {
       })
       .then((data) => {
         if (data.status == 200) {
-          console.log(data);
           let new_saved = this.state.saved.map((i) => i);
           new_saved[index] = true;
           this.setState({ loadingSave: false, saved: new_saved });
@@ -645,8 +633,10 @@ export class Main extends Component {
   }
 
   PlotBarModels(modelsInfo, param, label) {
+    console.log(modelsInfo);
+    console.log(param);
     console.log(label);
-    var models = modelsInfo.map((info) => info.model);
+    var models = modelsInfo.map((info) => info.model.label);
     var rowData = modelsInfo.map(
       (info) => info.data.classification_matrix[label][`${param}`]
     );
@@ -823,7 +813,6 @@ export class Main extends Component {
   }
 
   confidence_intervalWillson(s, n, z = 1.96) {
-    console.log(s, n);
     let down;
     let up;
     try {
@@ -852,7 +841,6 @@ export class Main extends Component {
   }
 
   confidence_intervalPirson(s, n, z = 1.96) {
-    console.log(s, n);
     let down;
     let up;
     try {
@@ -873,7 +861,6 @@ export class Main extends Component {
   }
 
   confidence_intervalVald(s, n, z = 1.96) {
-    console.log(s, n);
     let down;
     let up;
     try {
@@ -918,7 +905,6 @@ export class Main extends Component {
         )
       );
     }
-    console.log(intervals);
     var textList = intervals.map(
       (interval) => `${interval[1].toFixed(2)}<br>${interval[0].toFixed(2)}`
     );
@@ -1052,7 +1038,6 @@ export class Main extends Component {
   changeBool = (index) => {
     this.setState((state) => {
       let newInfo = this.state.modelConfigs;
-      console.log(!newInfo.value[index]["default_value"]);
       newInfo.value[index]["default_value"] =
         !newInfo.value[index]["default_value"];
       return { modelConfigs: newInfo };
@@ -1062,7 +1047,6 @@ export class Main extends Component {
   changeCat = (e, index) => {
     this.setState((state) => {
       let newInfo = this.state.modelConfigs;
-      console.log(newInfo.value[index]);
       newInfo.value[index]["default_value"] = e;
       return { modelConfigs: newInfo };
     });
@@ -1071,14 +1055,9 @@ export class Main extends Component {
   changeArrayLength = (e, index) => {
     this.setState((state) => {
       let newInfo = this.state.modelConfigs;
-      console.log(e.target.value);
       newInfo.value[index]["default_value"] = Array(
         parseInt(e.target.value)
       ).fill(newInfo.value[index]["diap"][3]);
-      console.log(
-        newInfo.value[index]["default_value"],
-        newInfo.value[index]["default_value"][0]
-      );
       return { modelConfigs: newInfo };
     });
   };
@@ -2056,6 +2035,80 @@ export class Main extends Component {
                       />
                     ) : LearnInfo && LearnLabel && LearnModel ? (
                       <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                        <div className="col-span-2 grid grid-cols-3 gap-4">
+                          {LearnInfo[0].data.y_onehot.map((label, index) => (
+                            <>
+                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                <div>
+                                  {/* Метрики */}
+                                  <Plot
+                                    data={this.PlotBarModels(
+                                      LearnInfo,
+                                      "SE",
+                                      index
+                                    )}
+                                    layout={{
+                                      autosize: true,
+                                      title: `${LearnLabel.name} = ${label} Чувствительность`,
+                                      xaxis: { range: [0, 1] },
+                                      yaxis: {
+                                        tickangle: -60,
+                                      },
+                                    }}
+                                    style={{
+                                      height: "100%",
+                                      width: "100%",
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                {/* Метрики */}
+                                <Plot
+                                  data={this.PlotBarModels(
+                                    LearnInfo,
+                                    "SP",
+                                    index
+                                  )}
+                                  layout={{
+                                    autosize: true,
+                                    title: `${LearnLabel.name} = ${label} Специфичность`,
+                                    xaxis: { range: [0, 1] },
+                                    yaxis: {
+                                      tickangle: -60,
+                                    },
+                                  }}
+                                  style={{
+                                    height: "100%",
+                                    width: "100%",
+                                  }}
+                                />
+                              </div>
+                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                {/* Метрики */}
+                                <Plot
+                                  data={this.PlotBarModels(
+                                    LearnInfo,
+                                    "accuracy",
+                                    index
+                                  )}
+                                  layout={{
+                                    autosize: true,
+                                    title: `${LearnLabel.name} = ${label} Точность`,
+                                    xaxis: { range: [0, 1] },
+                                    yaxis: {
+                                      tickangle: -60,
+                                    },
+                                  }}
+                                  style={{
+                                    height: "100%",
+                                    width: "100%",
+                                  }}
+                                />
+                              </div>
+                            </>
+                          ))}
+                        </div>
                         <Tab.Group>
                           <div>
                             <Disclosure
@@ -2063,37 +2116,26 @@ export class Main extends Component {
                               className="bg-white border-gray-200 dark:bg-gray-800"
                             >
                               {({ open }) => (
-                                <div className="flex h-8 mb-4 items-center justify-between">
+                                <div className="flex h-8 my-4 items-center justify-between">
                                   <div className="flex items-center">
                                     <div className="hidden md:block">
                                       <div className="flex items-baseline space-x-1">
                                         <Tab.List className="flex text-sm font-medium text-center">
-                                          <Tab
-                                            className={({ selected }) =>
-                                              classNames(
-                                                "",
-                                                "inline-block p-2 border-b-2 rounded-t-lg",
-                                                selected
-                                                  ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
-                                                  : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-                                              )
-                                            }
-                                          >
-                                            Результаты модели
-                                          </Tab>
-                                          <Tab
-                                            className={({ selected }) =>
-                                              classNames(
-                                                "",
-                                                "inline-block p-2 border-b-2 rounded-t-lg",
-                                                selected
-                                                  ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
-                                                  : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-                                              )
-                                            }
-                                          >
-                                            Доверительные интервалы
-                                          </Tab>
+                                          {LearnInfo.map((modelInfo, index) => (
+                                            <Tab
+                                              className={({ selected }) =>
+                                                classNames(
+                                                  "",
+                                                  "inline-block p-2 border-b-2 rounded-t-lg",
+                                                  selected
+                                                    ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                                    : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                                )
+                                              }
+                                            >
+                                              {modelInfo.model.label}
+                                            </Tab>
+                                          ))}
                                         </Tab.List>
                                       </div>
                                     </div>
@@ -2103,82 +2145,13 @@ export class Main extends Component {
                             </Disclosure>
                             {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
                             <Tab.Panels className={classNames("pb-2 mb-4")}>
-                              <Tab.Panel>
-                                <div className="col-span-2 grid grid-cols-3 gap-4">
-                                  {LearnInfo[0].data.y_onehot.map(
-                                    (label, index) => (
-                                      <>
-                                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                          <div>
-                                            {/* Метрики */}
-                                            <Plot
-                                              data={this.PlotBarModels(
-                                                LearnInfo,
-                                                "SE",
-                                                index
-                                              )}
-                                              layout={{
-                                                autosize: true,
-                                                title: `${LearnLabel.name} = ${label} Чувствительность`,
-                                                xaxis: { range: [0, 1] },
-                                              }}
-                                              style={{
-                                                height: "100%",
-                                                width: "100%",
-                                              }}
-                                            />
-                                          </div>
-                                        </div>
-                                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                          {/* Метрики */}
-                                          <Plot
-                                            data={this.PlotBarModels(
-                                              LearnInfo,
-                                              "SP",
-                                              index
-                                            )}
-                                            layout={{
-                                              autosize: true,
-                                              title: `${LearnLabel.name} = ${label} Специфичность`,
-                                              xaxis: { range: [0, 1] },
-                                            }}
-                                            style={{
-                                              height: "100%",
-                                              width: "100%",
-                                            }}
-                                          />
-                                        </div>
-                                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                          {/* Метрики */}
-                                          <Plot
-                                            data={this.PlotBarModels(
-                                              LearnInfo,
-                                              "accuracy",
-                                              index
-                                            )}
-                                            layout={{
-                                              autosize: true,
-                                              title: `${LearnLabel.name} = ${label} Точность`,
-                                              xaxis: { range: [0, 1] },
-                                            }}
-                                            style={{
-                                              height: "100%",
-                                              width: "100%",
-                                            }}
-                                          />
-                                        </div>
-                                      </>
-                                    )
-                                  )}
-                                </div>
-                              </Tab.Panel>
-                              <Tab.Panel>
-                                {LearnInfo.map((modelInfo, index) => (
+                              {LearnInfo.map((modelInfo, index) => (
+                                <Tab.Panel>
                                   <div>
                                     <h1>
                                       Название модели:{" "}
                                       <span className="font-bold text-gray-900 dark:text-white">
-                                        {modelInfo.model}
+                                        {modelInfo.model.label}
                                       </span>
                                     </h1>
                                     {saved[index] ? null : (
@@ -2521,8 +2494,8 @@ export class Main extends Component {
                                       </div>
                                     </div>
                                   </div>
-                                ))}
-                              </Tab.Panel>
+                                </Tab.Panel>
+                              ))}
                             </Tab.Panels>
                           </div>
                         </Tab.Group>

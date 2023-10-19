@@ -224,15 +224,16 @@ export default function Aside() {
               </button>
             </div>
             <p class="mb-3 text-sm text-blue-800 dark:text-blue-400">
-              Самообучающаяся система аналитики биомедицинских данных. Позволяет
-              строить предиктивные модели на основе сведений из датасетов.
+              Система интеллектуальной обработки медицинских датасетов и
+              построения предиктивных моделей на основе содержащихся в них
+              данных
             </p>
           </div>
         </Transition>
       </div>
       {/*Нижнее меню*/}
       <div class="w-full self-end">
-        <ul class="px-3 py-4 space-y-1 font-medium">
+        <ul class="hidden px-3 py-4 space-y-1 font-medium">
           <li className="hidden">
             <Switcher />
           </li>
