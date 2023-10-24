@@ -80,7 +80,7 @@ def sort_data(data, categorical, number):
         labels['ID']['use'] = False
     return labels
 
-def preprocess_data(data, target, labels):
+def preprocess_data(data, target, labels, test_size=0.2):
     columns = []
     columns_info = []
     for label in labels:
@@ -115,7 +115,7 @@ def preprocess_data(data, target, labels):
     print([column.shape for column in columns])
     dataset = np.concatenate(columns, axis=1)
     print(dataset.shape)
-    X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=0.20, random_state=786)
+    X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=test_size, random_state=786)
     return X_train, y_train, X_test, y_test, columns_info
 
 

@@ -39,6 +39,7 @@ def learner():
     r_data['categorical_columns'] = r_data['categorical_columns'].split(';;;') if r_data['categorical_columns'] != "" else []
     models = json.loads(r_data['model_name'])
     models_params = json.loads(r_data['params'])
+    test_size = float(r_data['score'])
 
     user = r_data['user']
     user_folder = os.path.abspath(f'models/{user}')
@@ -62,7 +63,7 @@ def learner():
     labels = sort_data(dataset, r_data['categorical_columns'], r_data['number_columns'])
     labels[r_data['target']]['use'] = False
     try:
-        X_train, y_train, X_test, y_test, columns_info = preprocess_data(dataset, dataset[r_data['target']].copy(), labels)
+        X_train, y_train, X_test, y_test, columns_info = preprocess_data(dataset, dataset[r_data['target']].copy(), labels, test_size)
     except Exception as e:
         print(e)
         return jsonify({'message': str(e), 'status': 500}), 500
