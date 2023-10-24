@@ -343,6 +343,7 @@ async def learn_model(request):
         'Content-Type': 'application/json'
     }
     type_model = request.data.get("model", "")
+    score = request.data.get('score', "0.8")
     if type_model == "":
         return Response(data={'status': 'error'}, status=500)
     for m in type_model:
@@ -359,7 +360,7 @@ async def learn_model(request):
 
     broker_key = f'ml_{request.user.username}_{dataset.id}'
 
-    send_data = create_info_request(request, type_model, params)
+    send_data = create_info_request(request, type_model, params, score)
     redis_cli.hset(broker_key, mapping=send_data)
 
     response_status, response = await learn_response(dataset=dataset, headers=headers, key=broker_key)
