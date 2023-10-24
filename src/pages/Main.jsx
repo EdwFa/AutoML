@@ -18,6 +18,7 @@ import Aside from "../components/Sidebar";
 import { Disclosure } from "@headlessui/react";
 
 import ReactPaginate from "react-paginate";
+import Slider from 'react-input-slider';
 
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
@@ -122,6 +123,7 @@ export class Main extends Component {
       NumberLabels: [],
       CategoricalLabels: [],
       LearnInfo: null,
+      queryScore: 0.8,
 
       // configs models
       modelConfigs: null,
@@ -568,6 +570,7 @@ export class Main extends Component {
         body: JSON.stringify({
           model: this.state.LearnModel?.map((model) => model),
           target: this.state.LearnLabel.name,
+          score: this.state.queryScore,
           categorical_columns: this.state.CategoricalLabels.map(
             (label) => label.name
           ),
@@ -1111,6 +1114,7 @@ export class Main extends Component {
       CategoricalLabels,
       LearnLabel,
       LearnInfo,
+      queryScore,
 
       z,
       intervalType,
@@ -2035,80 +2039,7 @@ export class Main extends Component {
                       />
                     ) : LearnInfo && LearnLabel && LearnModel ? (
                       <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                        <div className="col-span-2 grid grid-cols-3 gap-4">
-                          {LearnInfo[0].data.y_onehot.map((label, index) => (
-                            <>
-                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                <div>
-                                  {/* Метрики */}
-                                  <Plot
-                                    data={this.PlotBarModels(
-                                      LearnInfo,
-                                      "SE",
-                                      index
-                                    )}
-                                    layout={{
-                                      autosize: true,
-                                      title: `${LearnLabel.name} = ${label} Чувствительность`,
-                                      xaxis: { range: [0, 1] },
-                                      yaxis: {
-                                        tickangle: -60,
-                                      },
-                                    }}
-                                    style={{
-                                      height: "100%",
-                                      width: "100%",
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Метрики */}
-                                <Plot
-                                  data={this.PlotBarModels(
-                                    LearnInfo,
-                                    "SP",
-                                    index
-                                  )}
-                                  layout={{
-                                    autosize: true,
-                                    title: `${LearnLabel.name} = ${label} Специфичность`,
-                                    xaxis: { range: [0, 1] },
-                                    yaxis: {
-                                      tickangle: -60,
-                                    },
-                                  }}
-                                  style={{
-                                    height: "100%",
-                                    width: "100%",
-                                  }}
-                                />
-                              </div>
-                              <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Метрики */}
-                                <Plot
-                                  data={this.PlotBarModels(
-                                    LearnInfo,
-                                    "accuracy",
-                                    index
-                                  )}
-                                  layout={{
-                                    autosize: true,
-                                    title: `${LearnLabel.name} = ${label} Точность`,
-                                    xaxis: { range: [0, 1] },
-                                    yaxis: {
-                                      tickangle: -60,
-                                    },
-                                  }}
-                                  style={{
-                                    height: "100%",
-                                    width: "100%",
-                                  }}
-                                />
-                              </div>
-                            </>
-                          ))}
-                        </div>
+
                         <Tab.Group>
                           <div>
                             <Disclosure
@@ -2121,6 +2052,19 @@ export class Main extends Component {
                                     <div className="hidden md:block">
                                       <div className="flex items-baseline space-x-1">
                                         <Tab.List className="flex text-sm font-medium text-center">
+                                          <Tab
+                                            className={({ selected }) =>
+                                                classNames(
+                                                "",
+                                                "inline-block p-2 border-b-2 rounded-t-lg",
+                                                selected
+                                                  ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                                  : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                              )
+                                            }
+                                          >
+                                            результаты моделей
+                                          </Tab>
                                           {LearnInfo.map((modelInfo, index) => (
                                             <Tab
                                               className={({ selected }) =>
@@ -2145,6 +2089,82 @@ export class Main extends Component {
                             </Disclosure>
                             {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
                             <Tab.Panels className={classNames("pb-2 mb-4")}>
+                              <Tab.Panel>
+                                <div className="col-span-2 grid grid-cols-3 gap-4">
+                                  {LearnInfo[0].data.y_onehot.map((label, index) => (
+                                    <>
+                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                        <div>
+                                          {/* Метрики */}
+                                          <Plot
+                                            data={this.PlotBarModels(
+                                              LearnInfo,
+                                              "SE",
+                                              index
+                                            )}
+                                            layout={{
+                                              autosize: true,
+                                              title: `${LearnLabel.name} = ${label} Чувствительность`,
+                                              xaxis: { range: [0, 1] },
+                                              yaxis: {
+                                                tickangle: -60,
+                                              },
+                                            }}
+                                            style={{
+                                              height: "100%",
+                                              width: "100%",
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                        {/* Метрики */}
+                                        <Plot
+                                          data={this.PlotBarModels(
+                                            LearnInfo,
+                                            "SP",
+                                            index
+                                          )}
+                                          layout={{
+                                            autosize: true,
+                                            title: `${LearnLabel.name} = ${label} Специфичность`,
+                                            xaxis: { range: [0, 1] },
+                                            yaxis: {
+                                              tickangle: -60,
+                                            },
+                                          }}
+                                          style={{
+                                            height: "100%",
+                                            width: "100%",
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                        {/* Метрики */}
+                                        <Plot
+                                          data={this.PlotBarModels(
+                                            LearnInfo,
+                                            "accuracy",
+                                            index
+                                          )}
+                                          layout={{
+                                            autosize: true,
+                                            title: `${LearnLabel.name} = ${label} Точность`,
+                                            xaxis: { range: [0, 1] },
+                                            yaxis: {
+                                              tickangle: -60,
+                                            },
+                                          }}
+                                          style={{
+                                            height: "100%",
+                                            width: "100%",
+                                          }}
+                                        />
+                                      </div>
+                                    </>
+                                  ))}
+                                </div>
+                              </Tab.Panel>
                               {LearnInfo.map((modelInfo, index) => (
                                 <Tab.Panel>
                                   <div>
@@ -2516,6 +2536,20 @@ export class Main extends Component {
                       </div>
                     </InfoPanel>
                     <>
+                      <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                        Общие данные
+                      </label>
+                      <div>
+                            <p>Разделение датасета на обучаемую и тестовую выборку = {queryScore.toFixed(2)}</p>
+                            <Slider
+                              axis="x"
+                              x={queryScore}
+                              xmax={1}
+                              xmin={0}
+                              xstep={0.01}
+                              onChange={({ x }) => this.setState({ queryScore: x })}
+                            />
+                      </div>
                       <label className="block mb-2 font-bold text-gray-900 dark:text-white">
                         Настраиваемая модель
                       </label>

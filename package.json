@@ -28,6 +28,7 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.11.0",
+    "react-input-slider": "^6.0.1",
     "react-paginate": "^8.1.4",
     "react-plotly.js": "^2.6.0",
     "react-router-dom": "^6.8.1",
