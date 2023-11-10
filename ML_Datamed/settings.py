@@ -84,6 +84,8 @@ TEMPLATES = [
     },
 ]
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 WSGI_APPLICATION = 'ML_Datamed.wsgi.application'
 
 CORS_ORIGIN_ALLOW_ALL = bool_env(os.getenv('CORS_ORIGIN_ALLOW_ALL'))
@@ -225,8 +227,8 @@ redis_cli = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 8025
+EMAIL_HOST = 'smtp.supportservice24.ru'
+EMAIL_PORT = 25
 EMAIL_URL = os.getenv("EMAIL_URL")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_AUTH = os.getenv("EMAIL_AUTH")
