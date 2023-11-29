@@ -291,7 +291,7 @@ export class Registration extends Component {
             <div className="w-full relative px-24 flex flex-col items-center -mt-36">
               <img class="h-36" src={PictureD} alt="" />
               <h1 className="text-4xl font-bold text-center max-w-xl uppercase">
-                Sechenov Machine Learning change helthcare
+                Sechenov Machine Learning change healthcare
               </h1>
               <div className="absolute mt-72 text-gray-100 text-xs">
                 <h2 class="whitespace-pre-wrap">Последние обновления:</h2>

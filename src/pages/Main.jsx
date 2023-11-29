@@ -716,9 +716,15 @@ export class Main extends Component {
       annotations: [],
       xaxis: {
         ticks: "",
-        side: "top",
+        side: "bottom",
+        title: {
+            text: "Предсказано",
+        }
       },
       yaxis: {
+        title: {
+            text: "Фактически",
+        },
         ticks: "",
         ticksuffix: " ",
         autosize: true,
@@ -816,6 +822,7 @@ export class Main extends Component {
   }
 
   confidence_intervalWillson(s, n, z = 1.96) {
+    console.log(z);
     let down;
     let up;
     try {
@@ -844,6 +851,7 @@ export class Main extends Component {
   }
 
   confidence_intervalPirson(s, n, z = 1.96) {
+    console.log(z);
     let down;
     let up;
     try {
@@ -864,6 +872,7 @@ export class Main extends Component {
   }
 
   confidence_intervalVald(s, n, z = 1.96) {
+    console.log(z);
     let down;
     let up;
     try {
@@ -902,6 +911,14 @@ export class Main extends Component {
     } else if (type == 2) {
       intervals = intervals.map((values, index) =>
         this.confidence_intervalVald(
+          row[metrics[index]],
+          row[values[0]] + row[values[1]],
+          z
+        )
+      );
+    } else if (type == 3) {
+      intervals = intervals.map((values, index) =>
+        this.confidence_intervalPirson(
           row[metrics[index]],
           row[values[0]] + row[values[1]],
           z
@@ -967,9 +984,9 @@ export class Main extends Component {
   }
 
   PlotHeatmapLabelLayOut(row) {
-    var xValues = ["True", "False"];
+    var xValues = ["Правда", "Ложь"];
 
-    var yValues = ["True", "False"].reverse();
+    var yValues = ["Правда", "Ложь"].reverse();
 
     var zValues = [
       [row.TP, row.FN],
@@ -985,10 +1002,16 @@ export class Main extends Component {
       annotations: [],
       xaxis: {
         ticks: "",
-        side: "top",
+        title: {
+            text: "Предсказано",
+        },
+        side: "bottom",
       },
       yaxis: {
         ticks: "",
+        title: {
+            text: "Фактически",
+        },
         ticksuffix: " ",
         autosize: true,
       },
@@ -2399,7 +2422,7 @@ export class Main extends Component {
                                               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                               onChange={(e) =>
                                                 this.setState({
-                                                  z: parseInt(e.target.value),
+                                                  z: parseFloat(e.target.value),
                                                 })
                                               }
                                             >
@@ -2426,6 +2449,9 @@ export class Main extends Component {
                                               </option>
                                               <option value="2">
                                                 Оценка по Вальду
+                                              </option>
+                                              <option value="3">
+                                                Оценка по Пирсону
                                               </option>
                                             </select>
                                           </div>
