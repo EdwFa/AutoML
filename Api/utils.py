@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup as bs
+import re
 
 
 overviewTable = [
@@ -179,6 +180,16 @@ class TranslateStat:
             f.write(str(self.page.prettify()))
         return
 
+    def change_raw_file(self, file_):
+        with open(file_, 'r', encoding='utf-8') as f:
+            text = f.read()
+            text = re.sub(r'Histogram of lengths of the category', r'Гистограмма частот по категориям', text)
+            text = re.sub(r'Histogram with fixed size bins', r"Гистограмма с интервалами фиксированного размера интервалов", text)
+            text = re.sub(r'\(bins', "(инттервалов", text)
+        with open(file_, 'w', encoding='utf-8') as f:
+            f.write(text)
+        return
+
     def translate(self):
         self.translate_main()
         self.translate_overview()
@@ -194,6 +205,9 @@ class TranslateStat:
         for table in self.body.find_all('table', class_="freq table table-hover table-striped table-0"):
             for cell, text in zip(table.thead.tr.find_all('td'), ('Значение', 'Кол-во', 'Частота (%)')):
                 cell.string = text
+        for tr in self.body.find_all('tr', class_='other'):
+            td = tr.find('td')
+            td.string = td.string.replace('Other values', 'Другие значения')
         return
 
     def translate_main(self):
@@ -242,8 +256,6 @@ class TranslateStat:
             if info is None:
                 continue
             type_val = cat_or_real(info.find('div', class_="col-sm-12").find('small').string)
-            print(info.find('div', class_="col-sm-12").find('small').string)
-            print(type_val)
             info.find('div', class_="col-sm-12").find('small').string = type_val
 
             if type_val == 'Unsupported':
@@ -258,6 +270,12 @@ class TranslateStat:
                 for li, text in zip(info.find_all('li'), tableNavsNums):
                     li.a.string = text
 
+                a = info.find('g', id="matplotlib.axis_2")
+                try:
+                    a.find_all('g')[-1].decompose()
+                except:
+                    pass
+
             elif type_val == 'Категориальный' or type_val == 'Текст':
                 self.translate_table(info.find('div', class_="col-sm-6"), tableCars1)
                 for li, text in zip(info.find_all('li'), tableNavCars):
@@ -268,6 +286,13 @@ class TranslateStat:
                 info.find('div', class_="tab-content").find('div', class_="caption text-center text-muted").string = "Стандарт Unicode присваивает каждой кодовой точке свойства символов, которые можно использовать для анализа текстовых переменных."
                 for h4, text in zip(info.find('div', class_="tab-content").find_all('h4'), tableH4):
                     h4.string = text
+
+                a = info.find('g', id="matplotlib.axis_2")
+                try:
+                    a.find_all('g')[-1].decompose()
+                except:
+                    pass
+
             elif type_val == 'Логический':
                 self.translate_table(info.find('div', class_="col-sm-6"), tableCars1)
                 for li, text in zip(info.find_all('li'), tableNavBool):

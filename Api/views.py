@@ -1,13 +1,8 @@
 from flask import Blueprint, current_app, jsonify, request
 from flask import send_file
-import json
-import os
-import time
 import pandas as pd
 import seaborn as sns
-import plotly.graph_objs as go
 from ydata_profiling import ProfileReport
-from io import StringIO
 
 # import redis
 from .utils import TranslateStat
@@ -41,6 +36,7 @@ def createStat():
     translateHTML = TranslateStat(save_file)
     translateHTML.translate()
     translateHTML.reload_changes(save_file)
+    translateHTML.change_raw_file(save_file)
     current_app.logger.info(f'Response dataset...')
     return send_file(save_file, as_attachment=True)
 
@@ -62,5 +58,5 @@ def createGraphics():
     g.map_lower(sns.kdeplot, fill=True)
     g.map_diag(sns.histplot, kde=True)
     g.figure.savefig(save_file)
-
+    current_app.logger.info(f'Response dataset...')
     return send_file(save_file, as_attachment=True)
