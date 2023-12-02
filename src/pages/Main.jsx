@@ -855,16 +855,12 @@ export class Main extends Component {
     let down;
     let up;
     try {
-      down = s / (s + (n - s + 1) * 1);
+      down = s - z * Math.sqrt((1-s)*s/(n+4));
     } catch {
       down = 0;
     }
     try {
-      up =
-        (s +
-          (z * z) / (2 * n) +
-          z * Math.sqrt((s * (1 - s) + (z * z) / (4 * n)) / n)) /
-        (1 + (z * z) / n);
+      up = s + z * Math.sqrt((1-s)*s/(n+4));
     } catch {
       up = 0;
     }
@@ -984,9 +980,9 @@ export class Main extends Component {
   }
 
   PlotHeatmapLabelLayOut(row) {
-    var xValues = ["Правда", "Ложь"];
+    var xValues = ["True", "False"];
 
-    var yValues = ["Правда", "Ложь"].reverse();
+    var yValues = ["True", "False"].reverse();
 
     var zValues = [
       [row.TP, row.FN],
@@ -2451,7 +2447,7 @@ export class Main extends Component {
                                                 Оценка по Вальду
                                               </option>
                                               <option value="3">
-                                                Оценка по Пирсону
+                                                Оценка по Агрести-Коула
                                               </option>
                                             </select>
                                           </div>
@@ -2510,7 +2506,7 @@ export class Main extends Component {
                                                       showlegend: false,
                                                       autosize: true,
                                                       annotations: [],
-                                                      yaxis: { range: [0, 1] },
+                                                      yaxis: { range: [0, 1.2] },
                                                     }}
                                                     style={{
                                                       height: "100%",
