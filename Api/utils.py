@@ -81,20 +81,19 @@ def sort_data(data, categorical, number):
     return labels
 
 def preprocess_data(data, target, labels, test_size=0.2):
+    random_state = int(test_size * 100) % 17
+    print(test_size, random_state)
     columns = []
     columns_info = []
     for label in labels:
         if labels[label]['use'] == False:
-            print('Not Use --> ', label)
             categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
-            print(f"Column {label} Catefory list == ", categ_list)
             continue
         column = data[label].copy()
         if labels[label]['type'] == 1:
             column.fillna(column.median(), inplace=True)
             mean = column.mean()
             std = column.std()
-            print(f'Column {label} mean = ', mean)
             column = (column - mean) / std
             columns.append(column.to_numpy())
             labels[label]['count'] = 1
@@ -105,17 +104,13 @@ def preprocess_data(data, target, labels, test_size=0.2):
             matrix = np.zeros((column.shape[0], len(categ_list)))
             for i, val in zip(range(column.shape[0]), column):
                 matrix[i, categ_list[val]] = 1
-            print(f"Column {label} Catefory list == ", categ_list)
             columns.append(matrix)
             labels[label]['count'] = len(categ_list)
             params = [{'cat': k, 'val': v} for k, v in categ_list.items()]
             columns_info.append(dict(label=label, type='cat', params=params))
-    print([len(column.shape) for column in columns])
     columns = [column.reshape(column.shape[0], 1) if len(column.shape) == 1 else column for column in columns]
-    print([column.shape for column in columns])
     dataset = np.concatenate(columns, axis=1)
-    print(dataset.shape)
-    X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=test_size, random_state=786)
+    X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=test_size, random_state=random_state)
     return X_train, y_train, X_test, y_test, columns_info
 
 
@@ -160,7 +155,6 @@ def permutation_importance(model, X, y, labels, n_repeats=10):
     for k, v in labels.items():
         if v['use'] == False:
             continue
-        print(k)
         f_labels.append(k)
         list_feature_importance = []
         for n_round in range(n_repeats):
@@ -182,33 +176,23 @@ def permutation_importance(model, X, y, labels, n_repeats=10):
     return data
 
 def trainer(X_train, y_train, X_test, y_test, model_name, label_name, labels, **params):
-    print("params ", params)
     if 'clear' in params:
         model = default_models[model_name]
     else:
         model = models[model_name]
-        print(params)
         model = model(**params)
 
     model.fit(X_train, y_train)
     features_importants = permutation_importance(model, X_train, y_train, labels)
-    print(features_importants)
 
     pred = model.predict(X_test)
     y_test_org = np.unique(y_test)
-    print(y_test_org)
     targets_org = [label for label in y_test_org]
-    print("Targets original == ", targets_org)
     cm_model = confusion_matrix(y_test, pred)
-    print("metrics == ", cm_model.ravel())
     train_accuracy = accuracy_score(y_train, model.predict(X_train))
     test_accuracy = accuracy_score(y_test, pred)
     table_accuracy = classification_report(y_test, pred)
-    print(table_accuracy.splitlines())
     classification_matrix = create_classification_report(table_accuracy, y_test, pred, label_name)
-    print('train == ', train_accuracy)
-    print('test == ', test_accuracy)
-    print('Class matrix == ', classification_matrix)
 
     y_scores = model.predict_proba(X_test)
     y_onehot = pd.get_dummies(y_test, columns=model.classes_)
@@ -229,9 +213,7 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
     'NNV' --> NPV = TN/(TN+FN)
     """
     print('Start create classification table...')
-    print("Table accuracy == ", table_accuracy)
     uniq_vals = list(set(y_test))
-    print("uniq values == ", uniq_vals)
     intervals = []
     dict_results = {k: {'TP': 0, 'TN': 0, 'FP': 0, 'FN': 0} for k in uniq_vals}
     for label in uniq_vals:
@@ -244,14 +226,12 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
                 dict_results[label]['FP'] += 1
             elif label == expect and label != fact:
                 dict_results[label]['FN'] += 1
-    print("словарь результатов == ", dict_results)
 
     table_strings = table_accuracy.splitlines()
     table_strings = [[el for el in s.split(' ') if el != ''] for s in table_strings if s != '']
     table_strings[0] = ['label'] + table_strings[0] + ['SE', 'SP', 'PPV', 'NPV']
     classification_matrix = {}
     for i, (k, v) in enumerate(dict_results.items()):
-        print(k, v)
         try:
             Accuracy = (v['TP'] + v['TN']) / (v['TP'] + v['TN'] + v['FP'] + v['FN'])
         except ZeroDivisionError:
@@ -333,8 +313,6 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
     return classification_matrix
 
 def prepare_matrix_to_grid(matrix):
-    print(matrix.columns)
-    print([l for l in matrix.to_dict('index').values()])
     return [l for l in matrix.to_dict('index').values()], [{'field': c} for c in matrix.columns]
 
 
@@ -343,7 +321,6 @@ def prepare_y_scores_to_js(y_scores, y_onehot):
     labels = []
     i = 0
     for i, result in zip(range(y_scores.shape[1]), results):
-        print(i)
         y_true = y_onehot.iloc[:, i]
         y_score = y_scores[:, i]
 
@@ -356,7 +333,6 @@ def prepare_y_scores_to_js(y_scores, y_onehot):
         result.append(name)
         labels.append(str(y_onehot.columns[i]) + "<br />")
 
-    print(labels)
     return results, labels
 
 
