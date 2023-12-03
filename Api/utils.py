@@ -313,7 +313,9 @@ class TranslateStat:
         return
 
     def translate_correlations(self):
-        variables = self.sections['correlations_tab']
+        variables = self.sections.get('correlations_tab', None)
+        if variables is None:
+            return
         for li, text in zip(variables.find_all('li'), ('Автоматически', 'Heatmap', 'Таблица')):
             li.a.string = text
         return
@@ -327,7 +329,9 @@ class TranslateStat:
         return
 
     def translate_samples(self):
-        variables = self.sections['sample']
+        variables = self.sections.get('sample', None)
+        if variables is None:
+            return
         for li, text in zip(variables.find_all('li'), ('Первые строки', 'Последние строки')):
             li.a.string = text
         return
