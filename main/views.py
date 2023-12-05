@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 allowed_types = ['csv', 'xlsx', 'xls']
 
-time_out_time_learn = 5 * 60
+time_out_time_learn = 10 * 60
 time_out_time_stat = 10 * 60
 
 
