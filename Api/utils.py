@@ -176,6 +176,8 @@ def permutation_importance(model, X, y, labels, n_repeats=10):
     return data
 
 def trainer(X_train, y_train, X_test, y_test, model_name, label_name, labels, **params):
+    print(params)
+    is_permutate = params.pop('is_permutate', False)
     if 'clear' in params:
         model = default_models[model_name]
     else:
@@ -183,7 +185,10 @@ def trainer(X_train, y_train, X_test, y_test, model_name, label_name, labels, **
         model = model(**params)
 
     model.fit(X_train, y_train)
-    features_importants = permutation_importance(model, X_train, y_train, labels)
+    if is_permutate:
+        features_importants = permutation_importance(model, X_train, y_train, labels)
+    else:
+        features_importants = None
 
     pred = model.predict(X_test)
     y_test_org = np.unique(y_test)
