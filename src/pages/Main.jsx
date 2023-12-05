@@ -636,15 +636,10 @@ export class Main extends Component {
   }
 
   PlotBarModels(modelsInfo, param, label) {
-    console.log(modelsInfo);
-    console.log(param);
-    console.log(label);
     var models = modelsInfo.map((info) => info.model.label);
     var rowData = modelsInfo.map(
       (info) => info.data.classification_matrix[label][`${param}`]
     );
-    console.log(models);
-    console.log(rowData);
     var data = [
       {
         y: models,
@@ -822,7 +817,6 @@ export class Main extends Component {
   }
 
   confidence_intervalWillson(s, n, z = 1.96) {
-    console.log(z);
     let down;
     let up;
     try {
@@ -851,7 +845,6 @@ export class Main extends Component {
   }
 
   confidence_intervalPirson(s, n, z = 1.96) {
-    console.log(z);
     let down;
     let up;
     try {
@@ -868,7 +861,6 @@ export class Main extends Component {
   }
 
   confidence_intervalVald(s, n, z = 1.96) {
-    console.log(z);
     let down;
     let up;
     try {
@@ -1057,11 +1049,12 @@ export class Main extends Component {
     });
   };
 
-  changeBool = (index) => {
+  changeBool = (e, index) => {
+    console.log(index);
     this.setState((state) => {
       let newInfo = this.state.modelConfigs;
-      newInfo.value[index]["default_value"] =
-        !newInfo.value[index]["default_value"];
+      newInfo.value[index]["default_value"] = !newInfo.value[index]["default_value"];
+      console.log(newInfo.value[index]["default_value"])
       return { modelConfigs: newInfo };
     });
   };
@@ -2384,24 +2377,28 @@ export class Main extends Component {
                                         />
                                       </div>
                                       {/* график значимости факторов */}
-                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                        <Plot
-                                          data={this.PlotFeatureImportants(
-                                            modelInfo.data.features_importants
-                                              .importances_mean,
-                                            modelInfo.data.features_importants
-                                              .labels
-                                          )}
-                                          layout={{
-                                            title: "Значимость факторов",
-                                            autosize: true,
-                                          }}
-                                          style={{
-                                            height: "100%",
-                                            width: "100%",
-                                          }}
-                                        />
-                                      </div>
+                                      {modelInfo.data.features_importants === null ?
+                                        null
+                                        :
+                                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                            <Plot
+                                              data={this.PlotFeatureImportants(
+                                                modelInfo.data.features_importants
+                                                  .importances_mean,
+                                                modelInfo.data.features_importants
+                                                  .labels
+                                              )}
+                                              layout={{
+                                                title: "Значимость факторов",
+                                                autosize: true,
+                                              }}
+                                              style={{
+                                                height: "100%",
+                                                width: "100%",
+                                              }}
+                                            />
+                                        </div>
+                                      }
 
                                       <div className="col-span-2 block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                         <div className="flex">
@@ -2645,8 +2642,8 @@ export class Main extends Component {
                                 <input
                                   type="checkbox"
                                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                  defaultChecked={param.default_value}
-                                  onChange={() => this.changeBool(index)}
+                                  checked={param.default_value}
+                                  onChange={(e) => this.changeBool(e, index)}
                                 />
                               </div>
                             ) : param.type === "string" ? (
