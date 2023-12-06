@@ -80,7 +80,7 @@ def read_dataset_file(dataset, drop_or_fill='fill'):
 # ----------
 
 
-def create_info_request(request, type_models, params, score):
+def create_info_request(request, type_models, params, score, count):
     print(request.data)
     data = {
         'model_name': json.dumps(type_models),
@@ -89,7 +89,8 @@ def create_info_request(request, type_models, params, score):
         'categorical_columns': request.data.get('categorical_columns', ""),
         'number_columns': request.data.get('number_columns', ""),
         'params': json.dumps(params),
-        'score': score
+        'score': score,
+        'count': count
     }
     if data['categorical_columns'] != "":
         data['categorical_columns'] = ';;;'.join(data['categorical_columns'])
