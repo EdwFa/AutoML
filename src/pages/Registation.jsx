@@ -114,6 +114,71 @@ export class Registration extends Component {
       Employment,
     } = this.state;
 
+    return (
+        <div className="flex min-h-screen">
+          <div className="w-full xl:w-1/2 flex items-center">
+            <div className="w-full max-w-lg mx-auto px-4 py-15">
+              {/* регистрация пользоваля */}
+              <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-6">
+                Регистрация пользователя
+              </h1>
+              <p>В данный момент регистрация отключена и находится на техническом обсулживании. Пожайлуста извините</p>
+            </div>
+          </div>
+          <div class="hidden xl:flex flex-col justify-center xl:basis-1/2 login_bg text-gray-100 ">
+            <div className="w-full relative px-24 flex flex-col items-center -mt-36">
+              <img class="h-36" src={PictureD} alt="" />
+              <h1 className="text-4xl font-bold text-center max-w-xl uppercase">
+                Sechenov Machine Learning change healthcare
+              </h1>
+              <div className="absolute mt-72 text-gray-100 text-xs">
+                <h2 class="whitespace-pre-wrap">Последние обновления:</h2>
+                <div class="text-gray-200 mb-4">13 сентября 2023 г.</div>
+                <ul class="max-w-md space-y-1 text-gray-200 list-inside dark:text-gray-300">
+                  <li class="flex items-center">
+                    <svg
+                      class="w-3.5 h-3.5 mr-2 text-green-500 dark:text-green-400 flex-shrink-0"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z" />
+                    </svg>
+                    Добавлена возможность редактирования датасета.
+                  </li>
+                  <li class="flex items-center">
+                    <svg
+                      class="w-3.5 h-3.5 mr-2 text-green-500 dark:text-green-400 flex-shrink-0"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z" />
+                    </svg>
+                    Добавлен раздел "Статистика".
+                  </li>
+                  <li class="flex items-center">
+                    <svg
+                      class="w-3.5 h-3.5 mr-2 text-green-500 dark:text-green-400 flex-shrink-0"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z" />
+                    </svg>
+                    Обновлен функционал построения гистограмм и графиков с
+                    точечным распределением.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+    )
+
     if (created) {
       return (
         <div>
