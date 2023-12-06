@@ -124,6 +124,7 @@ export class Main extends Component {
       CategoricalLabels: [],
       LearnInfo: null,
       queryScore: 0.8,
+      queryCount: 0,
 
       // configs models
       modelConfigs: null,
@@ -295,6 +296,7 @@ export class Main extends Component {
           datasetColumns: data.columns,
           countRows: data.count_rows,
           countColumns: data.count_columns,
+          queryCount: data.dataset.length > 10000? 10000: data.dataset.length
         });
         this.LoadStatistic(dataset);
         this.RefreshModels(dataset);
@@ -571,6 +573,7 @@ export class Main extends Component {
           model: this.state.LearnModel?.map((model) => model),
           target: this.state.LearnLabel.name,
           score: this.state.queryScore,
+          count: this.state.queryCount,
           categorical_columns: this.state.CategoricalLabels.map(
             (label) => label.name
           ),
@@ -1127,6 +1130,7 @@ export class Main extends Component {
       LearnLabel,
       LearnInfo,
       queryScore,
+      queryCount,
 
       z,
       intervalType,
@@ -1528,8 +1532,8 @@ export class Main extends Component {
                         </div>
                         <div className="flex items-baseline space-x-4">
                           {/* общая информация о датасете */}
-                          <p> Количество строк: {countRows}</p>
-                          <p>Количество колонок: {countColumns}</p>
+                          <p> Количество наблюдений: {datasetRows.length}</p>
+                          <p>Количество признаков: {datasetColumns.length}</p>
                           <button
                             type="button"
                             className="mt-2 px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
@@ -2567,6 +2571,17 @@ export class Main extends Component {
                               xmin={0}
                               xstep={0.01}
                               onChange={({ x }) => this.setState({ queryScore: x })}
+                            />
+                      </div>
+                      <div>
+                            <p>Количество наблюдений переданных на обучение = {queryCount}</p>
+                            <Slider
+                              axis="x"
+                              x={queryCount}
+                              xmax={datasetRows.length > 10000? 10000: datasetRows.length}
+                              xmin={0}
+                              xstep={1}
+                              onChange={({ x }) => this.setState({ queryCount: x })}
                             />
                       </div>
                       <label className="block mb-2 font-bold text-gray-900 dark:text-white">
