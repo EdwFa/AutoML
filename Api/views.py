@@ -40,6 +40,7 @@ def learner():
     models = json.loads(r_data['model_name'])
     models_params = json.loads(r_data['params'])
     test_size = float(r_data['score'])
+    count_rows = int(r_data['count'])
 
     user = r_data['user']
     user_folder = os.path.abspath(f'models/{user}')
@@ -59,7 +60,7 @@ def learner():
         return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
     current_app.logger.info(f'Find dataset and convert them to pandas DataFrame...')
 
-    dataset = load_data(data['key'], r_data['target'], *r_data['categorical_columns'], *r_data['number_columns'])
+    dataset = load_data(data['key'], r_data['target'], count_rows, *r_data['categorical_columns'], *r_data['number_columns'])
     labels = sort_data(dataset, r_data['categorical_columns'], r_data['number_columns'])
     labels[r_data['target']]['use'] = False
     try:

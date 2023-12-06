@@ -8,6 +8,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 
+from sklearn.utils import shuffle
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -49,12 +50,14 @@ default_models = {
 
 formats = ['csv', 'xlsx', 'xls']
 
-def load_data(dataset, target, *labels):
+def load_data(dataset, target, count, *labels):
     print(f'Load dataset...')
     data = pd.read_csv(dataset.stream)
     if labels is not None:
         data = data[[target, *labels]]
-    print(data.columns)
+        data = shuffle(data)
+        data = data.iloc[0:count,:]
+    print(data)
 
     return data
 
