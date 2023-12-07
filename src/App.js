@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 // Импорт страниц
-import { LogIn } from "./pages/LogIn";
+import LogIn from "./pages/LogIn";
 import Help from "./pages/Help";
 import Doc1 from "./pages/Doc1";
 import Doc2 from "./pages/Doc2";
@@ -14,6 +14,7 @@ import Doc4 from "./pages/Doc4";
 import { Registration } from "./pages/Registation";
 import { Main } from "./pages/Main";
 import { Models } from "./pages/Models";
+import { Admin } from "./pages/Admin";
 
 function App() {
   useEffect(() => {
@@ -33,6 +34,7 @@ function App() {
         <Route path="/sign-up" element={<Registration />} />
         <Route path="/" element={<Main />} />
         <Route path="/models" element={<Models />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </Router>
   );

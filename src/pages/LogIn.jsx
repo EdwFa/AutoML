@@ -1,113 +1,92 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { variables } from "../api/Variables";
 import Picture from "../assets/images/logo1.svg";
 import PictureD from "../assets/images/logo-sechenov-dark.svg";
 
-export class LogIn extends Component {
-  constructor(props) {
-    super(props);
+export default function LogIn() {
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [formUsername, setUsername] = useState("");
+  const [formPassword, setPassword] = useState("");
+  const [token, setToken] = useState("");
 
-    this.state = {
-      error: null,
-      token: variables.token,
-      formUsername: "",
-      formPassword: "",
-      email: "",
-      username: "",
-      is_staff: false,
-      is_admin: false,
-    };
-  }
-
-  changeUserNameForm = (e) => {
-    this.setState({ formUsername: e.target.value });
+  const changeUserNameForm = (e) => {
+    setUsername(e.target.value);
   };
 
-  changePasswordForm = (e) => {
-    this.setState({ formPassword: e.target.value });
+  const changePasswordForm = (e) => {
+    setPassword(e.target.value);
   };
 
-  refreshUser() {
+  const refreshUser = (token) => {
     // Перезапускаем get наших списков
-    this.setState({ token: variables.token });
-    if (this.state.token != "") {
+    if (token != "") {
       fetch(variables.API_URL + "accounts/profile", {
         headers: {
           "Content-Type": "application/json;charset=utf-8",
-          Authorization: `Token ${this.state.token}`,
+          Authorization: `Token ${token}`,
         },
       })
         .then((response) => response.json())
         .then((data) => {
-          this.setState({
-            username: data.data.username,
-            email: data.data.email,
-            is_staff: data.data.is_staff,
-            is_admin: data.data.is_superuser,
-            error: null,
-          });
+          console.log(data.data)
+          setUser(data.data)
+          setError(null)
+          variables.token = token;
           variables.user = data.data;
         })
         .catch((error) => {
           console.log(error);
-          this.setState({ error: error });
+          setError(error);
         });
     }
+    console.log(user);
   }
 
-  submitUp() {
-    console.log("some");
+  const submitUp = () => {
     fetch("accounts/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json;charset=utf-8",
       },
       body: JSON.stringify({
-        username: this.state.formUsername,
-        password: this.state.formPassword,
+        username: formUsername,
+        password: formPassword,
       }),
     })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw Error(`Something went wrong: code ${response.status}`);
-        }
-      })
-      .then(({ key }) => {
-        variables.token = key;
-        this.setState({ error: null, token: key });
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+        if(data.error !== undefined)
+            throw Error(`${data.error}`);
+        setToken(data.key);
+        setError(null);
+        refreshUser(data.key);
       })
       .catch((error) => {
         console.log(error);
-        this.setState({ error: "Ошибка, подробности в консоли" });
+        setError(error.message);
       });
-    this.refreshUser();
   }
 
-  SubmitOut() {
+  const SubmitOut = () => {
     if (this.state.token != "") {
       fetch(variables.API_URL + "accounts/logout", {
         headers: {
           "Content-Type": "application/json;charset=utf-8",
-          Authorization: `Token ${this.state.token}`,
+          Authorization: `Token ${token}`,
         },
       })
         .then((response) => {
           if (response.ok) {
-            this.setState({
-              token: "",
-              username: "",
-              email: "",
-              is_staff: false,
-              is_admin: false,
-            });
+            setToken("");
+            setUser(null);
+            variables.token = null;
             variables.user = null;
-
-            this.refreshUser();
             return null;
           } else {
             throw Error(`Something went wrong: code ${response.status}`);
@@ -115,36 +94,22 @@ export class LogIn extends Component {
         })
         .catch((error) => {
           console.log(error);
-          this.setState({ error: "Ошибка, подробности в консоли", token: "" });
+          setError(error);
         });
     }
   }
 
-  componentDidMount() {
-    this.refreshUser();
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.token !== prevState.token) {
-      this.refreshUser();
+  useEffect(() => {
+    try {
+      refreshUser(token);
+    } catch (error) {
+      console.log(error);
     }
-  }
+  }, []);
 
-  render() {
-    const {
-      loading,
-      error,
-      token,
-      formUsername,
-      formPassword,
-      email,
-      username,
-      is_staff,
-      is_admin,
-    } = this.state;
 
-    if (token != "") {
-      return <Navigate push to="/" />;
+    if (user !== null) {
+      navigate("/", {state: {user: user, token: token}})
     } else {
       return (
         <div className="flex flex-row min-h-screen">
@@ -167,7 +132,7 @@ export class LogIn extends Component {
                     id="username"
                     name="username"
                     value={formUsername}
-                    onChange={this.changeUserNameForm}
+                    onChange={changeUserNameForm}
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="name@datamed.pro"
                     required
@@ -184,31 +149,40 @@ export class LogIn extends Component {
                     type="password"
                     id="password"
                     value={formPassword}
-                    onChange={this.changePasswordForm}
+                    onChange={changePasswordForm}
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="••••••••"
                     required
                   />
                 </div>
+                {/*
+                    <div className="flex justify-between mb-6">
+                      <div className="flex items-start">
+                        <Link
+                          to="/sign-up"
+                          className="text-sm font-medium text-blue-700 dark:text-blue-800"
+                        >
+                          Не зарегистрированы?
+                        </Link>
+                      </div>
+                      <div className="flex items-center">
+                        <Link className="ml-2 text-sm font-medium text-blue-700 dark:text-blue-800">
+                          Забыли пароль?
+                        </Link>
+                      </div>
+                    </div>
+                */}
+                {error !== null?
                 <div className="flex justify-between mb-6">
-                  <div className="flex items-start">
-                    <Link
-                      to="/sign-up"
-                      className="text-sm font-medium text-blue-700 dark:text-blue-800"
-                    >
-                      Не зарегистрированы?
-                    </Link>
-                  </div>
-                  <div className="flex items-center">
-                    <Link className="ml-2 text-sm font-medium text-blue-700 dark:text-blue-800">
-                      Забыли пароль?
-                    </Link>
-                  </div>
+                  <p className="ml-2 text-sm text-red-700 dark:text-red-800">
+                      {error}
+                  </p>
                 </div>
+                :null}
                 <div className="flex">
                   <button
                     type="button"
-                    onClick={() => this.submitUp()}
+                    onClick={() => submitUp()}
                     className="text-white w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                   >
                     Войти
@@ -270,6 +244,5 @@ export class LogIn extends Component {
           </div>
         </div>
       );
-    }
   }
 }

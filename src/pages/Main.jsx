@@ -86,6 +86,7 @@ export class Main extends Component {
       // user data
       user: variables.user,
       token: variables.token,
+      maxCount: variables.user !== null? variables.user.count: 10000,
       loading: false,
       loadingStat: false,
       loadingLearn: false,
@@ -272,6 +273,7 @@ export class Main extends Component {
   // Подгрзка датасета с сервера и его визуализация
 
   LoadDataset(dataset) {
+    console.log(this.state.maxCount);
     this.setState({
       loading: true,
       datasetRows: [],
@@ -296,7 +298,7 @@ export class Main extends Component {
           datasetColumns: data.columns,
           countRows: data.count_rows,
           countColumns: data.count_columns,
-          queryCount: data.dataset.length > 10000? 10000: data.dataset.length
+          queryCount: data.dataset.length > this.state.maxCount? this.state.maxCount: data.dataset.length
         });
         this.LoadStatistic(dataset);
         this.RefreshModels(dataset);
@@ -318,6 +320,7 @@ export class Main extends Component {
 
   componentDidMount() {
     this.GetDatasets();
+    this.setState({token: variables.token, user: variables.user, maxCount: variables.user !== null? variables.user.count: 10000})
   }
 
   // Работа с визализацией данных(графики)
@@ -1094,6 +1097,7 @@ export class Main extends Component {
     const {
       token,
       user,
+      maxCount,
       loading,
       loadingStat,
       loadingLearn,
@@ -1136,13 +1140,13 @@ export class Main extends Component {
       intervalType,
     } = this.state;
 
-    if (token == "") {
+    if (token === null) {
       return <Navigate push to="/login" />;
     } else {
       return (
         <div className="flex h-screen overflow-hidden">
           {/*Боковое меню*/}
-          <Aside />
+          <Aside user={user} />
           {/*Контент*/}
           <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
             {/*Хлебные крошки*/}
@@ -1189,6 +1193,33 @@ export class Main extends Component {
                           class="p-2 rounded-lg ml-1 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
                         >
                           AutoML
+                        </a>
+                      </div>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/admin">
+                      <div class="flex items-center">
+                        <svg
+                          class="w-3 h-3 text-gray-400 mx-1"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 6 10"
+                        >
+                          <path
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="m1 9 4-4-4-4"
+                          />
+                        </svg>
+                        <a
+                          href="#"
+                          class="p-2 rounded-lg ml-1 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
+                        >
+                          Админ-панель
                         </a>
                       </div>
                     </Link>
@@ -2578,7 +2609,7 @@ export class Main extends Component {
                             <Slider
                               axis="x"
                               x={queryCount}
-                              xmax={datasetRows.length > 10000? 10000: datasetRows.length}
+                              xmax={datasetRows.length > maxCount? maxCount: datasetRows.length}
                               xmin={0}
                               xstep={1}
                               onChange={({ x }) => this.setState({ queryCount: x })}

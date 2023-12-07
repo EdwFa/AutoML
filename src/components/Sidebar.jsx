@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import { Transition } from "@headlessui/react";
@@ -20,10 +20,25 @@ import { CircleStackIcon } from "@heroicons/react/24/outline";
 
 //Dark Mode
 import Switcher from "../components/Switcher";
+import {
+  variables,
+} from "../api/Variables.js";
 
-export default function Aside() {
+export default function Aside(props) {
   const [isShowing, setIsShowing] = useState(true);
   const [open, setOpen] = useState(true);
+  const [user, setUser] = useState(null);
+  const [is_admin, setAdmin] = useState(false);
+
+  useEffect(() => {
+    try {
+      console.log(props.user);
+      setUser(props.user);
+      setAdmin(props.user.is_superuser);
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
 
   return (
     <aside
@@ -50,7 +65,7 @@ export default function Aside() {
         </a>
         {/*Верхнее меню*/}
         <ul class="my-4 space-y-1 font-medium">
-          <Link to="/">
+          <Link to="/" user={user}>
             <li
               className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
                 !open && "hover:!bg-blue-100"
@@ -66,7 +81,7 @@ export default function Aside() {
               </span>
             </li>
           </Link>
-          <Link to="/models">
+          <Link to="/models" user={user}>
             <li
               className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
                 !open && "hover:!bg-blue-100"
@@ -82,6 +97,24 @@ export default function Aside() {
               </span>
             </li>
           </Link>
+          {is_admin?
+          <Link to="/admin" user={user}>
+            <li
+              className={`flex items-center p-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${
+                !open && "hover:!bg-blue-100"
+              }`}
+            >
+              <DocumentTextIcon className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span
+                className={`ml-3 duration-100 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Админ-панель
+              </span>
+            </li>
+          </Link>
+          :null}
           <Link>
             <li
               className={`hidden flex items-center px-2 text-gray-900 rounded-lg text-sm dark:text-white dark:hover:bg-gray-700 group hover:bg-gray-100 ${

@@ -2,6 +2,9 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
 export function showDate(dateString) {
+  console.log(dateString)
+  if(dateString === null || dateString === undefined)
+    return null;
   let NewDate = new Date(dateString);
   NewDate = format(NewDate, "dd/MM/yyyy, HH:mm", { locale: ru });
   return NewDate;
@@ -9,7 +12,7 @@ export function showDate(dateString) {
 
 export const variables = {
   API_URL: "",
-  token: "",
+  token: null,
   user: null,
   uploaded_file: null,
 };
