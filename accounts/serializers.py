@@ -26,7 +26,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'city', 'employment', 'password')
+        fields = ('username', 'email', 'first_name', 'last_name', 'city', 'employment', 'password', 'info', 'allow_date', 'count')
 
     def create(self, validated_data):
         print(validated_data)
@@ -41,15 +41,16 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'city', 'info', 'employment')
+        fields = ('first_name', 'last_name', 'city', 'info', 'employment', 'allow_date', 'count')
 
     def update(self, instance, validated_data):
         instance.info = validated_data.get('info', instance.info)
-        instance.email = validated_data.get('email', instance.email)
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.city = validated_data.get('city', instance.city)
         instance.employment = validated_data.get('employment', instance.employment)
+        instance.allow_date = validated_data.get('allow_date', instance.allow_date)
+        instance.count = validated_data.get('count', instance.count)
         instance.save()
         return instance
 

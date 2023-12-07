@@ -13,7 +13,7 @@ class MyUserAdmin(UserAdmin):
     form = MyUserChangeForm
 
     fieldsets = UserAdmin.fieldsets + (
-            (None, {'fields': ('city', 'employment', 'info')}),
+            (None, {'fields': ('city', 'employment', 'info', 'count', 'allow_date')}),
     )
 
 # общая информация

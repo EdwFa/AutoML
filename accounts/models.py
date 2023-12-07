@@ -1,4 +1,5 @@
 import os.path
+import datetime
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -27,6 +28,8 @@ class User(AbstractUser):
     city = models.CharField(max_length=255, null=True, blank=True)
     employment = models.CharField(max_length=1, choices=choices_employments, default='S')
     info = models.TextField(null=True, blank=True)
+    allow_date = models.DateField(null=True, blank=True)
+    count = models.IntegerField(default=10000)
 
     def __str__(self):
         return f'{self.username}'
@@ -59,8 +62,8 @@ class User(AbstractUser):
 
 
     def delete(self, *args, **kwargs):
-        for dataset in self.datasets.all():
-            dataset.delete()
-        if os.path.exists(os.path.join('datasets', self.username)):
-            clear_dir(os.path.join('datasets', self.username))
+        # for dataset in self.datasets.all():
+        #     dataset.delete()
+        # if os.path.exists(os.path.join('datasets', self.username)):
+        #     clear_dir(os.path.join('datasets', self.username))
         super().delete(*args, **kwargs)
