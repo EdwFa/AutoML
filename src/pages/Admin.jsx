@@ -91,18 +91,18 @@ export class Admin extends Component {
       users: [],
       usersDef: [
                 {field: 'id', headerName: 'Номер', filter: 'agNumberColumnFilter'},
-                {field: 'date_joined', headerName: 'Дата создания', filter: 'agDateColumnFilter', inRangeFloatingFilterDateFormat: "dd/mm/yyyy", filterParams: filterParams, cellRenderer: (params) => <div>{showDate(params.data.date_joined)}</div>},
+                {field: 'date_joined', headerName: 'Дата создания', filter: 'agDateColumnFilter', inRangeFloatingFilterDateFormat: "dd/mm/yyyy", filterParams: filterParams, cellRenderer: (params) => <div>{params.data === undefined? null: showDate(params.data.date_joined)}</div>},
                 {field: 'email', headerName: 'Email', filter: 'agTextColumnFilter'},
                 {field: 'username', headerName: 'Имя пользователя', filter: 'agTextColumnFilter'},
                 {field: 'first_name', headerName: 'Имя', filter: 'agTextColumnFilter'},
                 {field: 'last_name', headerName: 'Фамилия', filter: 'agTextColumnFilter'},
-                {field: 'last_login', headerName: 'Использовал приложение', filter: 'agDateColumnFilter', inRangeFloatingFilterDateFormat: "dd/mm/yyyy", filterParams: filterParams, cellRenderer: (params) => <div>{showDate(params.data.last_login)}</div>},
+                {field: 'last_login', headerName: 'Использовал приложение', filter: 'agDateColumnFilter', inRangeFloatingFilterDateFormat: "dd/mm/yyyy", filterParams: filterParams, cellRenderer: (params) => <div>{params.data === undefined? null: showDate(params.data.last_login)}</div>},
                 {field: 'employment', headerName: 'Род деятельности', filter: 'agTextColumnFilter'},
                 {field: 'city', headerName: 'Аффиляция', filter: 'agTextColumnFilter'},
                 {field: 'info', headerName: 'Описание', filter: 'agTextColumnFilter'},
                 {field: 'count', headerName: 'Права', filter: 'agNumberColumnFilter'},
-                {field: 'allow_date', headerName: 'Подписка до...', filter: 'agDateColumnFilter', inRangeFloatingFilterDateFormat: "dd/mm/yyyy", filterParams: filterParams, cellRenderer: (params) => <div>{showDate(params.data.allow_date)}</div>},
-                {field: 'is_superuser', headerName: 'Администратор', filter: 'agBoooleanColumnFilter', cellRenderer: (params) => <div><input type="checkbox" checked={params.data.is_superuser} /></div>},
+                {field: 'allow_date', headerName: 'Подписка до...', filter: 'agDateColumnFilter', inRangeFloatingFilterDateFormat: "dd/mm/yyyy", filterParams: filterParams, cellRenderer: (params) => <div>{params.data === undefined? null: showDate(params.data.allow_date)}</div>},
+                {field: 'is_superuser', headerName: 'Администратор', filter: 'agBoooleanColumnFilter', cellRenderer: (params) => <div><input type="checkbox" checked={params.data === undefined? false: params.data.is_superuser} /></div>},
                 {field: 'id', headerName: "Действия", filter: false, cellRenderer: (params) => <div className='flex'>
                                                     <button
                                                         type="button"
