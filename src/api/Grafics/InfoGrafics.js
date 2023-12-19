@@ -4,6 +4,7 @@ import Plot from 'react-plotly.js';
 
 import { GetScatterData, GetScatterLayout } from './Scatter.js';
 import { GetHistogramData, GetHistogramLayout } from './Histogram.js'
+import { GetPieData, GetPieLayout } from './PieChart.js'
 
 // import "../Viewer/styles.css"
 
@@ -80,6 +81,20 @@ export class PlotGrafic extends Component {
                         }
                         layout={
                             GetHistogramLayout(x_label)
+                        }
+                        />
+                </div>
+            )
+        }
+        if ( graffic.name == 'pie' ){
+            return (
+                <div class="e28_378">
+                    <Plot
+                        data={
+                            GetPieData(x_data)
+                        }
+                        layout={
+                            GetPieLayout(x_label)
                         }
                         />
                 </div>

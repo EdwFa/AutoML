@@ -58,9 +58,10 @@ var filterParams = {
     var dateAsString = cellValue;
     if (dateAsString == null) return -1;
     var dateParts = dateAsString.split('/');
+    console.log(dateParts)
     var cellDate = new Date(
       Number(dateParts[2]),
-      Number(dateParts[1]) - 1,
+      Number(dateParts[1]) + 1,
       Number(dateParts[0])
     );
     if (filterLocalDateAtMidnight.getTime() === cellDate.getTime()) {
@@ -485,7 +486,6 @@ export class Admin extends Component {
                                   // allow every column to be pivoted
                                   filter: 'agTextColumnFilter',
                                   resizable: true,
-                                  enableRowGroup: true,
                                 }
                               }
                               autoGroupColumnDef={{ minWidth: 200, filter: 'agGroupColumnFilter' }}

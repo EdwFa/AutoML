@@ -42,6 +42,7 @@ import { PlotGrafic } from "../api/Grafics/InfoGrafics.js";
 const AllowedGrafics = [
   { id: 0, name: "scatter" },
   { id: 1, name: "histogram" },
+  {id: 2, name: 'pie'},
 ];
 
 function classNames(...classes) {
@@ -1626,7 +1627,7 @@ export class Main extends Component {
                               placeholder="Выберите X"
                             />
                             {choicedGrafic ? (
-                              choicedGrafic.name === "histogram" ? null : (
+                              choicedGrafic.name === "scatter" ? (
                                 <>
                                   <label className="block my-2 text-sm font-medium text-gray-900 dark:text-white">
                                     Y label
@@ -1647,22 +1648,28 @@ export class Main extends Component {
                                     placeholder="Выберите Y"
                                   />
                                 </>
+                              ) : null
+                            ) : null}
+                            {choicedGrafic ? (
+                              choicedGrafic.name === "pie" ? null : (
+                                <>
+                                  <label className="block my-2 text-sm font-medium text-gray-900 dark:text-white">
+                                      Group label
+                                    </label>
+                                    <Select
+                                      className="basic-single"
+                                      classNamePrefix="select"
+                                      options={datasetColumns}
+                                      getOptionLabel={(option) => `${option["field"]}`}
+                                      getOptionValue={(option) => `${option["field"]}`}
+                                      value={group_label}
+                                      noOptionsMessage={() => "Пусто"}
+                                      onChange={this.changeGroup}
+                                      placeholder="Выберите Y"
+                                    />
+                                </>
                               )
                             ) : null}
-                            <label className="block my-2 text-sm font-medium text-gray-900 dark:text-white">
-                              Group label
-                            </label>
-                            <Select
-                              className="basic-single"
-                              classNamePrefix="select"
-                              options={datasetColumns}
-                              getOptionLabel={(option) => `${option["field"]}`}
-                              getOptionValue={(option) => `${option["field"]}`}
-                              value={group_label}
-                              noOptionsMessage={() => "Пусто"}
-                              onChange={this.changeGroup}
-                              placeholder="Выберите Y"
-                            />
                             <button
                               class="mt-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
                               type="button"
