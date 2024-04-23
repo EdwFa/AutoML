@@ -20,16 +20,20 @@ import os
 
 
 default_models = [
-    ['Опорные вектора', 'SVM'],
-    ['Деревья решений', 'Decision Tree'],
-    ['Случайный лес', 'RandomForestClassifier'],
-    ['Логистическая регрессия', 'LogisticRegression'],
-    ['Градиентный бустинг', 'GradientBoostingClassifier'],
-    ['Ада бустинг', 'AdaBoostClassifier'],
-    ['Ближайшие соседи', 'KNeighborsClassifier'],
-    ['Дополнительные деравья', 'ExtraTreesClassifier'],
-    ['Нейронная сеть', 'MLPClassifier'],
-    ['Гистограммный бустинг', 'HistGradientBoostingClassifier']
+    ['Опорные вектора', 'SVM', 1],
+    ['Деревья решений', 'Decision Tree', 1],
+    ['Случайный лес', 'RandomForestClassifier', 1],
+    ['Логистическая регрессия', 'LogisticRegression', 1],
+    ['Градиентный бустинг', 'GradientBoostingClassifier', 1],
+    ['Ада бустинг', 'AdaBoostClassifier', 1],
+    ['Ближайшие соседи', 'KNeighborsClassifier', 1],
+    ['Дополнительные деравья', 'ExtraTreesClassifier', 1],
+    ['Нейронная сеть', 'MLPClassifier', 1],
+    ['Гистограммный бустинг', 'HistGradientBoostingClassifier', 1],
+    ['Фиктивная регрессия', 'DummyRegression', 2],
+    ['Линейная регрессия', 'LinearRegression', 2],
+    ['Catboost регрессия', 'CatboostRegression', 2],
+    ['LGBMRegressor', 'LGBMRegressor', 2]
 ]
 
 get_grid_type = lambda x : "agNumberColumnFilter" if (x == 'int' or x == 'float') else "agTextColumnFilter"
@@ -78,7 +82,6 @@ def read_dataset_file(dataset, drop_or_fill='fill'):
 # ----------
 # Обучение
 # ----------
-
 
 def create_info_request(request, type_models, params, score, count):
     print(request.data)
@@ -194,9 +197,7 @@ def get_statistic_info(dataset_table):
 # ----------
 # Сохранение и использование
 # ----------
-
-def predict(data, modelId):
-    model = LearnModel.objects.get(id=modelId)
+def predict_classification(data, model):
     predict_params = []
     for value, param in zip(data['params'], model.configs):
         print(value)
@@ -217,9 +218,45 @@ def predict(data, modelId):
     max = m.predict([predict_params])
     pred_softmax = m.predict_proba([predict_params])
     configs = model.configs[-1]
-    pred = [{'label': configs[0], 'target': i, 'value': round(j, 2), 'max': False} for i, j in zip(configs[1:], pred_softmax[0])]
-    pred[max[0]]['max'] = True
+    pred = [{'label': configs[0], 'target': i, 'value': round(j, 2), 'max': False} for i, j in
+            zip(configs[1:], pred_softmax[0])]
+    print(pred, max)
+    for i in pred:
+        if i['target'] == max[0]:
+            i['max'] = True
     return pred
+
+def predict_regression(data, model):
+    predict_params = []
+    for value, param in zip(data['params'], model.configs):
+        print(value)
+        print(param)
+        if value[1] == None:
+            raise Exception('Params cant be null value')
+        if isinstance(value[1], dict):
+            i = [0 for j in param['params']]
+            i[value[1]['val']] = 1
+            for j in i:
+                predict_params.append(j)
+        else:
+            i = (value[1] - param['mean']) / param['std']
+            predict_params.append(i)
+        print('----')
+    print(predict_params)
+    m = load(model.get_model_file())
+    max = m.predict([predict_params])
+    pred = round(max[0], 2)
+    return pred
+
+def predict(data, modelId):
+    model = LearnModel.objects.get(id=modelId)
+    print(model)
+    if model.type == 1:
+        return predict_classification(data, model)
+    elif model.type == 2:
+        return predict_regression(data, model)
+    else:
+        return None
 
 
 

@@ -16,6 +16,11 @@ choices_types_data = (
     ('B', 'Булево значение')
 )
 
+choices_types_datasets = (
+    (1, 'Классификация'),
+    (2, 'Регрессия')
+)
+
 class Dataset(models.Model):
     """Таблица для храниния общей информации о датасете, так же хранит пользоватлея который загрузил ее и путь до файла"""
     name = models.CharField(max_length=64)
@@ -23,6 +28,7 @@ class Dataset(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='datasets', related_query_name='datasets')
     upload_date = models.DateTimeField(auto_now=True)
     format = models.CharField(max_length=8)
+    type = models.IntegerField(choices=choices_types_datasets, default=1)
     size = models.IntegerField()
     info = models.TextField(null=True)
 
@@ -53,6 +59,12 @@ class Dataset(models.Model):
     def get_dataset_path(self):
         return os.path.join(self.path, f'{self.id}_{self.name}.csv')
 
+    def get_type(self):
+        return choices_types_datasets[self.type - 1][1]
+
+    def get_type_code(self):
+        return choices_types_datasets[self.type - 1][0]
+
     def get_stat_path(self):
         return os.path.join(self.path, 'statistic.html')
 
@@ -64,6 +76,7 @@ class LearnModel(models.Model):
     name = models.CharField(max_length=64)
     configs = models.JSONField(null=True)
     info = models.TextField(null=True)
+    type = models.IntegerField(choices=choices_types_datasets, default=1)
     date = models.DateTimeField(auto_now=True)
 
     def __str__(self):

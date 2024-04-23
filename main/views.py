@@ -18,7 +18,6 @@ from ML_Datamed.settings import HOST_TO_CONNECT_LEARNER, HOST_TO_CONNECT_STATIST
 from .serializers import *
 from .utils import *
 
-
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -48,6 +47,7 @@ def delete_dataset(request):
         return Response(data={'status': 'error'}, status=404)
     dataset.delete()
     return Response(data={'status': 'success'}, status=200)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -79,6 +79,7 @@ def update_dataset(request):
     data['status'] = 'Created'
     return Response(data=data, status=201)
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
@@ -98,12 +99,14 @@ def update_dataset_table(request):
     data['status'] = 'Created'
     return Response(data=data, status=201)
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
 @parser_classes([MultiPartParser, FormParser, FileUploadParser])
 def upload_dataset(request):
     dataset = request.FILES.get('file')
+    type_code = request.GET.get('type')
     dataset_name = '.'.join(dataset.name.split('.')[:-1])
     dataset_type = dataset.name.split('.')[-1]
 
@@ -111,7 +114,9 @@ def upload_dataset(request):
         'status': '',
         'name': dataset.name
     }
-
+    if type_code not in ("1", "2"):
+        data['status'] = 'Not allowed type learn'
+        return Response(data=data, status=403)
     if dataset_type not in allowed_types:
         data['status'] = 'Not allowed type of file'
         return Response(data=data, status=403)
@@ -123,6 +128,7 @@ def upload_dataset(request):
         size=dataset.size,
         format=dataset_type,
         info=dataset_name,
+        type=int(type_code),
         path='/'
     )
     dataset_table.save()
@@ -194,13 +200,14 @@ def get_statistic(request):
         }
     return Response(data=data, status=200)
 
+
 async def stat_response(dataset):
     timeout = aiohttp.ClientTimeout(total=time_out_time_stat)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         with open(dataset.get_dataset_path(), 'r') as f:
             try:
                 response = await session.post(f'{HOST_TO_CONNECT_STATISTIC}/create_stat', data={'key': f},
-                                           headers={'User-Agent': 'Mozilla/5.0'})
+                                              headers={'User-Agent': 'Mozilla/5.0'})
             except asyncio.exceptions.TimeoutError:
                 print("time out exception")
                 return 504
@@ -247,13 +254,14 @@ def get_graphics(request):
 
     return FileResponse(img)
 
+
 async def graphics_response(dataset):
     timeout = aiohttp.ClientTimeout(total=time_out_time_stat)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         with open(dataset.get_dataset_path(), 'r') as f:
             try:
                 response = await session.post(f'{HOST_TO_CONNECT_STATISTIC}/create_graphics', data={'key': f},
-                                           headers={'User-Agent': 'Mozilla/5.0'})
+                                              headers={'User-Agent': 'Mozilla/5.0'})
             except asyncio.exceptions.TimeoutError:
                 print("time out exception")
                 return 504
@@ -298,11 +306,11 @@ def get_models(request):
         'models': default_models,
         'labels': [
             {'id': i, 'name': col, 'number': (dtype == 'int' or dtype == 'float')}
-        for i, (col, dtype) in enumerate(zip(columns, types))]
+            for i, (col, dtype) in enumerate(zip(columns, types))]
     }
     models = list()
     for model in data['models']:
-        models.append({'label': model[0], 'name': model[1], 'value': None})
+        models.append({'label': model[0], 'name': model[1], 'type': model[2], 'value': None})
         try:
             if not os.path.exists(f'documents/base_models/{model[1]}.json'):
                 continue
@@ -316,11 +324,14 @@ def get_models(request):
 
 async def learn_response(**kwargs):
     timeout = aiohttp.ClientTimeout(total=time_out_time_learn)
+    type_learn = kwargs["type_model"]
+    if type_learn is None:
+        return 500, {"message": "Unknown learn type"}
     async with aiohttp.ClientSession(timeout=timeout) as session:
         with open(kwargs['dataset'].get_dataset_path(), 'r') as f:
             try:
                 response = await session.post(
-                    f'{HOST_TO_CONNECT_LEARNER}/learner?broker_key={kwargs["key"]}',
+                    f'{HOST_TO_CONNECT_LEARNER}/{"learner-regression" if type_learn == 2 else "learner"}?broker_key={kwargs["key"]}',
                     data={'key': f},
                     headers={'User-Agent': 'Mozilla/5.0'}
                 )
@@ -332,6 +343,7 @@ async def learn_response(**kwargs):
             return 500, await response.json()
         return 200, await response.json()
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
@@ -342,12 +354,14 @@ async def learn_model(request):
     headers = {
         'Content-Type': 'application/json'
     }
-    type_model = request.data.get("model", "")
+    type_model = request.data.get("model", None)
     score = request.data.get('score', "0.8")
     count = request.data.get('count', '-1')
-    if type_model == "":
+    if type_model is None:
         return Response(data={'status': 'error'}, status=500)
     for m in type_model:
+        if m['value'] is None:
+            continue
         for p in m['value']:
             if isinstance(p['default_value'], list):
                 l = p['default_value']
@@ -356,15 +370,17 @@ async def learn_model(request):
                 for el in l:
                     if el > p['diap'][3] or el < p['diap'][2]:
                         raise Exception('not current val in array')
-    params = [{param['param']: param['default_value']['value'] if isinstance(param['default_value'], dict) else param['default_value'] for param in m['value']} if m['value'] else None for m in type_model]
+    params = [{param['param']: param['default_value']['value'] if isinstance(param['default_value'], dict) else param[
+        'default_value'] for param in m['value']} if m['value'] else None for m in type_model]
     print(params)
 
     broker_key = f'ml_{request.user.username}_{dataset.id}'
 
     send_data = create_info_request(request, type_model, params, score, count)
     redis_cli.hset(broker_key, mapping=send_data)
+    response_status, response = await learn_response(dataset=dataset, headers=headers, key=broker_key,
+                                                     type_model=type_model[0]['type'])
 
-    response_status, response = await learn_response(dataset=dataset, headers=headers, key=broker_key)
     redis_cli.delete(broker_key)
     if response_status == 500:
         return Response(data=response, status=201)
@@ -389,6 +405,7 @@ async def save_response(user, model_name):
             return 500, await response.json()
         return 200, await response.read()
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
@@ -401,9 +418,9 @@ async def save_model(request):
         return Response(data={'status': 504}, status=504)
 
     configs = request.data['columns']
-    print([t.rstrip("<br />") for t in request.data['target_info']])
-    configs.append([request.data['target'], *[t.rstrip("<br />") for t in request.data['target_info']]])
-    new_model = LearnModel(name=request.data['model']['label'], user=request.user, configs=request.data['columns'])
+    labels = [t.rstrip("<br />") for t in request.data['target_info']] if request.data['type'] == 1 else []
+    configs.append([request.data['target'], *labels])
+    new_model = LearnModel(name=request.data['model']['label'], user=request.user, configs=request.data['columns'], type=request.data['type'])
     await new_model.asave()
     # dump(response, os.path.join('models', request.user.username, f'{new_model.id}.sav'))
     with open(os.path.join('models', request.user.username, f'{new_model.id}.sav'), 'wb') as f:
@@ -445,6 +462,7 @@ def update_model(request):
     model.info = request.data.get('modelInfo', model.info)
     model.save()
     return Response(data={'status': 'success'}, status=200)
+
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])

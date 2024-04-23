@@ -14,6 +14,8 @@ class UserShowSerializer(serializers.ModelSerializer):
 class DatasetSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source='get_user')
     statistic = serializers.BooleanField(source='exist_stat')
+    type = serializers.CharField(source='get_type')
+    type_code = serializers.IntegerField(source='get_type_code')
 
     class Meta:
         model = Dataset
