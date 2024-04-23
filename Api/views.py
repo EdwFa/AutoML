@@ -10,8 +10,9 @@ from dotenv import load_dotenv
 import pickle
 from joblib import dump, load
 
-from .utils import *
-
+from .trainer_classification import trainer, prepare_matrix_to_grid, prepare_y_scores_to_js
+from .trainer_regression import trainer2
+from .preprocessing import *
 
 
 
@@ -32,7 +33,7 @@ def check_status():
 
 @analise.route('/learner', methods=['POST'])
 def learner():
-    current_app.logger.info(f'Connected to learning model SVM...')
+    current_app.logger.info(f'Connected to learning model Prediction...')
     broker_key = request.args.get('broker_key')
     r_data = redis_cli.hgetall(broker_key)
     r_data['number_columns'] = r_data['number_columns'].split(';;;') if r_data['number_columns'] != "" else []
@@ -68,7 +69,6 @@ def learner():
     except Exception as e:
         print(e)
         return jsonify({'message': str(e), 'status': 500}), 500
-
     all_data = []
     for model_name, params in zip(models, models_params):
         print(model_name)
@@ -103,6 +103,94 @@ def learner():
             'cm_model': cm_model.tolist(),
             'features_importants': features_importants,
             'columns_info': columns_info,
+        }
+        all_data.append({"model": model_name, "data": data, "target": r_data['target']})
+
+    return jsonify({'data': all_data, 'status': 200}), 200
+
+
+@analise.route('/learner-regression', methods=['POST'])
+def learner_regression():
+    current_app.logger.info(f'Connected to learning model Regression...')
+    # Извлечение данных из Redis
+    broker_key = request.args.get('broker_key')
+    r_data = redis_cli.hgetall(broker_key) # в виде словаря
+    # Обновление значения ключей
+    r_data['number_columns'] = r_data['number_columns'].split(';;;') if r_data['number_columns'] != "" else []
+    r_data['categorical_columns'] = r_data['categorical_columns'].split(';;;') if r_data[
+                                                                              'categorical_columns'] != "" else []
+    # Извлечение данных из Redis
+    models = json.loads(r_data['model_name'])
+    models_params = json.loads(r_data['params'])
+    test_size = float(r_data['score'])
+    count_rows = int(r_data['count'])
+
+    #Содание пользолвательской папки если ее нет
+    user = r_data['user']
+    user_folder = os.path.abspath(f'models/{user}')
+    print(user_folder)
+    if not os.path.exists(user_folder):
+        print('DONT EXIST!!!!!!!!!!!!!!!!!!!')
+        os.mkdir(user_folder)
+
+    # Поток проверки моделей в папке пользователя
+    checker = threading.Thread(target=check_models, args=(user_folder,))
+    checker.start()
+
+    if len(models) == 0:
+        return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
+    # Загрузка данных и перeвод в dataframe
+    data = request.files
+    print(data)
+    if 'key' not in data:
+        return jsonify({'status': 'Error', 'message': 'No found dataset!'}), 500
+    current_app.logger.info(f'Find dataset and convert them to pandas DataFrame...')
+
+    dataset = load_data(data['key'], r_data['target'], count_rows, *r_data['categorical_columns'],
+                        *r_data['number_columns'])
+    # Создание ярлыков
+    labels = sort_data(dataset, r_data['categorical_columns'], r_data['number_columns'])
+    labels[r_data['target']]['use'] = False
+
+    # Создание обучающих и тестовых наборов
+    try:
+        X_train, y_train, X_test, y_test, columns_info = preprocess_data(dataset, dataset[r_data['target']].copy(),
+                                                                         labels, test_size)
+    except Exception as e:
+        print(e)
+        return jsonify({'message': str(e), 'status': 500}), 500
+    # Список для хранения оценочных показателей для каждой модели
+    all_data = []
+    # Проверка переданных параметров
+    for model_name, params in zip(models, models_params):
+        print(model_name)
+        if params is None:
+            params = {'clear': True}
+        try:
+            # Обучение модели
+            params = {k: v for k, v in params.items() if v is not None}
+            model, train_mae, train_rmse, train_mape, test_mae, test_rmse, test_mape, train_r2, test_r2, features_importants = trainer2(
+                X_train, y_train, X_test, y_test, model_name['name'], labels, **params)
+        except Exception as e:
+            print(e)
+            return jsonify({'message': str(e), 'status': 500}), 500
+
+        print(train_mae, train_rmse, train_mape, test_mae, test_rmse, test_mape, train_r2, test_r2)
+        # Сохранение обученных моделей
+        with open(os.path.join(user_folder, f'model_{model_name["name"]}.sav'), 'wb') as f:
+            dump(model, f)
+
+        data = {
+            'train_mae': train_mae,
+            'train_rmse': train_rmse,
+            'train_mape': train_mape,
+            'test_mae': test_mae,
+            'test_rmse': test_rmse,
+            'test_mape': test_mape,
+            'train_r2': train_r2,
+            'test_r2': test_r2,
+            'features_importants': features_importants,
+            'columns_info': columns_info
         }
         all_data.append({"model": model_name, "data": data, "target": r_data['target']})
 

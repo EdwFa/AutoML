@@ -1,5 +1,3 @@
-import os.path
-
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -8,14 +6,14 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 
-from sklearn.utils import shuffle
+
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
-from sklearn.model_selection import train_test_split
+
 from sklearn.metrics import roc_curve, roc_auc_score
 
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
-from sklearn.linear_model import SGDClassifier
+
 
 import numpy as np
 import pandas as pd
@@ -34,6 +32,7 @@ models = {
     'MLPClassifier': MLPClassifier,
     'HistGradientBoostingClassifier': HistGradientBoostingClassifier
 }
+
 default_models = {
     'SVM': SVC(probability=True),
     'Decision Tree': DecisionTreeClassifier(),
@@ -47,82 +46,6 @@ default_models = {
     'MLPClassifier': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1),
     'HistGradientBoostingClassifier': HistGradientBoostingClassifier(max_iter=100),
 }
-
-formats = ['csv', 'xlsx', 'xls']
-
-def load_data(dataset, target, count, *labels):
-    print(f'Load dataset...')
-    data = pd.read_csv(dataset.stream)
-    if labels is not None:
-        data = data[[target, *labels]]
-        data = shuffle(data)
-        data = data.iloc[0:count,:]
-    print(data)
-
-    return data
-
-
-def sort_data(data, categorical, number):
-    labels = {}
-    for dtype, label, uniqval in zip(data.dtypes, data.columns, data.nunique()):
-        info = {}
-        print(f'column --> {label} is {dtype}')
-        if label in categorical:
-            info['type'] = 0
-        elif label in number:
-            info['type'] = 1
-        elif dtype == 'float' or dtype == 'int':
-            info['type'] = 1
-        else:
-            info['type'] = 0
-
-        info['uniq_vals'] = uniqval
-        info['use'] = True
-        labels[label] = info
-    if 'ID' in data.columns:
-        labels['ID']['use'] = False
-    return labels
-
-def preprocess_data(data, target, labels, test_size=0.2):
-    random_state = int(test_size * 100) % 17
-    print(test_size, random_state)
-    columns = []
-    columns_info = []
-    for label in labels:
-        if labels[label]['use'] == False:
-            categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
-            continue
-        column = data[label].copy()
-        if labels[label]['type'] == 1:
-            column.fillna(column.median(), inplace=True)
-            mean = column.mean()
-            std = column.std()
-            column = (column - mean) / std
-            columns.append(column.to_numpy())
-            labels[label]['count'] = 1
-            columns_info.append(dict(label=label, type='num', mean=mean, std=std))
-        else:
-            column.fillna(column.mode().values[0], inplace=True)
-            categ_list = {category: i for i, category in enumerate(data[label].unique().tolist())}
-            matrix = np.zeros((column.shape[0], len(categ_list)))
-            for i, val in zip(range(column.shape[0]), column):
-                matrix[i, categ_list[val]] = 1
-            columns.append(matrix)
-            labels[label]['count'] = len(categ_list)
-            params = [{'cat': k, 'val': v} for k, v in categ_list.items()]
-            columns_info.append(dict(label=label, type='cat', params=params))
-    columns = [column.reshape(column.shape[0], 1) if len(column.shape) == 1 else column for column in columns]
-    dataset = np.concatenate(columns, axis=1)
-    X_train, X_test, y_train, y_test = train_test_split(dataset, target, test_size=1-test_size, random_state=random_state)
-    return X_train, y_train, X_test, y_test, columns_info
-
-
-def check_filename(filename):
-    file_path = '/'.join(filename.split('/')[:-1])
-    print(file_path)
-    if not os.path.exists(file_path):
-        os.mkdir(file_path)
-    return filename
 
 
 def get_score_after_permutation(model, X, y, curr_feat, start_pos, count):
@@ -174,8 +97,15 @@ def permutation_importance(model, X, y, labels, n_repeats=10):
         "importances": importances,
     }
     indices = data["importances_mean"].argsort()
+    print('\n\n\n', indices, '\n\n\n')
+    new_labels = []
+    for i in indices:
+        new_labels.append(f_labels[i])
+    data['labels'] = new_labels
     data["importances_mean"] = data["importances_mean"][indices].tolist()
     data["importances_std"] = data["importances_std"][indices].tolist()
+    print("\n\n\n", data["importances_mean"], "\n\n")
+    print("\n\n\n", data["importances_std"], "\n\n")
     return data
 
 def trainer(X_train, y_train, X_test, y_test, model_name, label_name, labels, **params):
