@@ -12,7 +12,7 @@ export function showDate(dateString) {
 
 export const variables = {
   API_URL: "",
-  token: null,
+  token: "",
   user: null,
   uploaded_file: null,
 };

@@ -158,6 +158,7 @@ export class Models extends Component {
       .then((data) => {
         this.setState({
           modelInfo: data.configs,
+          prediction: null,
           predictInfo: data.configs
             .slice(0, -1)
             .map((param) => [param.label, null]),
@@ -620,15 +621,19 @@ export class Models extends Component {
                           {prediction === null ? null : (
                             <div className="mb-10 block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                               {/* Метрики */}
-                              <Plot
-                                data={this.plotPred(prediction)}
-                                layout={{
-                                  autosize: true,
-                                  title: `Предсказание модели для ${prediction[0].label}`,
-                                  yaxis: { range: [0, 1] },
-                                }}
-                                style={{ height: "100%", width: "100%" }}
-                              />
+                              {model.type === 1 ?
+                                  <Plot
+                                    data={this.plotPred(prediction)}
+                                    layout={{
+                                      autosize: true,
+                                      title: `Предсказание модели для ${prediction[0].label}`,
+                                      yaxis: { range: [0, 1] },
+                                    }}
+                                    style={{ height: "100%", width: "100%" }}
+                                  />
+                              :
+                                  <p>{prediction}</p>
+                              }
                             </div>
                           )}
                         </div>

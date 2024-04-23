@@ -100,6 +100,7 @@ export class Main extends Component {
       dataset: null,
       datasetRows: [],
       datasetColumns: [],
+      createTypeLearn: {id: 1, name: 'Классификация'},
 
       // graphics
       choicedGrafic: null,
@@ -120,13 +121,14 @@ export class Main extends Component {
       default_models: [],
       models_params: {},
       labels: [],
-      LearnModel: null,
+      LearnModel: [],
       LearnLabel: null,
       NumberLabels: [],
       CategoricalLabels: [],
       LearnInfo: null,
       queryScore: 0.8,
       queryCount: 0,
+      typeLearn: null,
 
       // configs models
       modelConfigs: null,
@@ -215,7 +217,7 @@ export class Main extends Component {
     const formData = new FormData();
     formData.append("file", e.target.files[0], e.target.files[0].name);
 
-    fetch(variables.API_URL + "main/datasets/upload", {
+    fetch(variables.API_URL + `main/datasets/upload?type=${this.state.createTypeLearn.id}`, {
       headers: {
         Authorization: `Token ${this.state.token}`,
       },
@@ -282,6 +284,7 @@ export class Main extends Component {
       countRows: 0,
       countColumns: 0,
     });
+    this.changeTypeLearn(dataset.type_code)
     fetch(
       variables.API_URL + "main/dataset/viewer" + `?datasetId=${dataset.id}`,
       {
@@ -592,6 +595,7 @@ export class Main extends Component {
       })
       .then((data) => {
         if (data.status == 200) {
+          console.log(data.data)
           this.setState({
             LearnInfo: data.data,
             saved: data.data?.map((i) => false),
@@ -607,7 +611,7 @@ export class Main extends Component {
       });
   }
 
-  saveModel(info, index) {
+  saveModel(info, index, modelType) {
     this.setState({ loadingSave: true });
     fetch(variables.API_URL + "main/dataset/save", {
       method: "POST",
@@ -619,7 +623,8 @@ export class Main extends Component {
         model: info.model,
         target: info.target,
         columns: info.data.columns_info,
-        target_info: info.data.y_onehot,
+        target_info: modelType === 1 ? info.data.y_onehot : null,
+        type: modelType
       }),
     })
       .then((res) => {
@@ -763,10 +768,12 @@ export class Main extends Component {
     return layout;
   }
 
-  PlotFeatureImportants(means, labels) {
+  PlotFeatureImportants(feature_importance, labels) {
+
     var data = [
       {
-        x: means,
+        // x: feature_importance.importances_mean.map((mean, index) => mean / feature_importance.importances_std[index]),
+        x: feature_importance.importances_mean.map((mean, index) => mean),
         y: labels,
         name: `значимость факторов`,
         type: "bar",
@@ -1094,6 +1101,21 @@ export class Main extends Component {
     });
   };
 
+  changeTypeLearn = (e) => {
+    this.setState({
+      typeLearn: e,
+      LearnModel: [],
+      LearnLabel: null,
+      LearnInfo: null
+    })
+  }
+
+  changeCreateTypeLearn = (e) => {
+    this.setState({
+      createTypeLearn: e
+    })
+  }
+
   render() {
     const {
       token,
@@ -1112,6 +1134,7 @@ export class Main extends Component {
       datasetColumns,
       countColumns,
       countRows,
+      fileType,
 
       allowed_grafics,
       choicedGrafic,
@@ -1136,12 +1159,14 @@ export class Main extends Component {
       LearnInfo,
       queryScore,
       queryCount,
+      typeLearn,
+      createTypeLearn,
 
       z,
       intervalType,
     } = this.state;
 
-    if (token === null) {
+    if (token === "") {
       return <Navigate push to="/login" />;
     } else {
       return (
@@ -1333,17 +1358,18 @@ export class Main extends Component {
                 {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
                 <Tab.Panels className={classNames("px-4")}>
                   <Tab.Panel
-                    className={classNames(
-                      "h-dvh flex flex-col bg-white dark:bg-gray-800",
-                      "focus:outline-none"
-                    )}
+                      className={classNames(
+                          "h-dvh flex flex-col bg-white dark:bg-gray-800",
+                          "focus:outline-none"
+                      )}
                   >
                     {/* загрузка файла */}
                     <InfoPanel>
                       <span class="sr-only">Info</span>
                       <div class="ml-3 text-sm">
                         Это стартовая страница. Чтобы начать работу в системе,
-                        загрузите файл с датасетом. Обратите внимание, что файл
+                        выберите тип решаемой задачи и загрузите файл с
+                        соответсвующим датасетом. Обратите внимание, что файл
                         должен соответствовать следующим параметрам:{" "}
                         <p>• Допустимый формат: XLS, XLSX, CSV </p>
                         <p>• Допустимый размер: до 10 MB</p>
@@ -1355,163 +1381,183 @@ export class Main extends Component {
                         </p>
                       </div>
                     </InfoPanel>
-
+                    <div className="mb-4">
+                      <Select
+                          className="basic-single"
+                          classNamePrefix="select"
+                          options={[{id: 1, name: 'Классификация'}, {id: 2, name: 'Регрессия'}]}
+                          getOptionLabel={(option) => option.name}
+                          getOptionValue={(option) => option}
+                          value={createTypeLearn}
+                          onChange={(e) => this.changeCreateTypeLearn(e)}
+                          placeholder="Выберите тип решаемой задачи"
+                          isSearchable
+                          className="w-36"
+                      />
+                    </div>
                     <div className="">
                       <span>
                         {uploaded_file ? (
-                          <>
-                            {uploaded_file.slice(0, 5)} ...{" "}
-                            {uploaded_file.slice(-5)}
-                          </>
+                            <>
+                              {uploaded_file.slice(0, 5)} ...{" "}
+                              {uploaded_file.slice(-5)}
+                            </>
                         ) : (
-                          <label
-                            class="px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                            for="files"
-                          >
-                            Загрузить датасет
-                          </label>
+                            <label
+                                className="px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                htmlFor="files"
+                            >
+                              Загрузить датасет
+                            </label>
                         )}
                       </span>
                       <input
-                        className="hidden"
-                        id="files"
-                        type="file"
-                        onChange={this.uploadClick}
+                          className="hidden"
+                          id="files"
+                          type="file"
+                          fileType="Классифиция"
+                          onChange={this.uploadClick}
                       />
-                      <p className="mt-2 text-xs leading-5 text-gray-600">
-                        XLS, XLSX, CSV не более 10MB
-                      </p>
+                      <br/>
+                      <br/>
                     </div>
-
-                    {/* просмотр и выбо датасетов */}
+                    {/* просмотр и выбор датасетов */}
                     <div className="mt-2 grow w-full flex text-sm leading-6 text-gray-600">
                       <div
-                        className="ag-theme-alpine ag-theme-acmecorp"
-                        style={{ height: "100%", width: "100%" }}
+                          className="ag-theme-alpine ag-theme-acmecorp"
+                          style={{height: "100%", width: "100%"}}
                       >
                         <AgGridReact
-                          ref={this.gridRef}
-                          rowData={datasets}
-                          pagination={true}
-                          columnDefs={[
-                            {
-                              field: "info",
-                              sortable: true,
-                              enableRowGroup: true,
-                              enableValue: true,
-                              resizable: true,
-                              headerName: "Описание",
-                            },
-                            {
-                              field: "name",
-                              sortable: true,
-                              enableRowGroup: true,
-                              enableValue: true,
-                              resizable: true,
-                              headerName: "Название файла",
-                            },
-                            {
-                              field: "format",
-                              sortable: true,
-                              enableRowGroup: true,
-                              enableValue: true,
-                              resizable: true,
-                              headerName: "Формат файла",
-                            },
-                            {
-                              field: "size",
-                              sortable: true,
-                              enableRowGroup: true,
-                              enableValue: true,
-                              resizable: true,
-                              headerName: "Размер(в байтах)",
-                            },
-                            {
-                              field: "upload_date",
-                              sortable: true,
-                              enableRowGroup: true,
-                              enableValue: true,
-                              resizable: true,
-                              headerName: "Дата загрузки",
-                            },
-                            {
-                              field: "user",
-                              sortable: true,
-                              enableRowGroup: true,
-                              enableValue: true,
-                              resizable: true,
-                              headerName: "Владелец",
-                            },
-                          ]}
-                          rowSelection={"single"}
-                          onSelectionChanged={this.onSelectionChanged}
+                            ref={this.gridRef}
+                            rowData={datasets}
+                            pagination={true}
+                            columnDefs={[
+                              {
+                                field: "info",
+                                sortable: true,
+                                enableRowGroup: true,
+                                enableValue: true,
+                                resizable: true,
+                                headerName: "Описание",
+                              },
+                              {
+                                field: "name",
+                                sortable: true,
+                                enableRowGroup: true,
+                                enableValue: true,
+                                resizable: true,
+                                headerName: "Название файла",
+                              },
+                              {
+                                field: "type",
+                                sortable: true,
+                                enableRowGroup: true,
+                                enableValue: true,
+                                resizable: true,
+                                headerName: "Тип задачи",
+                              },
+                              {
+                                field: "format",
+                                sortable: true,
+                                enableRowGroup: true,
+                                enableValue: true,
+                                resizable: true,
+                                headerName: "Формат файла",
+                              },
+                              {
+                                field: "size",
+                                sortable: true,
+                                enableRowGroup: true,
+                                enableValue: true,
+                                resizable: true,
+                                headerName: "Размер(в байтах)",
+                              },
+                              {
+                                field: "upload_date",
+                                sortable: true,
+                                enableRowGroup: true,
+                                enableValue: true,
+                                resizable: true,
+                                headerName: "Дата загрузки",
+                              },
+                              {
+                                field: "user",
+                                sortable: true,
+                                enableRowGroup: true,
+                                enableValue: true,
+                                resizable: true,
+                                headerName: "Владелец",
+                              },
+                            ]}
+                            rowSelection={"single"}
+                            onSelectionChanged={this.onSelectionChanged}
                         ></AgGridReact>
                       </div>
                     </div>
                     <div>
                       {dataset ? (
-                        <>
-                          <p className="mt-2">
-                            Выбран датасет:{" "}
-                            <span className="font-bold">
+                          <>
+                            <p className="mt-2">
+                              Выбран датасет:{" "}
+                              <span className="font-bold">
                               {dataset.name}.{dataset.format}
                             </span>
-                          </p>
-                          <p>
-                            Описание:{" "}
-                            <span className="font-bold">{dataset.info}</span>
-                          </p>
-                          <div className="mt-2 flex justify-start">
-                            <button
-                              type="button"
-                              disabled={loading}
-                              className="mr-2 px-3 py-2 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
-                              onClick={() => this.deleteDataset(dataset)}
-                            >
-                              Удалить датасет
-                            </button>
-                            <br />
-                            <button
-                              type="button"
-                              disabled={loading}
-                              className="px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                              onClick={() => this.LoadDataset(dataset)}
-                            >
-                              {loading ? (
-                                <>
-                                  <svg
-                                    aria-hidden="true"
-                                    role="status"
-                                    class="inline w-4 h-4 mr-3 text-white animate-spin"
-                                    viewBox="0 0 100 101"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path
-                                      d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                      fill="#E5E7EB"
-                                    />
-                                    <path
-                                      d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                      fill="currentColor"
-                                    />
-                                  </svg>
-                                  Загрузка
-                                </>
-                              ) : (
-                                "Открыть"
-                              )}
-                            </button>
-                          </div>
-                        </>
+                            </p>
+                            <p>
+                              Описание:{" "}
+                              <span className="font-bold">{dataset.info}</span>
+                            </p>
+                            <div className="mt-2 flex justify-start">
+                              <button
+                                  type="button"
+                                  disabled={loading}
+                                  className="mr-2 px-3 py-2 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+                                  onClick={() => this.deleteDataset(dataset)}
+                              >
+                                Удалить датасет
+                              </button>
+                              <br/>
+                              <button
+                                  type="button"
+                                  disabled={loading}
+                                  className="px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                  onClick={() => this.LoadDataset(dataset)}
+                              >
+                                {loading ? (
+                                    <>
+                                      <svg
+                                          aria-hidden="true"
+                                          role="status"
+                                          class="inline w-4 h-4 mr-3 text-white animate-spin"
+                                          viewBox="0 0 100 101"
+                                          fill="none"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                            fill="#E5E7EB"
+                                        />
+                                        <path
+                                            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                            fill="currentColor"
+                                        />
+                                      </svg>
+                                      Загрузка
+                                    </>
+                                ) : (
+                                    "Открыть"
+                                )}
+                              </button>
+                            </div>
+                          </>
                       ) : null}
                     </div>
                   </Tab.Panel>
                   <Tab.Panel
-                    className={classNames(
-                      "h-dvh flex flex-col bg-white dark:bg-gray-800",
-                      "focus:outline-none"
-                    )}
+                      className={classNames(
+                          "h-dvh flex flex-col bg-white dark:bg-gray-800",
+                          "focus:outline-none"
+                      )}
                   >
                     {/* Отображаем файл в виде таблицы */}
                     <InfoPanel>
@@ -1522,16 +1568,16 @@ export class Main extends Component {
                       </div>
                     </InfoPanel>
                     {datasetRows.length !== 0 ? (
-                      <div className="grow w-full flex flex-col text-sm leading-6 text-gray-600">
-                        <div
-                          className="ag-theme-alpine ag-theme-acmecorp flex flex-col"
-                          style={{ height: "100%", width: "100%" }}
-                        >
-                          <AgGridReact
-                            ref={this.datasetGridRef}
-                            columnDefs={datasetColumns}
-                            rowData={datasetRows}
-                            autoGroupColumnDef={this.autoGroupColumnDef}
+                        <div className="grow w-full flex flex-col text-sm leading-6 text-gray-600">
+                          <div
+                              className="ag-theme-alpine ag-theme-acmecorp flex flex-col"
+                              style={{height: "100%", width: "100%"}}
+                          >
+                            <AgGridReact
+                                ref={this.datasetGridRef}
+                                columnDefs={datasetColumns}
+                                rowData={datasetRows}
+                                autoGroupColumnDef={this.autoGroupColumnDef}
                             localeText={AG_GRID_LOCALE_RU}
                             pagination={true}
                             autosize={true}
@@ -1978,188 +2024,215 @@ export class Main extends Component {
                     </InfoPanel>
                     {/* Выбор для обучения */}
                     {datasetRows.length !== 0 ? (
-                      <div className="mb-4">
-                        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                          Доступные модели
-                        </label>
-                        <Select
-                          className="basic-multi-select"
-                          classNamePrefix="select"
-                          options={default_models}
-                          getOptionLabel={(option) => option.label}
-                          getOptionValue={(option) => option}
-                          value={LearnModel}
-                          onChange={(e) => this.changeModel(e)}
-                          placeholder="Выберите модели для обучения"
-                          isSearchable
-                          isClearable
-                          isMulti
-                        />
-                        <label className="block my-2 text-sm font-medium text-gray-900 dark:text-white">
-                          Поле для обучения
-                        </label>
-                        <Select
-                          className="basic-single"
-                          classNamePrefix="select"
-                          options={labels}
-                          getOptionLabel={(option) => `${option["name"]}`}
-                          getOptionValue={(option) => `${option["id"]}`}
-                          value={LearnLabel}
-                          noOptionsMessage={() => "Пусто"}
-                          onChange={(e) => this.changeLabel(e)}
-                          placeholder="Выберите поле для обучения"
-                          isSearchable
-                          isClearable
-                        />
-                        <label
-                          for="date"
-                          class="block my-2 text-sm font-medium text-gray-900 dark:text-white"
-                        >
-                          Категориальные данные
-                        </label>
-                        <Select
-                          className="basic-multi-select"
-                          classNamePrefix="select"
-                          options={labels}
-                          getOptionLabel={(option) => `${option["name"]}`}
-                          getOptionValue={(option) => `${option["id"]}`}
-                          value={CategoricalLabels}
-                          onChange={(e) => this.changeCategoricalLabels(e)}
-                          placeholder="Выберите поля на который будете обучать"
-                          isSearchable
-                          isClearable
-                          isMulti
-                        />
-                        <label
-                          for="date"
-                          class="block my-2 text-sm font-medium text-gray-900 dark:text-white"
-                        >
-                          Числовые данные
-                        </label>
-                        <Select
-                          className="basic-multi-select"
-                          classNamePrefix="select"
-                          options={labels}
-                          getOptionLabel={(option) => `${option["name"]}`}
-                          getOptionValue={(option) => `${option["id"]}`}
-                          value={NumberLabels}
-                          onChange={(e) => this.changeNumberLabels(e)}
-                          placeholder="Выберите поля на который будете обучать"
-                          isSearchable
-                          isClearable
-                          isMulti
-                        />
-                        <div>
-                          <button
-                            type="button"
-                            disabled={loadingLearn}
-                            class="mt-4 flex items-center justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                            onClick={() => this.LearnModel(dataset)}
+                        <div className="mb-4">
+                          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            Доступные модели
+                          </label>
+                          <Select
+                              className="basic-multi-select"
+                              classNamePrefix="select"
+                              options={default_models?.filter(model => model.type === typeLearn)}
+                              getOptionLabel={(option) => option.label}
+                              getOptionValue={(option) => option}
+                              value={LearnModel}
+                              onChange={(e) => this.changeModel(e)}
+                              placeholder="Выберите модели для обучения"
+                              isSearchable
+                              isClearable
+                              isMulti
+                          />
+                          <label className="block my-2 text-sm font-medium text-gray-900 dark:text-white">
+                            Поле для обучения
+                          </label>
+                          <Select
+                              className="basic-single"
+                              classNamePrefix="select"
+                              options={labels}
+                              getOptionLabel={(option) => `${option["name"]}`}
+                              getOptionValue={(option) => `${option["id"]}`}
+                              value={LearnLabel}
+                              noOptionsMessage={() => "Пусто"}
+                              onChange={(e) => this.changeLabel(e)}
+                              placeholder="Выберите поле для обучения"
+                              isSearchable
+                              isClearable
+                          />
+                          <label
+                              for="date"
+                              class="block my-2 text-sm font-medium text-gray-900 dark:text-white"
                           >
-                            {loadingLearn ? (
-                              <>
-                                <svg
-                                  aria-hidden="true"
-                                  role="status"
-                                  class="inline w-4 h-4 mr-3 text-white animate-spin"
-                                  viewBox="0 0 100 101"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                    fill="#E5E7EB"
-                                  />
-                                  <path
-                                    d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                    fill="currentColor"
-                                  />
-                                </svg>
-                                Обучение
-                              </>
-                            ) : (
-                              "Обучить"
-                            )}
-                          </button>
+                            Категориальные данные
+                          </label>
+                          <Select
+                              className="basic-multi-select"
+                              classNamePrefix="select"
+                              options={labels}
+                              getOptionLabel={(option) => `${option["name"]}`}
+                              getOptionValue={(option) => `${option["id"]}`}
+                              value={CategoricalLabels}
+                              onChange={(e) => this.changeCategoricalLabels(e)}
+                              placeholder="Выберите поля на который будете обучать"
+                              isSearchable
+                              isClearable
+                              isMulti
+                          />
+                          <label
+                              for="date"
+                              class="block my-2 text-sm font-medium text-gray-900 dark:text-white"
+                          >
+                            Числовые данные
+                          </label>
+                          <Select
+                              className="basic-multi-select"
+                              classNamePrefix="select"
+                              options={labels}
+                              getOptionLabel={(option) => `${option["name"]}`}
+                              getOptionValue={(option) => `${option["id"]}`}
+                              value={NumberLabels}
+                              onChange={(e) => this.changeNumberLabels(e)}
+                              placeholder="Выберите поля на который будете обучать"
+                              isSearchable
+                              isClearable
+                              isMulti
+                          />
+                          <div>
+                            <button
+                                type="button"
+                                disabled={loadingLearn}
+                                class="mt-4 flex items-center justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                onClick={() => this.LearnModel(dataset)}
+                            >
+                              {loadingLearn ? (
+                                  <>
+                                    <svg
+                                        aria-hidden="true"
+                                        role="status"
+                                        class="inline w-4 h-4 mr-3 text-white animate-spin"
+                                        viewBox="0 0 100 101"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                          fill="#E5E7EB"
+                                      />
+                                      <path
+                                          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                          fill="currentColor"
+                                      />
+                                    </svg>
+                                    Обучение
+                                  </>
+                              ) : (
+                                  "Обучить"
+                              )}
+                            </button>
+                          </div>
                         </div>
-                      </div>
                     ) : null}
                     {/* Информация об обучении */}
                     {loadingLearn ? (
-                      <GetLearnInfo
-                        token={token}
+                        <GetLearnInfo
+                            token={token}
                         datasetId={dataset.id}
-                        LearnModel={LearnModel.name}
+                        LearnModel={'this'}
                       />
-                    ) : LearnInfo && LearnLabel && LearnModel ? (
+                    ) : LearnInfo && LearnLabel && LearnModel.length !== 0 ? (
                       <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-
-                        <Tab.Group>
-                          <div>
-                            <Disclosure
-                              as="nav"
-                              className="bg-white border-gray-200 dark:bg-gray-800"
-                            >
-                              {({ open }) => (
-                                <div className="flex h-8 my-4 items-center justify-between">
-                                  <div className="flex items-center">
-                                    <div className="hidden md:block">
-                                      <div className="flex items-baseline space-x-1">
-                                        <Tab.List className="flex text-sm font-medium text-center">
-                                          <Tab
-                                            className={({ selected }) =>
-                                                classNames(
-                                                "",
-                                                "inline-block p-2 border-b-2 rounded-t-lg",
-                                                selected
-                                                  ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
-                                                  : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-                                              )
-                                            }
-                                          >
-                                            результаты моделей
-                                          </Tab>
-                                          {LearnInfo.map((modelInfo, index) => (
-                                            <Tab
-                                              className={({ selected }) =>
-                                                classNames(
-                                                  "",
-                                                  "inline-block p-2 border-b-2 rounded-t-lg",
-                                                  selected
-                                                    ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
-                                                    : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-                                                )
-                                              }
-                                            >
-                                              {modelInfo.model.label}
-                                            </Tab>
-                                          ))}
-                                        </Tab.List>
+                        {typeLearn === 2 ?
+                            <Tab.Group>
+                              <div>
+                                <Disclosure
+                                    as="nav"
+                                    className="bg-white border-gray-200 dark:bg-gray-800"
+                                >
+                                  {({open}) => (
+                                      <div className="flex h-8 my-4 items-center justify-between">
+                                        <div className="flex items-center">
+                                          <div className="hidden md:block">
+                                            <div className="flex items-baseline space-x-1">
+                                              <Tab.List className="flex text-sm font-medium text-center">
+                                                <Tab
+                                                    className={({selected}) =>
+                                                        classNames(
+                                                            "",
+                                                            "inline-block p-2 border-b-2 rounded-t-lg",
+                                                            selected
+                                                                ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                                                : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                                        )
+                                                    }
+                                                >
+                                                  Результаты моделей
+                                                </Tab>
+                                                {LearnInfo.map((modelInfo, index) => (
+                                                    <Tab
+                                                        className={({selected}) =>
+                                                            classNames(
+                                                                "",
+                                                                "inline-block p-2 border-b-2 rounded-t-lg",
+                                                                selected
+                                                                    ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                                                    : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                                            )
+                                                        }
+                                                    >
+                                                      {modelInfo.model.label}
+                                                    </Tab>
+                                                ))}
+                                              </Tab.List>
+                                            </div>
+                                          </div>
+                                        </div>
                                       </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </Disclosure>
-                            {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
-                            <Tab.Panels className={classNames("pb-2 mb-4")}>
-                              <Tab.Panel>
-                                <div className="col-span-2 grid grid-cols-3 gap-4">
-                                  {LearnInfo[0].data.y_onehot.map((label, index) => (
-                                    <>
-                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                  )}
+                                </Disclosure>
+                                {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
+                                <Tab.Panels className={classNames("pb-2 mb-4")}>
+                                  <Tab.Panel>
+                                    <div className="col-span-2 grid grid-cols-2 gap-4">
+                                      <div
+                                          className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                                         <div>
                                           {/* Метрики */}
                                           <Plot
-                                            data={this.PlotBarModels(
-                                              LearnInfo,
-                                              "SE",
-                                              index
-                                            )}
+                                              data={[{
+                                                y: LearnInfo.map((row) => row.model.label),
+                                                x: LearnInfo.map((row) => row.data.test_mae),
+                                                name: LearnInfo.map((row) => `models ${row.model.label} value ${row.data.test_mae}`),
+                                                type: "bar",
+                                                orientation: "h",
+                                              }]}
+                                              layout={{
+                                                autosize: true,
+                                                title: `Test MAE`,
+                                                xaxis: {range: [0, 1]},
+                                                yaxis: {
+                                                  tickangle: -60,
+                                                },
+                                              }}
+                                              style={{
+                                                height: "100%",
+                                                width: "100%",
+                                              }}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div
+                                          className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                        {/* Метрики */}
+                                        <Plot
+                                            data={[{
+                                              y: LearnInfo.map((row) => row.model.label),
+                                              x: LearnInfo.map((row) => row.data.test_rmse),
+                                              name: LearnInfo.map((row) => `models ${row.model.label} value ${row.data.test_rmse}`),
+                                              type: "bar",
+                                              orientation: "h",
+                                            }]}
                                             layout={{
                                               autosize: true,
-                                              title: `${LearnLabel.name} = ${label} Чувствительность`,
-                                              xaxis: { range: [0, 1] },
+                                              title: `Test RMSE`,
+                                              xaxis: {range: [0, 1]},
                                               yaxis: {
                                                 tickangle: -60,
                                               },
@@ -2168,426 +2241,768 @@ export class Main extends Component {
                                               height: "100%",
                                               width: "100%",
                                             }}
-                                          />
-                                        </div>
-                                      </div>
-                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                        {/* Метрики */}
-                                        <Plot
-                                          data={this.PlotBarModels(
-                                            LearnInfo,
-                                            "SP",
-                                            index
-                                          )}
-                                          layout={{
-                                            autosize: true,
-                                            title: `${LearnLabel.name} = ${label} Специфичность`,
-                                            xaxis: { range: [0, 1] },
-                                            yaxis: {
-                                              tickangle: -60,
-                                            },
-                                          }}
-                                          style={{
-                                            height: "100%",
-                                            width: "100%",
-                                          }}
                                         />
-                                      </div>
-                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                        {/* Метрики */}
-                                        <Plot
-                                          data={this.PlotBarModels(
-                                            LearnInfo,
-                                            "accuracy",
-                                            index
-                                          )}
-                                          layout={{
-                                            autosize: true,
-                                            title: `${LearnLabel.name} = ${label} Точность`,
-                                            xaxis: { range: [0, 1] },
-                                            yaxis: {
-                                              tickangle: -60,
-                                            },
-                                          }}
-                                          style={{
-                                            height: "100%",
-                                            width: "100%",
-                                          }}
-                                        />
-                                      </div>
-                                    </>
-                                  ))}
-                                </div>
-                              </Tab.Panel>
-                              {LearnInfo.map((modelInfo, index) => (
-                                <Tab.Panel>
-                                  <div>
-                                    <h1>
-                                      Название модели:{" "}
-                                      <span className="font-bold text-gray-900 dark:text-white">
-                                        {modelInfo.model.label}
-                                      </span>
-                                    </h1>
-                                    {saved[index] ? null : (
-                                      <div>
-                                        <button
-                                          type="button"
-                                          disabled={loadingSave}
-                                          class="my-4 flex items-center justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                                          onClick={() =>
-                                            this.saveModel(modelInfo, index)
-                                          }
-                                        >
-                                          {loadingSave ? (
-                                            <>
-                                              <svg
-                                                aria-hidden="true"
-                                                role="status"
-                                                class="inline w-4 h-4 mr-3 text-white animate-spin"
-                                                viewBox="0 0 100 101"
-                                                fill="none"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                              >
-                                                <path
-                                                  d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                                  fill="#E5E7EB"
-                                                />
-                                                <path
-                                                  d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                                  fill="currentColor"
-                                                />
-                                              </svg>
-                                              Сохранение
-                                            </>
-                                          ) : (
-                                            "Сохранить модель"
-                                          )}
-                                        </button>
-                                      </div>
-                                    )}
-                                    {/* таблица с результатами */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
-                                      <div className="col-span-2">
-                                        <div class="relative overflow-x-auto">
-                                          <table className="table-auto w-full border border-gray-200 text-sm text-left text-gray-500 dark:text-gray-400">
-                                            <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                                              <tr className="table-row">
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  {LearnLabel.name}
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  accuracy
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  precision
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  recall
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  f1-score
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  SE
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  SP
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  PPV
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  NPV
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  FPR
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  FNR
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  Overall accuracy
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  LR+
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  LR-
-                                                </th>
-                                                <th className="table-cell text-left px-6 py-3">
-                                                  DOR
-                                                </th>
-                                              </tr>
-                                            </thead>
-                                            <tbody className="table-row-group">
-                                              {modelInfo.data.classification_matrix?.map(
-                                                (row) => (
-                                                  <tr
-                                                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
-                                                    key={row[LearnLabel.name]}
-                                                  >
-                                                    <td className="table-cell px-6 py-4">
-                                                      {
-                                                        row[
-                                                          `${LearnLabel.name}`
-                                                        ]
-                                                      }
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.accuracy}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.precision}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.recall}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row[`f1-score`]}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.SE}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.SP}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.PPV}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.NPV}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.FPR}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.FNR}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row[`Overall accuracy`]}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row[`LR+`]}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row[`LR-`]}
-                                                    </td>
-                                                    <td className="table-cell px-6 py-4">
-                                                      {row.DOR}
-                                                    </td>
-                                                  </tr>
-                                                )
-                                              )}
-                                            </tbody>
-                                          </table>
-                                        </div>
                                       </div>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      {/* Графики обучения */}
-                                      {/* график правилных результатов */}
-                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                        <Plot
-                                          data={this.PlotHeatmap(
-                                            modelInfo.data.cm_model,
-                                            modelInfo.data.y_onehot
-                                          )}
-                                          layout={this.PlotLayoutHeatmap(
-                                            modelInfo.data.cm_model,
-                                            modelInfo.data.y_onehot
-                                          )}
-                                          style={{
-                                            height: "100%",
-                                            width: "100%",
-                                          }}
-                                        />
-                                      </div>
-                                      {/* Roc кривая */}
-                                      <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                        <Plot
-                                          data={this.PlotRocCurve(
-                                            modelInfo.data.y_scores
-                                          )}
-                                          layout={{
-                                            title: "Roc кривая",
-                                            autosize: true,
-                                          }}
-                                          style={{
-                                            height: "100%",
-                                            width: "100%",
-                                          }}
-                                        />
-                                      </div>
-                                      {/* график значимости факторов */}
-                                      {modelInfo.data.features_importants === null ?
-                                        null
-                                        :
-                                        <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                            <Plot
-                                              data={this.PlotFeatureImportants(
-                                                modelInfo.data.features_importants
-                                                  .importances_mean,
-                                                modelInfo.data.features_importants
-                                                  .labels
-                                              )}
+                                    <div className="col-span-2 grid grid-cols-2 gap-4">
+                                        <div
+                                            className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                          {/* Метрики */}
+                                          <Plot
+                                              data={[{
+                                                y: LearnInfo.map((row) => row.model.label),
+                                                x: LearnInfo.map((row) => row.data.test_mape),
+                                                name: LearnInfo.map((row) => `models ${row.model.label} value ${row.data.test_mape}`),
+                                                type: "bar",
+                                                orientation: "h",
+                                              }]}
                                               layout={{
-                                                title: "Значимость факторов",
                                                 autosize: true,
+                                                title: `Test MAPE`,
+                                                xaxis: {range: [0, 1]},
+                                                yaxis: {
+                                                  tickangle: -60,
+                                                },
                                               }}
                                               style={{
                                                 height: "100%",
                                                 width: "100%",
                                               }}
-                                            />
+                                          />
                                         </div>
-                                      }
+                                        <div
+                                            className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                          {/* Метрики */}
+                                          <Plot
+                                              data={[{
+                                                y: LearnInfo.map((row) => row.model.label),
+                                                x: LearnInfo.map((row) => row.data.test_r2),
+                                                name: LearnInfo.map((row) => `models ${row.model.label} value ${row.data.test_r2}`),
+                                                type: "bar",
+                                                orientation: "h",
+                                              }]}
+                                              layout={{
+                                                autosize: true,
+                                                title: `Test R2`,
+                                                xaxis: {range: [0, 1]},
+                                                yaxis: {
+                                                  tickangle: -60,
+                                                },
+                                              }}
+                                              style={{
+                                                height: "100%",
+                                                width: "100%",
+                                              }}
+                                          />
+                                        </div>
+                                    </div>
+                                  </Tab.Panel>
+                                  {LearnInfo.map((modelInfo, index) => (
+                                      <Tab.Panel>
+                                        <div>
+                                          <h1>
+                                            Название модели:{" "}
+                                            <span className="font-bold text-gray-900 dark:text-white">
+                                        {modelInfo.model.label}
+                                      </span>
+                                          </h1>
+                                          {saved[index] ? null : (
+                                              <div>
+                                                <button
+                                                    type="button"
+                                                    disabled={loadingSave}
+                                                    class="my-4 flex items-center justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                                    onClick={() =>
+                                                        this.saveModel(modelInfo, index, 2)
+                                                    }
+                                                >
+                                                  {loadingSave ? (
+                                                      <>
+                                                        <svg
+                                                            aria-hidden="true"
+                                                            role="status"
+                                                            class="inline w-4 h-4 mr-3 text-white animate-spin"
+                                                            viewBox="0 0 100 101"
+                                                            fill="none"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                        >
+                                                          <path
+                                                              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                                              fill="#E5E7EB"
+                                                          />
+                                                          <path
+                                                              d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                                              fill="currentColor"
+                                                          />
+                                                        </svg>
+                                                        Сохранение
+                                                      </>
+                                                  ) : (
+                                                      "Сохранить модель"
+                                                  )}
+                                                </button>
+                                              </div>
+                                          )}
+                                          {/* таблица с результатами */}
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                                            <div className="col-span-2">
+                                              <div className="relative overflow-x-auto">
+                                                <table
+                                                    className="table-auto w-full border border-gray-200 text-sm text-left text-gray-500 dark:text-gray-400">
+                                                  <thead
+                                                      className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
+                                                  <tr className="table-row">
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Train_MAE
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Train RMSE
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Train MAPE
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Train R2 score
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Test MAE
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Test RMSE
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Test MAPE
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Test R2 score
+                                                    </th>
+                                                  </tr>
+                                                  </thead>
+                                                  <tbody className="table-row-group">
+                                                  <tr
+                                                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                                                      key={index}
+                                                  >
+                                                    <td className="table-cell px-6 py-4">
+                                                      {modelInfo.data.train_mae}
+                                                    </td>
+                                                    <td className="table-cell px-6 py-4">
+                                                      {modelInfo.data.train_rmse}
+                                                    </td>
+                                                    <td className="table-cell px-6 py-4">
+                                                      {modelInfo.data.train_mape}
+                                                    </td>
+                                                    <td className="table-cell px-6 py-4">
+                                                      {modelInfo.data.train_r2}
+                                                    </td>
+                                                    <td className="table-cell px-6 py-4">
+                                                      {modelInfo.data.test_mae}
+                                                    </td>
+                                                    <td className="table-cell px-6 py-4">
+                                                      {modelInfo.data.test_rmse}
+                                                    </td>
+                                                    <td className="table-cell px-6 py-4">
+                                                      {modelInfo.data.test_mape}
+                                                    </td>
+                                                    <td className="table-cell px-6 py-4">
+                                                      {modelInfo.data.test_r2}
+                                                    </td>
+                                                  </tr>
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div
+                                                className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                              {/* Метрики */}
+                                              <Plot
+                                                  data={[{
+                                                    y: ['Train MAE', 'Train MRSE', 'Train MAPE', 'Train R2 scrore'],
+                                                    x: [
+                                                      modelInfo.data.train_mae, modelInfo.data.train_rmse,
+                                                      modelInfo.data.train_mape, modelInfo.data.train_r2
+                                                    ],
+                                                    type: "bar",
+                                                    orientation: "h",
+                                                  },
+                                                  ]}
+                                                  layout={{
+                                                    autosize: true,
+                                                    title: 'Результаты обучения моделей',
+                                                    xaxis: {range: [0, 1]},
+                                                    yaxis: {
+                                                      tickangle: -60,
+                                                    },
+                                                  }}
+                                                  style={{
+                                                    height: "100%",
+                                                    width: "100%",
+                                                  }}
+                                              />
+                                            </div>
+                                            <div
+                                                className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                              <Plot
+                                                  data={[{
+                                                    y: ['Test MAE', 'Test MRSE', 'Test MAPE', 'Test R2 scrore'],
+                                                    x: [
+                                                      modelInfo.data.test_mae, modelInfo.data.test_rmse,
+                                                      modelInfo.data.test_mape, modelInfo.data.test_r2
+                                                    ],
+                                                    type: "bar",
+                                                    orientation: "h",
+                                                  },
+                                                  ]}
+                                                  layout={{
+                                                    autosize: true,
+                                                    title: 'Результаты тестирования моделей',
+                                                    xaxis: {range: [0, 1]},
+                                                    yaxis: {
+                                                      tickangle: -60,
+                                                    },
+                                                  }}
+                                                  style={{
+                                                    height: "100%",
+                                                    width: "100%",
+                                                  }}
+                                              />
+                                            </div>
+                                            {modelInfo.data.features_importants === null ?
+                                                null
+                                                :
+                                                <div
+                                                    className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                                  <Plot
+                                                      data={this.PlotFeatureImportants(
+                                                          modelInfo.data.features_importants,
+                                                          modelInfo.data.features_importants.labels
+                                                      )}
+                                                      layout={{
+                                                        title: "Значимость факторов",
+                                                        autosize: true,
+                                                      }}
+                                                      style={{
+                                                        height: "100%",
+                                                        width: "100%",
+                                                      }}
+                                                  />
+                                                </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </Tab.Panel>
+                                    ))}
+                                </Tab.Panels>
+                              </div>
+                            </Tab.Group>
+                            :
+                            <Tab.Group>
+                              <div>
+                                <Disclosure
+                                    as="nav"
+                                    className="bg-white border-gray-200 dark:bg-gray-800"
+                                >
+                                  {({open}) => (
+                                      <div className="flex h-8 my-4 items-center justify-between">
+                                        <div className="flex items-center">
+                                          <div className="hidden md:block">
+                                            <div className="flex items-baseline space-x-1">
+                                              <Tab.List className="flex text-sm font-medium text-center">
+                                                <Tab
+                                                    className={({selected}) =>
+                                                        classNames(
+                                                            "",
+                                                            "inline-block p-2 border-b-2 rounded-t-lg",
+                                                            selected
+                                                                ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                                                : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                                        )
+                                                    }
+                                                >
+                                                  Результаты моделей
+                                                </Tab>
+                                                {LearnInfo.map((modelInfo, index) => (
+                                                    <Tab
+                                                        className={({selected}) =>
+                                                            classNames(
+                                                                "",
+                                                                "inline-block p-2 border-b-2 rounded-t-lg",
+                                                                selected
+                                                                    ? "focus:outline-none text-blue-600 border-b-2 border-blue-600"
+                                                                    : "hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                                                            )
+                                                        }
+                                                    >
+                                                      {modelInfo.model.label}
+                                                    </Tab>
+                                                ))}
+                                              </Tab.List>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                  )}
+                                </Disclosure>
+                                {/* Страница с датасетом где он выводится в aj-grid и тут его загрузка есть */}
+                                <Tab.Panels className={classNames("pb-2 mb-4")}>
+                                  <Tab.Panel>
+                                    <div className="col-span-2 grid grid-cols-3 gap-4">
+                                      {LearnInfo[0].data.y_onehot.map((label, index) => (
+                                          <>
+                                            <div
+                                                className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                              <div>
+                                                {/* Метрики */}
+                                                <Plot
+                                                    data={this.PlotBarModels(
+                                                        LearnInfo,
+                                                        "SE",
+                                                        index
+                                                    )}
+                                                    layout={{
+                                                      autosize: true,
+                                                      title: `${LearnLabel.name} = ${label} Чувствительность`,
+                                                      xaxis: {range: [0, 1]},
+                                                      yaxis: {
+                                                        tickangle: -60,
+                                                      },
+                                                    }}
+                                                    style={{
+                                                      height: "100%",
+                                                      width: "100%",
+                                                    }}
+                                                />
+                                              </div>
+                                            </div>
+                                            <div
+                                                className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                              {/* Метрики */}
+                                              <Plot
+                                                  data={this.PlotBarModels(
+                                                      LearnInfo,
+                                                      "SP",
+                                                      index
+                                                  )}
+                                                  layout={{
+                                                    autosize: true,
+                                                    title: `${LearnLabel.name} = ${label} Специфичность`,
+                                                    xaxis: {range: [0, 1]},
+                                                    yaxis: {
+                                                      tickangle: -60,
+                                                    },
+                                                  }}
+                                                  style={{
+                                                    height: "100%",
+                                                    width: "100%",
+                                                  }}
+                                              />
+                                            </div>
+                                            <div
+                                                className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                              {/* Метрики */}
+                                              <Plot
+                                                  data={this.PlotBarModels(
+                                                      LearnInfo,
+                                                      "accuracy",
+                                                      index
+                                                  )}
+                                                  layout={{
+                                                    autosize: true,
+                                                    title: `${LearnLabel.name} = ${label} Точность`,
+                                                    xaxis: {range: [0, 1]},
+                                                    yaxis: {
+                                                      tickangle: -60,
+                                                    },
+                                                  }}
+                                                  style={{
+                                                    height: "100%",
+                                                    width: "100%",
+                                                  }}
+                                              />
+                                            </div>
+                                          </>
+                                      ))}
+                                    </div>
+                                  </Tab.Panel>
+                                  {LearnInfo.map((modelInfo, index) => (
+                                      <Tab.Panel>
+                                        <div>
+                                          <h1>
+                                            Название модели:{" "}
+                                            <span className="font-bold text-gray-900 dark:text-white">
+                                        {modelInfo.model.label}
+                                      </span>
+                                          </h1>
+                                          {saved[index] ? null : (
+                                              <div>
+                                                <button
+                                                    type="button"
+                                                    disabled={loadingSave}
+                                                    class="my-4 flex items-center justify-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                                    onClick={() =>
+                                                        this.saveModel(modelInfo, index, 1)
+                                                    }
+                                                >
+                                                  {loadingSave ? (
+                                                      <>
+                                                        <svg
+                                                            aria-hidden="true"
+                                                            role="status"
+                                                            class="inline w-4 h-4 mr-3 text-white animate-spin"
+                                                            viewBox="0 0 100 101"
+                                                            fill="none"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                        >
+                                                          <path
+                                                              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                                              fill="#E5E7EB"
+                                                          />
+                                                          <path
+                                                              d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                                              fill="currentColor"
+                                                          />
+                                                        </svg>
+                                                        Сохранение
+                                                      </>
+                                                  ) : (
+                                                      "Сохранить модель"
+                                                  )}
+                                                </button>
+                                              </div>
+                                          )}
+                                          {/* таблица с результатами */}
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                                            <div className="col-span-2">
+                                              <div className="relative overflow-x-auto">
+                                                <table
+                                                    className="table-auto w-full border border-gray-200 text-sm text-left text-gray-500 dark:text-gray-400">
+                                                  <thead
+                                                      className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
+                                                  <tr className="table-row">
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      {LearnLabel.name}
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      accuracy
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      precision
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      recall
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      f1-score
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      SE
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      SP
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      PPV
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      NPV
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      FPR
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      FNR
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      Overall accuracy
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      LR+
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      LR-
+                                                    </th>
+                                                    <th className="table-cell text-left px-6 py-3">
+                                                      DOR
+                                                    </th>
+                                                  </tr>
+                                                  </thead>
+                                                  <tbody className="table-row-group">
+                                                  {modelInfo.data.classification_matrix?.map(
+                                                      (row) => (
+                                                          <tr
+                                                              className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                                                              key={row[LearnLabel.name]}
+                                                          >
+                                                            <td className="table-cell px-6 py-4">
+                                                              {
+                                                                row[
+                                                                    `${LearnLabel.name}`
+                                                                    ]
+                                                              }
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.accuracy}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.precision}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.recall}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row[`f1-score`]}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.SE}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.SP}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.PPV}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.NPV}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.FPR}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.FNR}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row[`Overall accuracy`]}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row[`LR+`]}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row[`LR-`]}
+                                                            </td>
+                                                            <td className="table-cell px-6 py-4">
+                                                              {row.DOR}
+                                                            </td>
+                                                          </tr>
+                                                      )
+                                                  )}
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Графики обучения */}
+                                            {/* график правилных результатов */}
+                                            <div
+                                                className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                              <Plot
+                                                  data={this.PlotHeatmap(
+                                                      modelInfo.data.cm_model,
+                                                      modelInfo.data.y_onehot
+                                                  )}
+                                                  layout={this.PlotLayoutHeatmap(
+                                                      modelInfo.data.cm_model,
+                                                      modelInfo.data.y_onehot
+                                                  )}
+                                                  style={{
+                                                    height: "100%",
+                                                    width: "100%",
+                                                  }}
+                                              />
+                                            </div>
+                                            {/* Roc кривая */}
+                                            <div
+                                                className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                              <Plot
+                                                  data={this.PlotRocCurve(
+                                                      modelInfo.data.y_scores
+                                                  )}
+                                                  layout={{
+                                                    title: "Roc кривая",
+                                                    autosize: true,
+                                                  }}
+                                                  style={{
+                                                    height: "100%",
+                                                    width: "100%",
+                                                  }}
+                                              />
+                                            </div>
+                                            {/* график значимости факторов */}
+                                            {modelInfo.data.features_importants === null ?
+                                                null
+                                                :
+                                                <div
+                                                    className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                                  <Plot
+                                                      data={this.PlotFeatureImportants(
+                                                          modelInfo.data.features_importants,
+                                                          modelInfo.data.features_importants.labels
+                                                      )}
+                                                      layout={{
+                                                        title: "Значимость факторов",
+                                                        autosize: true,
+                                                      }}
+                                                      style={{
+                                                        height: "100%",
+                                                        width: "100%",
+                                                      }}
+                                                  />
+                                                </div>
+                                            }
 
-                                      <div className="col-span-2 block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                        <div className="flex">
-                                          <div>
+                                            <div
+                                                className="col-span-2 block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                              <div className="flex">
+                                                <div>
                                             <span className="block mb-2 font-bold text-gray-900 dark:text-white">
                                               Доверительные интервалы
                                             </span>
-                                          </div>
-                                          <div className="grow"> </div>
-                                          <div className="mr-2">
-                                            <select
-                                              name="#"
-                                              id="#"
-                                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                              onChange={(e) =>
-                                                this.setState({
-                                                  z: parseFloat(e.target.value),
-                                                })
-                                              }
-                                            >
-                                              <option value="1.64">90 %</option>
-                                              <option value="1.96">95 %</option>
-                                              <option value="2.58">99 %</option>
-                                            </select>
-                                          </div>
-                                          <div>
-                                            <select
-                                              name="#"
-                                              id="#"
-                                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                              onChange={(e) =>
-                                                this.setState({
-                                                  intervalType: parseInt(
-                                                    e.target.value
-                                                  ),
-                                                })
-                                              }
-                                            >
-                                              <option value="1">
-                                                Оценка по Уилсону
-                                              </option>
-                                              <option value="2">
-                                                Оценка по Вальду
-                                              </option>
-                                              <option value="3">
-                                                Оценка по Агрести-Коула
-                                              </option>
-                                            </select>
-                                          </div>
-                                        </div>
-                                        {/* Вывод по каждому значению target столбца */}
-                                        {modelInfo.data.classification_matrix?.map(
-                                          (row) => (
-                                            <>
-                                              <div className="col-span-2 grid grid-cols-3 gap-4">
-                                                <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                                  {/* Метрики */}
-                                                  <Plot
-                                                    data={this.PlotMetricsLabel(
-                                                      row,
-                                                      intervalType,
-                                                      z
-                                                    )}
-                                                    layout={{
-                                                      autosize: true,
-                                                      title: `${
-                                                        this.state.LearnLabel
-                                                          .name
-                                                      } ${
-                                                        row[
-                                                          this.state.LearnLabel
-                                                            .name
-                                                        ]
-                                                      }: Метрики`,
-                                                      xaxis: { range: [0, 1] },
-                                                    }}
-                                                    style={{
-                                                      height: "100%",
-                                                      width: "100%",
-                                                    }}
-                                                  />
                                                 </div>
-                                                <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                                  {/* Доверительные интервалы */}
-                                                  <Plot
-                                                    data={this.PlotIntervalsLabel(
-                                                      row,
-                                                      intervalType,
-                                                      z
-                                                    )}
-                                                    layout={{
-                                                      title: `${
-                                                        this.state.LearnLabel
-                                                          .name
-                                                      } ${
-                                                        row[
-                                                          this.state.LearnLabel
-                                                            .name
-                                                        ]
-                                                      }: Интервалы`,
-                                                      barmode: "stack",
-                                                      showlegend: false,
-                                                      autosize: true,
-                                                      annotations: [],
-                                                      yaxis: { range: [0, 1.2] },
-                                                    }}
-                                                    style={{
-                                                      height: "100%",
-                                                      width: "100%",
-                                                    }}
-                                                  />
+                                                <div className="grow"></div>
+                                                <div className="mr-2">
+                                                  <select
+                                                      name="#"
+                                                      id="#"
+                                                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                                      onChange={(e) =>
+                                                          this.setState({
+                                                            z: parseFloat(e.target.value),
+                                                          })
+                                                      }
+                                                  >
+                                                    <option value="1.64">90 %</option>
+                                                    <option value="1.96">95 %</option>
+                                                    <option value="2.58">99 %</option>
+                                                  </select>
                                                 </div>
-                                                <div className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                                  {/* Матрица ошибок */}
-                                                  <Plot
-                                                    data={this.PlotHeatmapLabel(
-                                                      row
-                                                    )}
-                                                    layout={this.PlotHeatmapLabelLayOut(
-                                                      row
-                                                    )}
-                                                    style={{
-                                                      height: "100%",
-                                                      width: "100%",
-                                                    }}
-                                                  />
+                                                <div>
+                                                  <select
+                                                      name="#"
+                                                      id="#"
+                                                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                                      onChange={(e) =>
+                                                          this.setState({
+                                                            intervalType: parseInt(
+                                                                e.target.value
+                                                            ),
+                                                          })
+                                                      }
+                                                  >
+                                                    <option value="1">
+                                                      Оценка по Уилсону
+                                                    </option>
+                                                    <option value="2">
+                                                      Оценка по Вальду
+                                                    </option>
+                                                    <option value="3">
+                                                      Оценка по Агрести-Коула
+                                                    </option>
+                                                  </select>
                                                 </div>
                                               </div>
-                                            </>
-                                          )
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </Tab.Panel>
-                              ))}
-                            </Tab.Panels>
-                          </div>
-                        </Tab.Group>
+                                              {/* Вывод по каждому значению target столбца */}
+                                              {modelInfo.data.classification_matrix?.map(
+                                                  (row) => (
+                                                      <>
+                                                        <div className="col-span-2 grid grid-cols-3 gap-4">
+                                                          <div
+                                                              className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                                            {/* Метрики */}
+                                                            <Plot
+                                                                data={this.PlotMetricsLabel(
+                                                                    row,
+                                                                    intervalType,
+                                                                    z
+                                                                )}
+                                                                layout={{
+                                                                  autosize: true,
+                                                                  title: `${
+                                                                      this.state.LearnLabel
+                                                                          .name
+                                                                  } ${
+                                                                      row[
+                                                                          this.state.LearnLabel
+                                                                              .name
+                                                                          ]
+                                                                  }: Метрики`,
+                                                                  xaxis: {range: [0, 1]},
+                                                                }}
+                                                                style={{
+                                                                  height: "100%",
+                                                                  width: "100%",
+                                                                }}
+                                                            />
+                                                          </div>
+                                                          <div
+                                                              className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                                            {/* Доверительные интервалы */}
+                                                            <Plot
+                                                                data={this.PlotIntervalsLabel(
+                                                                    row,
+                                                                    intervalType,
+                                                                    z
+                                                                )}
+                                                                layout={{
+                                                                  title: `${
+                                                                      this.state.LearnLabel
+                                                                          .name
+                                                                  } ${
+                                                                      row[
+                                                                          this.state.LearnLabel
+                                                                              .name
+                                                                          ]
+                                                                  }: Интервалы`,
+                                                                  barmode: "stack",
+                                                                  showlegend: false,
+                                                                  autosize: true,
+                                                                  annotations: [],
+                                                                  yaxis: {range: [0, 1.2]},
+                                                                }}
+                                                                style={{
+                                                                  height: "100%",
+                                                                  width: "100%",
+                                                                }}
+                                                            />
+                                                          </div>
+                                                          <div
+                                                              className="block p-4 bg-gray-50 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                                            {/* Матрица ошибок */}
+                                                            <Plot
+                                                                data={this.PlotHeatmapLabel(
+                                                                    row
+                                                                )}
+                                                                layout={this.PlotHeatmapLabelLayOut(
+                                                                    row
+                                                                )}
+                                                                style={{
+                                                                  height: "100%",
+                                                                  width: "100%",
+                                                                }}
+                                                            />
+                                                          </div>
+                                                        </div>
+                                                      </>
+                                                  )
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </Tab.Panel>
+                                  ))}
+                                </Tab.Panels>
+                              </div>
+                            </Tab.Group>
+                        }
                       </div>
                     ) : null}
                   </Tab.Panel>
                   <Tab.Panel
-                    className={classNames(
-                      "h-dvh flex flex-col bg-white dark:bg-gray-800",
-                      "focus:outline-none"
-                    )}
+                      className={classNames(
+                          "h-dvh flex flex-col bg-white dark:bg-gray-800",
+                          "focus:outline-none"
+                      )}
                   >
                     {/* Настройка моделей */}
                     <InfoPanel>
@@ -2601,171 +3016,176 @@ export class Main extends Component {
                         Общие данные
                       </label>
                       <div>
-                            <p>Разделение датасета на обучаемую и тестовую выборку = {queryScore.toFixed(2)}</p>
-                            <Slider
-                              axis="x"
-                              x={queryScore}
-                              xmax={1}
-                              xmin={0}
-                              xstep={0.01}
-                              onChange={({ x }) => this.setState({ queryScore: x })}
-                            />
+                        <p>Разделение датасета на обучаемую и тестовую выборку = {queryScore.toFixed(2)}</p>
+                        <Slider
+                            axis="x"
+                            x={queryScore}
+                            xmax={1}
+                            xmin={0}
+                            xstep={0.01}
+                            onChange={({x}) => this.setState({queryScore: x})}
+                        />
                       </div>
                       <div>
-                            <p>Количество наблюдений переданных на обучение = {queryCount}</p>
-                            <Slider
-                              axis="x"
-                              x={queryCount}
-                              xmax={datasetRows.length > maxCount? maxCount: datasetRows.length}
-                              xmin={0}
-                              xstep={1}
-                              onChange={({ x }) => this.setState({ queryCount: x })}
-                            />
+                        <p>Количество наблюдений переданных на обучение = {queryCount}</p>
+                        <Slider
+                            axis="x"
+                            x={queryCount}
+                            xmax={datasetRows.length > maxCount ? maxCount : datasetRows.length}
+                            xmin={0}
+                            xstep={1}
+                            onChange={({x}) => this.setState({queryCount: x})}
+                        />
                       </div>
                       <label className="block mb-2 font-bold text-gray-900 dark:text-white">
                         Настраиваемая модель
                       </label>
                       <Select
-                        className="basic-single"
-                        classNamePrefix="select"
-                        getoptionlabel={(option) => option.label}
-                        getoptionvalue={(option) => option}
-                        options={default_models}
-                        value={modelConfigs}
-                        noOptionsMessage={() => "Пусто"}
-                        onChange={(e) => this.changeModelConfigs(e)}
-                        placeholder="Выберите модель"
-                        isSearchable
-                        isClearable
+                          className="basic-single"
+                          classNamePrefix="select"
+                          options={default_models?.filter(model => model.type === typeLearn)}
+                          getoptionlabel={(option) => option.label}
+                          getoptionvalue={(option) => option}
+                          value={modelConfigs}
+                          noOptionsMessage={() => "Пусто"}
+                          onChange={(e) => this.changeModelConfigs(e)}
+                          placeholder="Выберите модель"
+                          isSearchable
+                          isClearable
                       />
                       {modelConfigs === null ? null : (
-                        <div className="grid grid-cols-3 gap-4 py-4">
-                          {modelConfigs.value?.map((param, index) =>
-                            !param.use ? null : param.type === "int" ? (
-                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Если данные int */}
-                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
-                                  {param.name}
-                                </label>
-                                <p>Описание: {param.info}</p>
-                                <input
-                                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                  type="number"
-                                  step="1"
-                                  min={param.diap[0]}
-                                  max={
-                                    param.diap.length === 2
-                                      ? param.diap[1]
-                                      : null
-                                  }
-                                  value={param.default_value}
-                                  onChange={(e) => this.changeNumber(e, index)}
-                                  placeholder="Введите значени поля"
-                                />
-                              </div>
-                            ) : param.type === "float" ? (
-                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Если данные int */}
-                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
-                                  {param.name}
-                                </label>
-                                <p>Описание: {param.info}</p>
-                                <input
-                                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                  type="number"
-                                  step="any"
-                                  min={param.diap[0]}
-                                  max={
-                                    param.diap.length === 2
-                                      ? param.diap[1]
-                                      : null
-                                  }
-                                  value={param.default_value}
-                                  onChange={(e) => this.changeNumber(e, index)}
-                                  placeholder="Введите значени поля"
-                                />
-                              </div>
-                            ) : param.type === "bool" ? (
-                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Если данные int */}
-                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
-                                  {param.name}
-                                </label>
-                                <p>Описание: {param.info}</p>
-                                <input
-                                  type="checkbox"
-                                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                  checked={param.default_value}
-                                  onChange={(e) => this.changeBool(e, index)}
-                                />
-                              </div>
-                            ) : param.type === "string" ? (
-                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Если данные int */}
-                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
-                                  {param.name}
-                                </label>
-                                <p>Описание: {param.info}</p>
-                                <Select
-                                  className=""
-                                  classNamePrefix="select"
-                                  options={param.diap.map((value) => ({
-                                    value: value,
-                                    label: value,
-                                  }))}
-                                  value={param.default_value}
-                                  noOptionsMessage={() => "Пусто"}
-                                  onChange={(e) => this.changeCat(e, index)}
-                                  placeholder="Выберите Параметр"
-                                  isSearchable
-                                  isClearable
-                                />
-                              </div>
-                            ) : param.type === "array" ? (
-                              <div className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                {/* Если данные int */}
-                                <label className="block mb-2 font-bold text-gray-900 dark:text-white">
-                                  {param.name}
-                                </label>
-                                <p>Описание: {param.info}</p>
-                                <select
-                                  name="#"
-                                  id="#"
-                                  onChange={(e) =>
-                                    this.changeArrayLength(e, index)
-                                  }
-                                  value={param.default_value.length}
-                                >
-                                  <option value="1">1</option>
-                                  <option value="2">2</option>
-                                  <option value="3">3</option>
-                                  <option value="4">4</option>
-                                  <option value="5">5</option>
-                                </select>
-                                {param.default_value?.map((elVal, indexArr) => (
-                                  <>
-                                    <label className="block mb-2 font-bold text-gray-900 dark:text-white">
-                                      Слой №{indexArr + 1}
-                                    </label>
-                                    <input
-                                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                      type="number"
-                                      step="1"
-                                      min={param.diap[2]}
-                                      max={param.diap[3]}
-                                      value={param.default_value[indexArr]}
-                                      onChange={(e) =>
-                                        this.changeArrayElem(e, index, indexArr)
-                                      }
-                                      placeholder="Введите значение поля"
-                                    />
-                                    <br />
-                                  </>
-                                ))}
-                              </div>
-                            ) : null
-                          )}
-                        </div>
+                          <div className="grid grid-cols-3 gap-4 py-4">
+                            {modelConfigs.value?.map((param, index) =>
+                                !param.use ? null : param.type === "int" ? (
+                                    <div
+                                        className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                      {/* Если данные int */}
+                                      <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                        {param.name}
+                                      </label>
+                                      <p>Описание: {param.info}</p>
+                                      <input
+                                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                          type="number"
+                                          step="1"
+                                          min={param.diap[0]}
+                                          max={
+                                            param.diap.length === 2
+                                                ? param.diap[1]
+                                                : null
+                                          }
+                                          value={param.default_value}
+                                          onChange={(e) => this.changeNumber(e, index)}
+                                          placeholder="Введите значени поля"
+                                      />
+                                    </div>
+                                ) : param.type === "float" ? (
+                                    <div
+                                        className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                      {/* Если данные int */}
+                                      <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                        {param.name}
+                                      </label>
+                                      <p>Описание: {param.info}</p>
+                                      <input
+                                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                          type="number"
+                                          step="any"
+                                          min={param.diap[0]}
+                                          max={
+                                            param.diap.length === 2
+                                                ? param.diap[1]
+                                                : null
+                                          }
+                                          value={param.default_value}
+                                          onChange={(e) => this.changeNumber(e, index)}
+                                          placeholder="Введите значени поля"
+                                      />
+                                    </div>
+                                ) : param.type === "bool" ? (
+                                    <div
+                                        className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                      {/* Если данные int */}
+                                      <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                        {param.name}
+                                      </label>
+                                      <p>Описание: {param.info}</p>
+                                      <input
+                                          type="checkbox"
+                                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                          checked={param.default_value}
+                                          onChange={(e) => this.changeBool(e, index)}
+                                      />
+                                    </div>
+                                ) : param.type === "string" ? (
+                                    <div
+                                        className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                      {/* Если данные int */}
+                                      <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                        {param.name}
+                                      </label>
+                                      <p>Описание: {param.info}</p>
+                                      <Select
+                                          className=""
+                                          classNamePrefix="select"
+                                          options={param.diap.map((value) => ({
+                                            value: value,
+                                            label: value,
+                                          }))}
+                                          value={param.default_value}
+                                          noOptionsMessage={() => "Пусто"}
+                                          onChange={(e) => this.changeCat(e, index)}
+                                          placeholder="Выберите Параметр"
+                                          isSearchable
+                                          isClearable
+                                      />
+                                    </div>
+                                ) : param.type === "array" ? (
+                                    <div
+                                        className="block p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                      {/* Если данные int */}
+                                      <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                        {param.name}
+                                      </label>
+                                      <p>Описание: {param.info}</p>
+                                      <select
+                                          name="#"
+                                          id="#"
+                                          onChange={(e) =>
+                                              this.changeArrayLength(e, index)
+                                          }
+                                          value={param.default_value.length}
+                                      >
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                      </select>
+                                      {param.default_value?.map((elVal, indexArr) => (
+                                          <>
+                                            <label className="block mb-2 font-bold text-gray-900 dark:text-white">
+                                              Слой №{indexArr + 1}
+                                            </label>
+                                            <input
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                                type="number"
+                                                step="1"
+                                                min={param.diap[2]}
+                                                max={param.diap[3]}
+                                                value={param.default_value[indexArr]}
+                                                onChange={(e) =>
+                                                    this.changeArrayElem(e, index, indexArr)
+                                                }
+                                                placeholder="Введите значение поля"
+                                            />
+                                            <br/>
+                                          </>
+                                      ))}
+                                    </div>
+                                ) : null
+                            )}
+                          </div>
                       )}
                     </>
                   </Tab.Panel>

@@ -396,3 +396,7 @@
 .login_bg {
   background-color: #0045bb;
 }
+
+.custom-width .select__menu {
+  width: 50px;
+}
