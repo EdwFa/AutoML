@@ -213,7 +213,7 @@ def create_classification_report(table_accuracy, y_test, pred, label_name):
             FNR = 0
 
         try:
-            OA = SP + SE
+            OA = (v['TP'] + v['TN']) / (v['TP'] + v['TN'] + v['FP'] + v['FN'])
         except ZeroDivisionError:
             OA = 0
         try:
